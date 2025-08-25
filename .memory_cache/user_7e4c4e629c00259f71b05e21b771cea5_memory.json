@@ -1,0 +1,213 @@
+[
+  {
+    "key": "personality_traits",
+    "summary": "User is described as dynamic, creative, and possessing good communication skills in the financial market.",
+    "context": "Based on initial analysis by LUMIR-AI",
+    "timestamp": "2025-08-25T00:45:05.623146",
+    "confidence": 0.9,
+    "tags": [
+      "personality",
+      "communication",
+      "creativity"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "daily_recommendation",
+    "summary": "Today is a personal number 6 day, suitable for focusing on high-potential and high-win-rate trades.",
+    "context": "LUMIR-AI's recommendation based on the user's number profile.",
+    "timestamp": "2025-08-25T00:02:29.050600",
+    "confidence": 0.9,
+    "tags": [
+      "daily_advice",
+      "trading_strategy",
+      "number_profile"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_management",
+    "summary": "User needs to focus on controlling emotions and managing risk to avoid impulsive decisions.",
+    "context": "LUMIR-AI's recommendation for effective trading.",
+    "timestamp": "2025-08-25T00:08:24.280258",
+    "confidence": 0.9,
+    "tags": [
+      "risk_management",
+      "capital_management",
+      "trading_plan"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_personality",
+    "summary": "User is energetic and enthusiastic in the financial market, with a strong ability to inspire others through communication and knowledge sharing.",
+    "context": "Initial analysis based on available information.",
+    "timestamp": "2025-08-25T00:08:24.279991",
+    "confidence": 0.9,
+    "tags": [
+      "personality",
+      "trading",
+      "communication"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_challenges",
+    "summary": "User may be prone to relying on external signals and lacks a distinct trading identity.",
+    "context": "Initial analysis suggests potential challenges.",
+    "timestamp": "2025-08-25T00:06:11.162151",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "challenges",
+      "risk"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "current_day_recommendation",
+    "summary": "Today (day number 8) is a good time to focus on trades with high profit potential and win rates, managing capital strictly and planning profit and risk clearly.",
+    "context": "Recommendation based on personal number 8.",
+    "timestamp": "2025-08-25T00:13:37.930807",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "recommendation",
+      "number_8"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_strategy",
+    "summary": "User has a creative and flexible mindset, constantly seeking new ideas to optimize trading strategies.",
+    "context": "Initial analysis based on provided information.",
+    "timestamp": "2025-08-25T00:08:24.280204",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "strategy",
+      "creativity",
+      "flexibility"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_risk_management",
+    "summary": "User needs to be cautious about getting carried away by winning trades and neglecting risk control, or lacking emotional discipline during market volatility.",
+    "context": "Identified potential weakness in risk management",
+    "timestamp": "2025-08-25T00:13:37.930794",
+    "confidence": 0.8,
+    "tags": [
+      "risk_management",
+      "trading_psychology",
+      "discipline"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "potential_mission",
+    "summary": "User has the potential to inspire and lead a community of traders towards positive thinking and mindful trading.",
+    "context": "Identified potential role as a leader and influencer",
+    "timestamp": "2025-08-25T00:13:37.930813",
+    "confidence": 0.8,
+    "tags": [
+      "leadership",
+      "community",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_style_potential",
+    "summary": "User quickly grasps market trends and changes, demonstrating flexibility and a desire to learn new trading strategies.",
+    "context": "Based on personality analysis and trading potential",
+    "timestamp": "2025-08-25T00:16:58.334022",
+    "confidence": 0.8,
+    "tags": [
+      "trading_style",
+      "learning",
+      "flexibility"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "advice_discipline",
+    "summary": "User needs to cultivate discipline and clear financial goals before acting to avoid emotional multitasking and capital burnout.",
+    "context": "Advice provided based on analysis",
+    "timestamp": "2025-08-25T00:16:58.334027",
+    "confidence": 0.9,
+    "tags": [
+      "discipline",
+      "financial_goals",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "advice_confidence",
+    "summary": "User should be confident but remain humble to maintain trust from the community.",
+    "context": "Advice provided based on analysis",
+    "timestamp": "2025-08-25T00:16:58.334031",
+    "confidence": 0.9,
+    "tags": [
+      "confidence",
+      "humility",
+      "community"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_management_needed",
+    "summary": "User needs to control emotions and manage risk to avoid irrational decisions.",
+    "context": "Highlighted as a key area for improvement.",
+    "timestamp": "2025-08-25T00:36:17.098183",
+    "confidence": 0.9,
+    "tags": [
+      "risk_management",
+      "emotion",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_management_advice",
+    "summary": "User needs to focus on controlling emotions and managing risk to avoid irrational decisions.",
+    "context": "Advice given based on initial analysis.",
+    "timestamp": "2025-08-25T00:45:05.623169",
+    "confidence": 0.9,
+    "tags": [
+      "risk_management",
+      "emotion",
+      "trading_decisions"
+    ],
+    "source_turns": [
+      1
+    ]
+  }
+]

@@ -1,0 +1,261 @@
+[
+  {
+    "key": "trading_style",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612146",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      1,
+      5
+    ]
+  },
+  {
+    "key": "personality_trait",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:15:26.907381",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      1,
+      2
+    ]
+  },
+  {
+    "key": "trading_risk",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:14:45.285553",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_advice",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175915",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      1,
+      3
+    ]
+  },
+  {
+    "key": "emotional_issue",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175837",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "key": "trading_strategy",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175918",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      2,
+      3
+    ]
+  },
+  {
+    "key": "advice",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:15:26.907391",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "trading_strategy",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:15:26.907396",
+    "confidence": 0.7,
+    "tags": [],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "emotional_regulation",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175907",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "personality_strength",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175912",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "personal_day",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:10.175921",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "personality_traits",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:46.094422",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_improvement_suggestion",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:46.094443",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "information_needed",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:16:46.094448",
+    "confidence": 1.0,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_strategy_core",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612175",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "risk_tolerance",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612180",
+    "confidence": 0.85,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "exploratory_trading",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612184",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "emotional_control",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612187",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "trading_approach",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:22.612190",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "fomo_management",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:57.390153",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "fomo_triggers",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:57.390177",
+    "confidence": 0.85,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "emotional_response_fomo",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:57.390182",
+    "confidence": 0.85,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "trading_strategy_reminder",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T11:17:57.390186",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  }
+]

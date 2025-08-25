@@ -1,0 +1,446 @@
+[
+  {
+    "key": "role",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:06:06.141400",
+    "confidence": 1.0,
+    "tags": [],
+    "source_turns": [
+      1,
+      2
+    ]
+  },
+  {
+    "key": "capabilities",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:06:06.141428",
+    "confidence": 1.0,
+    "tags": [],
+    "source_turns": [
+      1,
+      2
+    ]
+  },
+  {
+    "key": "trading_feelings",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:07:03.085295",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "trading_style",
+    "summary": "User is suitable for swing trading and needs to control FOMO.",
+    "context": "",
+    "timestamp": "2025-08-24T21:35:45.091886",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      3,
+      4,
+      10,
+      2
+    ]
+  },
+  {
+    "key": "risk_management",
+    "summary": "Longest losing streak of 43 indicates a need for better risk management; use stop-loss and take-profit orders.",
+    "context": "",
+    "timestamp": "2025-08-24T16:29:27.179247",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      3,
+      6,
+      10
+    ]
+  },
+  {
+    "key": "trading_behavior",
+    "summary": "User has a high frequency of trading and often executes quick trades (84.1%).",
+    "context": "",
+    "timestamp": "2025-08-24T21:35:45.091924",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      3,
+      2
+    ]
+  },
+  {
+    "key": "personality",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:07:03.085335",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "emotional_issue",
+    "summary": "User experiences FOMO (Fear Of Missing Out) when seeing price increases, leading to impulsive trading.",
+    "context": "",
+    "timestamp": "2025-08-24T16:31:17.875448",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      3,
+      6,
+      10
+    ]
+  },
+  {
+    "key": "trading_recommendation",
+    "summary": "User should slow down, focus on analysis, reduce daily trades, and avoid trading at 6:00 PM.",
+    "context": "",
+    "timestamp": "2025-08-24T21:35:45.091931",
+    "confidence": 0.95,
+    "tags": [],
+    "source_turns": [
+      3,
+      2
+    ]
+  },
+  {
+    "key": "trading_plan",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:07:03.085344",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "trading_strategy_focus",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:08:47.820426",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "losing_streak_concern",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:08:47.820431",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_asset_focus",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:08:47.820435",
+    "confidence": 0.85,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_frequency",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:08:47.820438",
+    "confidence": 0.85,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "psychological_focus",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:08:47.820442",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_strategy_improvement",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:10:35.993620",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "emotional_control",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:10:35.993646",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "trading_time_optimization",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:10:35.993651",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "information_request",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:10:35.993654",
+    "confidence": 0.7,
+    "tags": [],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "trading_style",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:12:28.681157",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "trade_preference",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:12:28.681184",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "loss_pattern",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:12:28.681189",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "personality_trait",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:12:28.681200",
+    "confidence": 0.8,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "trading_goal",
+    "summary": "",
+    "context": "",
+    "timestamp": "2025-08-24T16:12:28.681203",
+    "confidence": 0.9,
+    "tags": [],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "lumi_role",
+    "summary": "LUMIR-AI is a trading advisor and emotional control coach.",
+    "context": "LUMIR-AI introduced itself and its capabilities.",
+    "timestamp": "2025-08-24T16:26:09.960690",
+    "confidence": 0.95,
+    "tags": [
+      "lumi",
+      "role",
+      "trading",
+      "emotional_control"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "user_name",
+    "summary": "User's name is Trung",
+    "context": "User introduced himself as Trung",
+    "timestamp": "2025-08-24T16:27:10.819869",
+    "confidence": 1.0,
+    "tags": [
+      "user_information",
+      "name"
+    ],
+    "source_turns": [
+      4
+    ]
+  },
+  {
+    "key": "trading_strength",
+    "summary": "User possesses a sharp intuition and warm heart, which should be incorporated into trading decisions alongside technical analysis.",
+    "context": "LUMIR highlighted user's strengths based on personality and data analysis.",
+    "timestamp": "2025-08-24T16:29:27.179180",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "personality",
+      "intuition"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_weakness_sell",
+    "summary": "User's SELL trading performance needs significant improvement; research more effective strategies is recommended.",
+    "context": "LUMIR identified SELL trading as a key area for improvement.",
+    "timestamp": "2025-08-24T16:29:27.179224",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "sell",
+      "strategy"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_weakness_speed",
+    "summary": "User's high percentage (84.1%) of fast trades is concerning; slowing down and focusing on analysis is advised.",
+    "context": "LUMIR flagged fast trading as a potential issue.",
+    "timestamp": "2025-08-24T16:29:27.179233",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "speed",
+      "decision_making"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_weakness_time",
+    "summary": "Trading around 18:00 is potentially problematic; exercise caution or avoid trading during this time.",
+    "context": "LUMIR suggested caution or avoidance of trading at a specific time.",
+    "timestamp": "2025-08-24T16:29:27.179240",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "time",
+      "risk"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_discipline",
+    "summary": "User should reduce daily trades, avoid trading at 6:00 PM, and adhere to the trading plan.",
+    "context": "LUMIR emphasized the importance of discipline in trading.",
+    "timestamp": "2025-08-24T21:30:50.708648",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "discipline",
+      "emotion"
+    ],
+    "source_turns": [
+      10,
+      1
+    ]
+  },
+  {
+    "key": "trading_habit",
+    "summary": "User experiences significant losses at 18:00, suggesting a negative trading pattern during that time.",
+    "context": "Trading data shows the user's worst performance and losses occur at 18:00.",
+    "timestamp": "2025-08-24T16:31:17.875495",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "trading_time",
+      "loss",
+      "trading_habit"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_strategy_recommendation",
+    "summary": "LUMIR recommends focusing on a pre-defined trading plan, strict risk management, and avoiding emotional decisions.",
+    "context": "LUMIR's advice to manage FOMO and trade effectively.",
+    "timestamp": "2025-08-24T16:31:17.875501",
+    "confidence": 0.95,
+    "tags": [
+      "trading",
+      "trading_strategy",
+      "risk_management",
+      "emotional_control"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "short_term_goal",
+    "summary": "Short-term goals include reducing daily trades, avoiding trading at 18:00, and adhering to the trading plan.",
+    "context": "LUMIR outlined specific short-term goals for the user.",
+    "timestamp": "2025-08-24T16:31:17.875508",
+    "confidence": 0.9,
+    "tags": [
+      "goals",
+      "trading_plan",
+      "trading_frequency"
+    ],
+    "source_turns": [
+      10
+    ]
+  },
+  {
+    "key": "trading_strategy",
+    "summary": "User should focus on a pre-defined trading plan, strict risk management, and avoid emotional decisions.",
+    "context": "Based on LUMIR's recommendation from cached information.",
+    "timestamp": "2025-08-24T21:30:50.708628",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "strategy",
+      "risk_management",
+      "emotion"
+    ],
+    "source_turns": [
+      1
+    ]
+  }
+]

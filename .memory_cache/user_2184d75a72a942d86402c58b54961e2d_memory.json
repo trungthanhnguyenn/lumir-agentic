@@ -1,0 +1,316 @@
+[
+  {
+    "key": "trading_style",
+    "summary": "User's trading style is independent, proactive, and creative, suitable for building a personal trading system and seeking fast-moving markets.",
+    "context": "Based on personality analysis.",
+    "timestamp": "2025-08-25T00:08:52.228090",
+    "confidence": 0.9,
+    "tags": [
+      "personality",
+      "trading_style",
+      "leadership"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_behavior",
+    "summary": "User may overtrade due to overconfidence and potentially ignore stop-loss orders.",
+    "context": "Identified potential trading behaviors based on personality traits.",
+    "timestamp": "2025-08-25T00:02:54.920367",
+    "confidence": 0.8,
+    "tags": [
+      "trading_behavior",
+      "overtrading",
+      "stop_loss"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "emotional_issue",
+    "summary": "User needs to control emotions like fear, greed, and FOMO.",
+    "context": "Recommendation to control emotions in trading.",
+    "timestamp": "2025-08-25T00:02:54.920376",
+    "confidence": 0.7,
+    "tags": [
+      "emotion",
+      "fomo",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "capital_management",
+    "summary": "Focus on capital management and avoid risking too much capital in one trade.",
+    "context": "Recommendation to improve trading performance.",
+    "timestamp": "2025-08-25T00:02:54.920383",
+    "confidence": 0.8,
+    "tags": [
+      "capital_management",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_style_tendency",
+    "summary": "User tends to make independent decisions based on macro trend observations and can be overconfident.",
+    "context": "Personality analysis suggests a tendency towards independent decision-making and confidence, potentially leading to overtrading.",
+    "timestamp": "2025-08-25T00:06:36.655332",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "personality",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_management_advice",
+    "summary": "User needs to be cautious of overtrading and ensure adherence to stop-loss principles.",
+    "context": "The AI advises caution against overtrading and strict adherence to stop-loss rules due to potential overconfidence.",
+    "timestamp": "2025-08-25T00:06:36.655391",
+    "confidence": 0.9,
+    "tags": [
+      "risk_management",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_strategy_recommendation",
+    "summary": "Day 1 is recommended for experimenting with new ideas and implementing new trading strategies.",
+    "context": "The AI suggests Day 1 as an ideal time for experimenting with new ideas and strategies.",
+    "timestamp": "2025-08-25T00:06:36.655400",
+    "confidence": 0.8,
+    "tags": [
+      "trading_strategy",
+      "opportunity"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "goal",
+    "summary": "User's goal is to become an inspirational and enlightening figure in the trading community.",
+    "context": "Identified as a key objective in the analysis.",
+    "timestamp": "2025-08-25T00:08:52.228121",
+    "confidence": 0.8,
+    "tags": [
+      "goal",
+      "motivation",
+      "community"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "strength",
+    "summary": "User's strengths include market reading, market psychology understanding, and the ability to remain calm and disciplined.",
+    "context": "Highlighted as key strengths in the analysis.",
+    "timestamp": "2025-08-25T00:08:52.228129",
+    "confidence": 0.9,
+    "tags": [
+      "strength",
+      "market_reading",
+      "psychology",
+      "discipline"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_management",
+    "summary": "User needs to prioritize risk management and avoid being overly subjective.",
+    "context": "Recommendation to prioritize risk management due to independent personality.",
+    "timestamp": "2025-08-25T00:08:52.228134",
+    "confidence": 0.8,
+    "tags": [
+      "risk_management",
+      "personality",
+      "caution"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "potential_issue",
+    "summary": "User should be wary of FOMO (fear of missing out) and revenge trading.",
+    "context": "Identified as potential behaviors to watch out for.",
+    "timestamp": "2025-08-25T00:08:52.228139",
+    "confidence": 0.8,
+    "tags": [
+      "emotion",
+      "fomo",
+      "trading_psychology",
+      "behavior"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_potential",
+    "summary": "User has high potential as a trader with strong self-control and discipline, making decisions based on personal analysis and willing to experiment.",
+    "context": "Based on previous information and analysis by LUMIR.",
+    "timestamp": "2025-08-25T00:17:27.630892",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "potential",
+      "independent"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "information_request",
+    "summary": "LUMIR requests details about recent trades, currency pairs, trading strategies, and specific trading issues.",
+    "context": "LUMIR needs more information to provide specific and optimized advice.",
+    "timestamp": "2025-08-25T00:13:59.643250",
+    "confidence": 0.9,
+    "tags": [
+      "information",
+      "request",
+      "trading_advice"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_behavior_caution",
+    "summary": "User needs to avoid being overly accommodating and influenced by others, and should trust their own instincts and strategies.",
+    "context": "Behavior to watch out for in trading.",
+    "timestamp": "2025-08-25T00:17:27.630917",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "behavior",
+      "influence",
+      "instinct"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "emotional_issue_fomo",
+    "summary": "User needs to be aware of and avoid FOMO (fear of missing out) and revenge trading.",
+    "context": "Potential behavioral deviations detected.",
+    "timestamp": "2025-08-25T00:17:27.630923",
+    "confidence": 0.8,
+    "tags": [
+      "emotion",
+      "fomo",
+      "revenge_trading",
+      "behavioral_deviation"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_style_request",
+    "summary": "User is requested to describe their trading style (e.g., trend following, news trading, technical indicators).",
+    "context": "Information needed for more accurate advice.",
+    "timestamp": "2025-08-25T00:17:27.630927",
+    "confidence": 0.7,
+    "tags": [
+      "trading",
+      "style",
+      "information_needed"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "personality_traits",
+    "summary": "User is energetic, independent, and has leadership qualities with good emotional management skills.",
+    "context": "Based on initial personality assessment.",
+    "timestamp": "2025-08-25T00:45:37.017183",
+    "confidence": 0.9,
+    "tags": [
+      "personality",
+      "leadership",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "emotional_control",
+    "summary": "User struggles with emotional control during trading and may be overly confident.",
+    "context": "Analysis suggests potential difficulties in managing emotions and a tendency towards overconfidence.",
+    "timestamp": "2025-08-25T00:36:42.657040",
+    "confidence": 0.8,
+    "tags": [
+      "emotion",
+      "trading_psychology",
+      "overconfidence"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "potential_issues",
+    "summary": "Potential for FOMO, revenge trading, or overtrading needs to be monitored.",
+    "context": "Early warning signs of potential problematic trading behaviors.",
+    "timestamp": "2025-08-25T00:36:42.657045",
+    "confidence": 0.7,
+    "tags": [
+      "trading_behavior",
+      "fomo",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_strategy_preference",
+    "summary": "User's trading strategy is not yet defined, requiring further information.",
+    "context": "Requires more data to determine trading strategy",
+    "timestamp": "2025-08-25T00:45:37.017224",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "strategy"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "risk_tolerance",
+    "summary": "User's risk tolerance is not yet defined, requiring further information.",
+    "context": "Requires more data to determine risk tolerance",
+    "timestamp": "2025-08-25T00:45:37.017234",
+    "confidence": 0.8,
+    "tags": [
+      "risk",
+      "risk_tolerance"
+    ],
+    "source_turns": [
+      1
+    ]
+  }
+]

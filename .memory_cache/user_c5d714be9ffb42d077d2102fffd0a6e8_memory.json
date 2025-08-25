@@ -1,0 +1,218 @@
+[
+  {
+    "key": "role",
+    "summary": "LUMIR-AI is a trading advisor and emotional control coach.",
+    "context": "Introduction of LUMIR-AI",
+    "timestamp": "2025-08-25T16:47:00.484601",
+    "confidence": 1.0,
+    "tags": [
+      "role",
+      "ai",
+      "trading",
+      "emotional_control"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "introduction",
+    "summary": "LUMIR-AI là chuyên gia tư vấn giao dịch và huấn luyện kiểm soát cảm xúc, có thể hỗ trợ phân tích hiệu suất, tư vấn tâm lý, và hỗ trợ kiểm soát cảm xúc.",
+    "context": "Giới thiệu về LUMIR-AI",
+    "timestamp": "2025-08-25T16:47:16.586880",
+    "confidence": 0.95,
+    "tags": [
+      "introduction",
+      "expert",
+      "trading",
+      "emotion"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "user_name",
+    "summary": "Người dùng tên là Nguyễn Nhật Trường.",
+    "context": "User explicitly stated their name",
+    "timestamp": "2025-08-25T16:47:53.434423",
+    "confidence": 1.0,
+    "tags": [
+      "user_information",
+      "name"
+    ],
+    "source_turns": [
+      3,
+      4
+    ]
+  },
+  {
+    "key": "trading_strategy",
+    "summary": "User should build a clear trading strategy based on long-term trends, testing new strategies with small scale, and combining technical analysis with risk management.",
+    "context": "Based on user's personality (number 9) and balancing tendencies (number 3)",
+    "timestamp": "2025-08-25T16:48:55.458626",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "strategy",
+      "personality",
+      "risk_management"
+    ],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "risk_management",
+    "summary": "User needs to define acceptable risk, use stop-loss orders, and manage position sizing.",
+    "context": "Essential for stable and sustainable profits",
+    "timestamp": "2025-08-25T16:48:55.458644",
+    "confidence": 0.9,
+    "tags": [
+      "risk_management",
+      "stop_loss",
+      "position_sizing"
+    ],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "emotional_control",
+    "summary": "Emotional control is essential, including recognizing emotions, adhering to trading plans, and accepting losses.",
+    "context": "User has already identified FOMO as an issue",
+    "timestamp": "2025-08-25T16:51:06.113475",
+    "confidence": 0.9,
+    "tags": [
+      "emotion",
+      "fomo",
+      "trading_psychology",
+      "discipline"
+    ],
+    "source_turns": [
+      5,
+      7
+    ]
+  },
+  {
+    "key": "continuous_learning",
+    "summary": "User should analyze past trades, learn from successful traders, and stay updated on market news.",
+    "context": "Essential for improvement and adaptation",
+    "timestamp": "2025-08-25T16:48:55.458653",
+    "confidence": 0.9,
+    "tags": [
+      "learning",
+      "analysis",
+      "market_news"
+    ],
+    "source_turns": [
+      5
+    ]
+  },
+  {
+    "key": "trading_analysis_request",
+    "summary": "User is seeking to understand the reasons for trading losses and wants to analyze psychological and personality factors.",
+    "context": "User initiated the conversation by asking how to trade losses and expressed a desire to understand the underlying causes.",
+    "timestamp": "2025-08-25T16:49:54.741256",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "loss_analysis",
+      "psychology",
+      "personality"
+    ],
+    "source_turns": [
+      6
+    ]
+  },
+  {
+    "key": "trading_goal",
+    "summary": "User aims to minimize losses and maximize profits instead of completely avoiding losses.",
+    "context": "LUMIR explained that avoiding losses entirely is unrealistic and suggested focusing on risk reduction and profit maximization.",
+    "timestamp": "2025-08-25T16:51:06.113452",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "goal",
+      "risk_management"
+    ],
+    "source_turns": [
+      7
+    ]
+  },
+  {
+    "key": "capital_management",
+    "summary": "Key aspects of capital management include determining risk tolerance (no more than 2% of capital per trade), using stop-loss orders, and proper position sizing.",
+    "context": "LUMIR emphasized capital management as crucial for protecting capital.",
+    "timestamp": "2025-08-25T16:51:06.113470",
+    "confidence": 0.95,
+    "tags": [
+      "trading",
+      "capital_management",
+      "risk_management"
+    ],
+    "source_turns": [
+      7
+    ]
+  },
+  {
+    "key": "personality_advantage",
+    "summary": "User can leverage their intuition and analytical skills in trading.",
+    "context": "LUMIR suggested utilizing the user's strengths: intuition and deep thinking.",
+    "timestamp": "2025-08-25T16:51:06.113479",
+    "confidence": 0.85,
+    "tags": [
+      "personality",
+      "trading",
+      "advantage"
+    ],
+    "source_turns": [
+      7
+    ]
+  },
+  {
+    "key": "missing_trading_data",
+    "summary": "Người dùng chưa cung cấp thông tin về tình hình giao dịch hiện tại, loại tài sản đang giao dịch, vị thế đang nắm giữ, kế hoạch giao dịch hoặc cảm xúc về thị trường.",
+    "context": "LUMIR đang yêu cầu người dùng cung cấp thêm thông tin để đưa ra tư vấn toàn diện hơn.",
+    "timestamp": "2025-08-25T16:52:36.570678",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "information_needed",
+      "risk_management"
+    ],
+    "source_turns": [
+      8
+    ]
+  },
+  {
+    "key": "recommendation_day_2",
+    "summary": "LUMIR recommends starting new strategies and being confident on day 2 based on user's personality and psychology.",
+    "context": "LUMIR's response to the user's question about what to do on day 2.",
+    "timestamp": "2025-08-25T16:53:44.627930",
+    "confidence": 0.9,
+    "tags": [
+      "recommendation",
+      "trading_strategy",
+      "psychology"
+    ],
+    "source_turns": [
+      9
+    ]
+  },
+  {
+    "key": "information_request",
+    "summary": "LUMIR requests information about asset type, trading strategy, and recent trades to provide more specific advice.",
+    "context": "LUMIR's request for more information to analyze trading behavior.",
+    "timestamp": "2025-08-25T16:53:44.627955",
+    "confidence": 0.95,
+    "tags": [
+      "information_gathering",
+      "trading_analysis",
+      "advice"
+    ],
+    "source_turns": [
+      9
+    ]
+  }
+]

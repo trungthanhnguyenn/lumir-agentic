@@ -1,0 +1,350 @@
+[
+  {
+    "key": "personality_traits",
+    "summary": "User is creative, communicative, and has the potential to be a leader in the trading community.",
+    "context": "Based on personality analysis derived from date of birth 10/08/1992",
+    "timestamp": "2025-08-25T00:14:28.701968",
+    "confidence": 0.9,
+    "tags": [
+      "personality",
+      "communication",
+      "leadership"
+    ],
+    "source_turns": [
+      1,
+      2
+    ]
+  },
+  {
+    "key": "trading_advice_general",
+    "summary": "User should leverage their ability to understand market psychology, control emotions, define clear goals, and manage risk with stop-loss orders.",
+    "context": "General trading advice based on user's personality",
+    "timestamp": "2025-08-25T00:03:21.124566",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "psychology",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "potential_biases",
+    "summary": "User should be cautious of FOMO (fear of missing out) and revenge trading.",
+    "context": "Identified potential biases",
+    "timestamp": "2025-08-25T00:03:21.124573",
+    "confidence": 0.7,
+    "tags": [
+      "biases",
+      "fomo",
+      "revenge_trading"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "focus_areas",
+    "summary": "User should focus on personal development, communication, and emotional control.",
+    "context": "Recommended areas for improvement",
+    "timestamp": "2025-08-25T00:03:21.124577",
+    "confidence": 0.9,
+    "tags": [
+      "personal_development",
+      "communication",
+      "emotional_control"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "communication_skills",
+    "summary": "User has excellent communication and knowledge-sharing skills regarding financial markets.",
+    "context": "Based on personality analysis",
+    "timestamp": "2025-08-25T00:03:45.578240",
+    "confidence": 0.9,
+    "tags": [
+      "communication",
+      "knowledge_sharing",
+      "financial_markets"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "career_potential",
+    "summary": "Suitable careers include trading coach, technical analyst, financial content creator, and financial advisor.",
+    "context": "Based on personality and skills analysis",
+    "timestamp": "2025-08-25T00:03:45.578251",
+    "confidence": 0.9,
+    "tags": [
+      "career",
+      "trading_coach",
+      "technical_analyst",
+      "financial_advisor"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "current_stage",
+    "summary": "Currently in a phase of spreading value and becoming a spiritual leader within the trading community.",
+    "context": "Based on personality analysis (number 9 personality)",
+    "timestamp": "2025-08-25T00:03:45.578260",
+    "confidence": 0.8,
+    "tags": [
+      "community",
+      "leadership",
+      "influence"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "advice_for_today",
+    "summary": "Should review existing orders, adjust to protect profits, and maintain a calm mindset during market volatility.",
+    "context": "Advice for today's personal day number 6",
+    "timestamp": "2025-08-25T00:03:45.578267",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "risk_management",
+      "mindset"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "trading_plan",
+    "summary": "User needs to build a detailed trading plan including entry strategy, capital management, and stop-loss.",
+    "context": "LUMIR suggests building a detailed trading plan as a key to improvement.",
+    "timestamp": "2025-08-25T00:04:15.137737",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "planning",
+      "risk_management"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "trading_journal",
+    "summary": "User should keep a trading journal to identify behavioral patterns and adjust strategies.",
+    "context": "LUMIR recommends using a trading journal to track trades and emotions.",
+    "timestamp": "2025-08-25T00:04:15.137770",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "journaling",
+      "behavioral_analysis"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "emotional_control",
+    "summary": "User needs to identify and manage negative emotions like stress, anxiety, and fear during trading.",
+    "context": "LUMIR emphasizes the importance of controlling emotions and avoiding emotional trading.",
+    "timestamp": "2025-08-25T00:04:15.137779",
+    "confidence": 0.9,
+    "tags": [
+      "emotion",
+      "trading_psychology",
+      "emotional_control"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "community_engagement",
+    "summary": "User should share knowledge, join trading communities, and build relationships with other traders.",
+    "context": "LUMIR suggests leveraging user's communication skills and engaging with the trading community.",
+    "timestamp": "2025-08-25T00:04:15.137786",
+    "confidence": 0.8,
+    "tags": [
+      "community",
+      "networking",
+      "knowledge_sharing"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "work_life_balance",
+    "summary": "User needs to balance trading with personal life, including family, hobbies, and health.",
+    "context": "LUMIR advises maintaining a balance between trading and personal life.",
+    "timestamp": "2025-08-25T00:04:15.137793",
+    "confidence": 0.8,
+    "tags": [
+      "work_life_balance",
+      "health",
+      "wellbeing"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "energy_level_6",
+    "summary": "Today's energy level (6) indicates a need for stability and capital protection; avoid large trading decisions.",
+    "context": "LUMIR mentions today's energy level requires caution and focus on reviewing existing positions.",
+    "timestamp": "2025-08-25T00:04:15.137799",
+    "confidence": 0.9,
+    "tags": [
+      "energy_level",
+      "trading_strategy",
+      "risk_management"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "trading_potential",
+    "summary": "User has significant potential in trading and could become a leader in the trading community.",
+    "context": "Based on analysis of birthdate and personality traits",
+    "timestamp": "2025-08-25T00:06:59.489773",
+    "confidence": 0.8,
+    "tags": [
+      "trading",
+      "potential",
+      "leadership"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "improvement_areas",
+    "summary": "User needs to improve listening skills and expand strategic vision.",
+    "context": "Based on analysis of birthdate and personality traits",
+    "timestamp": "2025-08-25T00:06:59.489781",
+    "confidence": 0.8,
+    "tags": [
+      "improvement",
+      "listening",
+      "strategy"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_advice",
+    "summary": "User should leverage creativity, manage emotions, be patient, share knowledge, and recharge energy.",
+    "context": "Advice based on personal day number 6.",
+    "timestamp": "2025-08-25T00:14:28.702034",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "risk_management",
+      "emotional_control"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "information_request",
+    "summary": "LUMIR is requesting information about the user's current market pressure/anxiety and trading preferences (asset type and style).",
+    "context": "LUMIR is seeking further information to provide more tailored advice.",
+    "timestamp": "2025-08-25T00:09:15.142257",
+    "confidence": 1.0,
+    "tags": [
+      "information_gathering",
+      "trading_preferences",
+      "market_sentiment"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "emotional_advice",
+    "summary": "User needs to stay calm and observe the market, avoiding hasty decisions based on emotions and prioritizing energy regeneration.",
+    "context": "Based on 'Personal Day' 6 suggesting emotional adjustment and capital protection.",
+    "timestamp": "2025-08-25T00:14:28.702025",
+    "confidence": 0.8,
+    "tags": [
+      "emotion",
+      "risk_management",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "potential_issues",
+    "summary": "User should be vigilant against FOMO and revenge trading.",
+    "context": "Identified as potential standard deviations, requiring caution.",
+    "timestamp": "2025-08-25T00:14:28.702038",
+    "confidence": 0.7,
+    "tags": [
+      "trading_psychology",
+      "fomo",
+      "risk_management"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "number_of_fate",
+    "summary": "User's number of fate is 3, associated with creativity, communication, and connection, but also potential for distraction and feeling overwhelmed.",
+    "context": "Based on initial assessment of the user's number of fate",
+    "timestamp": "2025-08-25T00:17:52.553556",
+    "confidence": 0.9,
+    "tags": [
+      "number_of_fate",
+      "personality",
+      "communication",
+      "creativity"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_concern",
+    "summary": "User is concerned about managing emotions in trading.",
+    "context": "User explicitly stated concern about managing emotions in trading.",
+    "timestamp": "2025-08-25T00:17:52.553590",
+    "confidence": 0.9,
+    "tags": [
+      "trading",
+      "emotion",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  },
+  {
+    "key": "trading_stress",
+    "summary": "User experiences stress during trading, particularly when the market is volatile or when losing money.",
+    "context": "LUMIR is asking user about when they feel most stressed during trading.",
+    "timestamp": "2025-08-25T00:17:52.553595",
+    "confidence": 0.7,
+    "tags": [
+      "trading",
+      "stress",
+      "trading_psychology"
+    ],
+    "source_turns": [
+      1
+    ]
+  }
+]
