@@ -181,35 +181,36 @@ async def memory_history_endpoint(request: MemoryHistoryRequest):
 # ============================================================================
 
 @app.post("/api/question/decompose", response_model=Dict[str, Any])
-async def question_decomposition_endpoint(request: QuestionDecompositionRequest):
-    """
-    Phân tích câu hỏi và quyết định routing
+async def question_decomposition_endpoint(
+    question: str = Form(...),
+    user_name: Optional[str] = Form(None),
+    birthday: Optional[str] = Form(None),
+    username: Optional[str] = Form(None),
+    language: str = Form(default="vi"),
+    excel_file: Optional[UploadFile] = File(None)
+):
+    # Lưu file tạm thời và truyền excel_path
+    excel_path = None
+    if excel_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
+            content = await excel_file.read()
+            temp_file.write(content)
+            excel_path = temp_file.name
     
-    Sử dụng LLM để thông minh phân loại câu hỏi thay vì keyword matching cứng nhắc
-    """
     try:
         result = lumir_api.question_decomposition_endpoint(
-            question=request.question,
-            user_name=request.user_name,
-            birthday=request.birthday,
-            excel_path=None,  # Không có file upload trong endpoint này
-            language=request.language,
-            username=request.username
+            question=question,
+            user_name=user_name,
+            birthday=birthday,
+            excel_path=excel_path,  # Truyền đường dẫn file
+            language=language,
+            username=username
         )
-        
-        if result["success"]:
-            return JSONResponse(content=result, status_code=200)
-        else:
-            return JSONResponse(content=result, status_code=400)
-            
-    except Exception as e:
-        error_response = {
-            "endpoint": "question_decomposition",
-            "success": False,
-            "error": f"Internal server error: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        }
-        return JSONResponse(content=error_response, status_code=500)
+        return result
+    finally:
+        # Xóa file tạm
+        if excel_path and os.path.exists(excel_path):
+            os.unlink(excel_path)
 
 # ============================================================================
 # ENDPOINT 3: NUMEROLOGY ANALYSIS
