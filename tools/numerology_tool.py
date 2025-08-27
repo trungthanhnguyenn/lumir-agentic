@@ -32,14 +32,14 @@ class S3Client:
 
     def get_document_text_for_numerology(self, number_type: str, number: int, milestone_number: int = None, challenge_number: int = None) -> str:
         """
-        Tải file từ S3 dựa trên loại số và giá trị số.
+        Download file from S3 based on number type and value.
 
         Args:
-            number_type (str): Loại số, ví dụ 'life_path', 'personal_day', 'personal_year', etc.
-            number (int): Giá trị số.
+            number_type (str): Number type, e.g. 'life_path', 'personal_day', 'personal_year', etc.
+            number (int): Number value.
 
         Returns:
-            str: Nội dung văn bản của tài liệu.
+            str: Text content of the document.
         """
         # Map number types to folder and file naming conventions
         # Based on actual bucket structure: numerology_trader/{folder}/{file}
@@ -91,13 +91,13 @@ class S3Client:
             file_name = f"thach_thuc_{number}.docx"
         else:
             # For unsupported types, return a placeholder
-            return f"Tài liệu cho {number_type} với giá trị {number} chưa có sẵn."
+            return f"Document for {number_type} with value {number} is not available."
 
         file_key = f"{folder}/{file_name}"
         print(f"[S3 Numerology] Fetching: bucket={self.bucket_name}, key={file_key}")
 
         if self.s3 is None:
-            raise ValueError("S3 client không được khởi tạo.")
+            raise ValueError("S3 client is not initialized.")
 
         try:
             # print(f"🔍 Attempting to fetch: {file_key} from bucket: {self.bucket_name}")
@@ -108,7 +108,7 @@ class S3Client:
                 print(f"✅ Bucket {self.bucket_name} is accessible")
             except Exception as bucket_error:
                 print(f"⚠️ Bucket access issue: {bucket_error}")
-                return f"Không thể truy cập bucket {self.bucket_name}: {bucket_error}"
+                return f"Cannot access bucket {self.bucket_name}: {bucket_error}"
             
             # Try to get the object
             try:
@@ -118,12 +118,12 @@ class S3Client:
                 # Check if Body exists and is readable
                 if "Body" not in obj:
                     print(f"⚠️ No Body in S3 response: {obj.keys()}")
-                    return f"Response không có Body: {list(obj.keys())}"
+                    return f"Response does not have Body: {list(obj.keys())}"
                 
                 body = obj["Body"]
                 if body is None:
                     print(f"⚠️ Body is None")
-                    return f"Body của response là None"
+                    return f"Body of the response is None"
                 
                 # Read the content
                 try:
@@ -131,12 +131,12 @@ class S3Client:
                     # print(f"✅ File content read: {len(file_content)} bytes")
                 except Exception as read_error:
                     print(f"⚠️ Error reading body: {read_error}")
-                    return f"Lỗi đọc body: {read_error}"
+                    return f"Error reading body: {read_error}"
                 
                 # Check if content is valid
                 if not file_content:
                     print(f"⚠️ File content is empty")
-                    return f"File content rỗng"
+                    return f"File content is empty"
                 
                 # Try to parse as document
                 try:
@@ -147,7 +147,7 @@ class S3Client:
                     paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
                     if not paragraphs:
                         print(f"⚠️ No text content in document")
-                        return f"Document không có nội dung text"
+                        return f"Document does not have text content"
                     
                     text = "\n".join(paragraphs)
                     # print(f"✅ Text extracted: {len(text)} characters")
@@ -155,17 +155,17 @@ class S3Client:
                     
                 except Exception as doc_error:
                     print(f"⚠️ Error parsing document: {doc_error}")
-                    return f"Lỗi parse document: {doc_error}"
+                    return f"Error parsing document: {doc_error}"
                     
             except Exception as obj_error:
                 print(f"⚠️ Error getting object: {obj_error}")
-                return f"Lỗi lấy object: {obj_error}"
+                return f"Error getting object: {obj_error}"
                 
         except Exception as e:
             print(f"❌ Unexpected error: {e}")
             import traceback
             traceback.print_exc()
-            return f"Lỗi không mong đợi: {str(e)}"
+            return f"Unexpected error: {str(e)}"
 
 
 class CalNum:

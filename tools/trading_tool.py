@@ -13,22 +13,22 @@ from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 
 class QuestionAnalysis(BaseModel):
-    """Kết quả phân tích câu hỏi từ LLM"""
-    analysis_type: str = Field(description="Loại phân tích: 'overview', 'recent_trades', 'time_period', 'specific_metrics'")
-    recent_n_trades: Optional[int] = Field(description="Số giao dịch gần đây nếu user hỏi 'n giao dịch gần đây'")
-    time_period: Optional[Dict[str, Any]] = Field(description="Khoảng thời gian cụ thể nếu user hỏi về thời gian")
-    specific_metrics: List[str] = Field(description="Các chỉ số cụ thể user muốn biết")
-    focus_areas: List[str] = Field(description="Các lĩnh vực tập trung: 'performance', 'risk', 'timing', 'behavior'")
+    """Question analysis result from LLM"""
+    analysis_type: str = Field(description="Analysis type: 'overview', 'recent_trades', 'time_period', 'specific_metrics'")
+    recent_n_trades: Optional[int] = Field(description="Number of recent trades if user asks 'n recent trades'")
+    time_period: Optional[Dict[str, Any]] = Field(description="Specific time period if user asks about time")
+    specific_metrics: List[str] = Field(description="Specific metrics user wants to know")
+    focus_areas: List[str] = Field(description="Focus areas: 'performance', 'risk', 'timing', 'behavior'")
 
 def analyze_user_question_with_llm(question: str) -> Dict[str, Any]:
     """
-    Sử dụng LLM để phân tích câu hỏi và trả về các key cụ thể
+    Use LLM to analyze question and return specific keys
     
     Args:
-        question: Câu hỏi của user
+        question: User's question
         
     Returns:
-        Dictionary với các key được phân tích
+        Dictionary with specific keys analyzed
     """
     try:
         llm = get_openai_llm()
@@ -86,13 +86,41 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         Cleaned DataFrame with standardized column names
     """
     try:
-        # Read Excel file
-        if file_path.endswith('.xlsx'):
-            df = pd.read_excel(file_path)
-        elif file_path.endswith('.xls'):
-            df = pd.read_excel(file_path, engine='xlrd')
-        else:
-            raise ValueError("File must be .xlsx or .xls format")
+        print(f"📁 Attempting to read Excel file: {file_path}")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        # Check file size
+        file_size = os.path.getsize(file_path)
+        print(f"📊 File size: {file_size} bytes")
+        
+        if file_size == 0:
+            raise ValueError("File is empty")
+        
+        # Read Excel file with better error handling
+        try:
+            if file_path.endswith('.xlsx'):
+                df = pd.read_excel(file_path, engine='openpyxl')
+            elif file_path.endswith('.xls'):
+                df = pd.read_excel(file_path, engine='xlrd')
+            else:
+                raise ValueError("File must be .xlsx or .xls format")
+        except UnicodeDecodeError as e:
+            print(f"❌ Unicode decode error: {e}")
+            # Try with different encoding
+            try:
+                if file_path.endswith('.xlsx'):
+                    df = pd.read_excel(file_path, engine='openpyxl', encoding='latin-1')
+                else:
+                    df = pd.read_excel(file_path, engine='xlrd', encoding='latin-1')
+            except Exception as e2:
+                print(f"❌ Failed with latin-1 encoding: {e2}")
+                raise ValueError(f"Cannot read Excel file due to encoding issues: {e}")
+        
+        print(f"✅ Successfully read Excel file. Shape: {df.shape}")
+        print(f"📋 Columns found: {list(df.columns)}")
         
         # Clean column names
         df.columns = [str(col).strip() for col in df.columns]
@@ -127,46 +155,103 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         missing_columns = [col for col in required_columns if col not in df.columns]
         
         if missing_columns:
+            print(f"⚠️ Missing required columns: {missing_columns}")
+            print(f"📋 Available columns: {list(df.columns)}")
             raise ValueError(f"Missing required columns: {missing_columns}")
         
+        print(f"✅ Excel file processed successfully. Final shape: {df.shape}")
         return df
         
     except Exception as e:
         print(f"❌ Error reading Excel file: {e}")
+        print(f"📁 File path: {file_path}")
         raise
 
-def get_trading_data_from_excel(file_path: str = None) -> pd.DataFrame:
+def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None) -> pd.DataFrame:
     """
-    Get trading data from Excel file. If no file path provided, look for common locations.
+    Get trading data from multiple sources:
+    1. Excel file path (local file)
+    2. Trading data dictionary (from API endpoint)
     
     Args:
-        file_path: Optional path to Excel file
+        file_path: Path to Excel file (optional)
+        trading_data: Dictionary containing trading data (optional)
         
     Returns:
-        DataFrame with trading data
+        DataFrame with trading data or empty DataFrame if no data provided
     """
-    if file_path and os.path.exists(file_path):
-        return read_trading_excel(file_path)
     
-    # Look for common locations
-    common_paths = [
-        "trading_data/test_sample.xlsx",
-        "data/trading_history.xlsx",
-        "trading_history.xlsx",
-        "trading_data.xlsx"
-    ]
+    # Case 1: Trading data from API endpoint
+    if trading_data is not None:
+        print("🔄 Processing trading data from API endpoint")
+        try:
+            # Convert trading data to DataFrame
+            if isinstance(trading_data, dict) and 'trades' in trading_data:
+                df = pd.DataFrame(trading_data['trades'])
+            elif isinstance(trading_data, list):
+                df = pd.DataFrame(trading_data)
+            elif isinstance(trading_data, dict):
+                # Try to convert dict to DataFrame
+                df = pd.DataFrame([trading_data])
+            else:
+                print(f"⚠️ Unsupported trading data format: {type(trading_data)}")
+                return pd.DataFrame()
+            
+            if df.empty:
+                print("⚠️ Trading data is empty")
+                return df
+            
+            print(f"✅ Successfully loaded trading data from API. Records: {len(df)}")
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error processing trading data from API: {e}")
+            return pd.DataFrame()
     
-    for path in common_paths:
-        if os.path.exists(path):
-            print(f"📁 Found trading data at: {path}")
-            return read_trading_excel(path)
+    # Case 2: Excel file path
+    if file_path:
+        if not os.path.exists(file_path):
+            print(f"❌ Trading data file not found: {file_path}")
+            return pd.DataFrame()
+        
+        try:
+            print(f"🔄 Reading trading data from file: {file_path}")
+            df = read_trading_excel(file_path)
+            
+            if df.empty:
+                print("⚠️ Excel file is empty or contains no data")
+                return df
+            
+            print(f"✅ Successfully loaded trading data from file. Records: {len(df)}")
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error reading trading data file: {e}")
+            print(f"📁 File path: {file_path}")
+            return pd.DataFrame()
     
-    # If no file found, create sample data for demonstration
-    print("⚠️ No trading data file found. Using sample data for demonstration.")
-    return pd.DataFrame([
-        {"symbol": "XAUUSD", "side": "BUY", "close_time": "01/01/2024 10:00", "net_profit": 50, "commission": -2, "swap": -1},
-        {"symbol": "XAUUSD", "side": "SELL", "close_time": "01/01/2024 11:00", "net_profit": -30, "commission": -2, "swap": -1},
-    ])
+    # Case 3: No data provided
+    print("⚠️ No trading data provided (neither file path nor API data)")
+    return pd.DataFrame()
+
+
+def get_trading_data(file_path: str = None, trading_data: dict = None, excel_path: str = None) -> pd.DataFrame:
+    """
+    Unified function to get trading data from any source.
+    This is the main function that should be used by trading agent.
+    
+    Args:
+        file_path: Path to Excel file (legacy parameter)
+        trading_data: Dictionary containing trading data from API
+        excel_path: Path to Excel file (new parameter name)
+        
+    Returns:
+        DataFrame with trading data or empty DataFrame if no data provided
+    """
+    # Use excel_path if provided, otherwise use file_path
+    actual_file_path = excel_path if excel_path is not None else file_path
+    
+    return get_trading_data_from_excel(file_path=actual_file_path, trading_data=trading_data)
 
 def calculate_trade_index(df: pd.DataFrame):
     """
@@ -351,7 +436,7 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
     """
     filtered_df = df.copy()
     
-    # Lọc theo số giao dịch gần đây
+    # Filter by recent trades
     if analysis_result.get('recent_n_trades'):
         n_trades = analysis_result['recent_n_trades']
         print(f"🔍 Lọc {n_trades} giao dịch gần đây")
@@ -359,11 +444,11 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
             filtered_df = filtered_df.sort_values('close_time', ascending=False).head(n_trades)
             print(f"✅ Đã lọc thành công: {len(filtered_df)} giao dịch")
         else:
-            # Nếu không có cột thời gian, lấy n dòng cuối
+            # If no time column, take last n rows
             filtered_df = filtered_df.tail(n_trades)
             print(f"⚠️ Không có cột thời gian, lấy {len(filtered_df)} dòng cuối")
     
-    # Lọc theo khoảng thời gian
+    # Filter by time period
     if analysis_result.get('time_period'):
         time_period = analysis_result['time_period']
         print(f"🔍 Lọc theo thời gian: {time_period}")
@@ -372,17 +457,17 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
             current_time = datetime.now()
             
             if time_period.get('period') == 'recent' and time_period.get('value') == 'last_30_days':
-                # 30 ngày gần đây
+                # Last 30 days
                 start_date = current_time - timedelta(days=30)
                 filtered_df = filtered_df[filtered_df['close_time'] >= start_date]
                 print(f"✅ Đã lọc 30 ngày gần đây: {len(filtered_df)} giao dịch")
                 
             elif time_period.get('period') == 'month':
                 if time_period.get('value') == 'current':
-                    # Tháng hiện tại
+                    # Current month
                     start_date = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
                 else:
-                    # Tháng cụ thể
+                    # Specific month
                     month_value = time_period.get('value', 1)
                     start_date = current_time.replace(month=month_value, day=1, hour=0, minute=0, second=0, microsecond=0)
                 
@@ -393,15 +478,15 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
                     (filtered_df['close_time'] >= start_date) & 
                     (filtered_df['close_time'] <= end_date)
                 ]
-                print(f"✅ Đã lọc theo tháng: {len(filtered_df)} giao dịch")
+                print(f"✅ Filtered by month: {len(filtered_df)} trades")
             
             elif time_period.get('period') == 'week':
                 if time_period.get('value') == 'current':
-                    # Tuần hiện tại
+                    # Current week
                     start_date = current_time - timedelta(days=current_time.weekday())
                     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
                 else:
-                    # Tuần cụ thể
+                    # Specific week
                     week_value = time_period.get('value', 0)
                     start_date = current_time - timedelta(days=current_time.weekday() + week_value * 7)
                     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -411,31 +496,31 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
                     (filtered_df['close_time'] >= start_date) & 
                     (filtered_df['close_time'] < end_date)
                 ]
-                print(f"✅ Đã lọc theo tuần: {len(filtered_df)} giao dịch")
+                print(f"✅ Filtered by week: {len(filtered_df)} trades")
         else:
-            print("⚠️ Không có cột thời gian để lọc")
+            print("⚠️ No time column to filter")
     
     return filtered_df
 
 def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, Any] = None) -> str:
     """
-    Tạo báo cáo toàn diện dựa trên dữ liệu giao dịch
+    Generate comprehensive report based on trading data
     
     Args:
-        df: DataFrame giao dịch
-        analysis_result: Kết quả phân tích LLM (optional)
+        df: Trading DataFrame
+        analysis_result: LLM analysis result (optional)
         
     Returns:
-        Báo cáo toàn diện
+        Comprehensive report
     """
-    # Lọc dữ liệu theo điều kiện nếu có
+    # Filter data based on conditions if available
     if analysis_result:
         df = filter_trades_by_conditions(df, analysis_result)
     
-    # Tính toán chỉ số
+    # Calculate index
     result = calculate_trade_index(df)
     
-    # Tạo báo cáo
+    # Generate report
     report_parts = []
     
     # Header
@@ -451,14 +536,14 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     report_parts.append("=" * 50)
     
-    # Tổng quan
+    # Overview
     report_parts.append("📈 TỔNG QUAN")
     report_parts.append(f"• Tổng số lệnh: {result['trades']}")
     report_parts.append(f"• Tổng lợi nhuận: {result['net_profit']:,.2f}")
     report_parts.append(f"• Tỷ lệ thắng: {result['win_rate_pct']:.1f}%")
     report_parts.append(f"• Lợi nhuận trung bình/lệnh: {result['avg_profit_per_trade']:,.2f}")
     
-    # Hiệu suất
+    # Performance
     report_parts.append("\n🎯 HIỆU SUẤT")
     report_parts.append(f"• Lệnh thắng trung bình: {result['avg_profit_win']:,.2f}")
     report_parts.append(f"• Lệnh thua trung bình: {result['avg_loss_loss']:,.2f}")
@@ -466,14 +551,14 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     report_parts.append(f"• Lệnh thắng nhất: {result['best_trade']:,.2f}")
     report_parts.append(f"• Lệnh thua nhất: {result['worst_trade']:,.2f}")
     
-    # Rủi ro
+    # Risk
     report_parts.append("\n⚠️ RỦI RO")
     report_parts.append(f"• Sụt giảm tối đa: {result['max_drawdown_pct']:.1f}%")
     report_parts.append(f"• Số lệnh thua liên tiếp tối đa: {result['max_consecutive_losses']}")
     report_parts.append(f"• Giới hạn rủi ro/lệnh: {result['risk_kpi']['max_risk_per_trade']:,.2f}")
     report_parts.append(f"• Trung bình giao dịch/ngày: {result['risk_kpi']['avgTradesPerDay']:.1f}")
     
-    # Phân tích thời gian
+    # Time analysis
     if result['time_analysis']:
         report_parts.append("\n⏰ PHÂN TÍCH THỜI GIAN")
         best_hour = max(result['time_analysis'].items(), key=lambda x: x[1]['profit'])
@@ -481,31 +566,31 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
         report_parts.append(f"• Giờ tốt nhất: {best_hour[0]}:00 (lợi nhuận: {best_hour[1]['profit']:,.2f})")
         report_parts.append(f"• Giờ kém nhất: {worst_hour[0]}:00 (lợi nhuận: {worst_hour[1]['profit']:,.2f})")
     
-    # Phân tích cặp tiền
+    # Symbol analysis
     if result['symbol_analysis']:
         report_parts.append("\n💱 PHÂN TÍCH CẶP TIỀN")
         for symbol, data in result['symbol_analysis'].items():
             report_parts.append(f"• {symbol}: {data['trades']} lệnh, lợi nhuận: {data['profit']:,.2f}, win rate: {data['win_rate']:.1f}%")
     
-    # Phân tích hướng giao dịch
+    # Side analysis
     if result['side_analysis']:
         report_parts.append("\n🔄 PHÂN TÍCH HƯỚNG GIAO DỊCH")
         for side, data in result['side_analysis'].items():
             report_parts.append(f"• {side}: {data['trades']} lệnh, lợi nhuận: {data['profit']:,.2f}, win rate: {data['win_rate']:.1f}%")
     
-    # Hành vi giao dịch
+    # Behavioral analysis
     if result['behavioral']:
         report_parts.append("\n🧠 PHÂN TÍCH HÀNH VI")
         report_parts.append(f"• Tỷ lệ giao dịch nhanh: {result['behavioral']['rapid_fire_ratio']:.1%}")
     
-    # Chỉ số khác
+    # Other metrics
     report_parts.append("\n📊 CHỈ SỐ KHÁC")
     report_parts.append(f"• Tổng phí giao dịch: {result['total_fees']:,.2f}")
     report_parts.append(f"• Tổng pips: {result['total_pips']:,.0f}")
     if result['total_volume'] > 0:
         report_parts.append(f"• Tổng khối lượng: {result['total_volume']:,.2f}")
     
-    # Thêm đánh giá tổng quan dựa trên focus areas
+    # Add overall evaluation based on focus areas
     if analysis_result and analysis_result.get('focus_areas'):
         report_parts.append("\n🎯 ĐÁNH GIÁ TỔNG QUAN")
         focus_areas = analysis_result['focus_areas']
@@ -536,42 +621,45 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     return "\n".join(report_parts)
 
-def analyze_trading_data(file_path: str, question: str = None) -> Dict[str, Any]:
+def analyze_trading_data(file_path: str = None, question: str = None, trading_data: dict = None, excel_path: str = None) -> Dict[str, Any]:
     """
-    Phân tích dữ liệu giao dịch với câu hỏi cụ thể
+    Analyze trading data with a specific question
     
     Args:
-        file_path: Đường dẫn file Excel
-        question: Câu hỏi của user (optional)
+        file_path: Path to Excel file (legacy parameter)
+        question: Analysis question
+        trading_data: Trading data from API endpoint
+        excel_path: Path to Excel file (new parameter name)
+        question: User's question (optional)
         
     Returns:
-        Dictionary chứa kết quả phân tích và báo cáo
+        Dictionary containing analysis results and report
     """
     try:
-        print(f"🔍 Bắt đầu phân tích dữ liệu trading...")
+        print(f"🔍 Starting trading data analysis...")
         print(f"📁 File: {file_path}")
-        print(f"❓ Câu hỏi: {question or 'Không có'}")
+        print(f"❓ Question: {question or 'No question'}")
         
-        # Đọc dữ liệu
-        df = get_trading_data_from_excel(file_path)
-        print(f"✅ Đọc thành công: {len(df)} dòng dữ liệu")
+        # Read data from multiple sources
+        df = get_trading_data(file_path=file_path, trading_data=trading_data, excel_path=excel_path)
+        print(f"✅ Successfully read {len(df)} rows of data")
         
-        # Phân tích câu hỏi nếu có
+        # Analyze question if available
         analysis_result = None
         if question:
-            print(f"🧠 Phân tích câu hỏi với LLM...")
+            print(f"🧠 Analyzing question with LLM...")
             analysis_result = analyze_user_question_with_llm(question)
-            print(f"✅ Phân tích LLM hoàn thành")
+            print(f"✅ LLM analysis completed")
         
-        # Tạo báo cáo
-        print(f"📊 Tạo báo cáo...")
+        # Generate report
+        print(f"📊 Generating report...")
         report = generate_comprehensive_report(df, analysis_result)
-        print(f"✅ Báo cáo hoàn thành")
+        print(f"✅ Report generated")
         
-        # Tính toán chỉ số toàn bộ
-        print(f"📈 Tính toán chỉ số toàn bộ...")
+        # Calculate overall index
+        print(f"📈 Calculating overall index...")
         full_result = calculate_trade_index(df)
-        print(f"✅ Tính toán hoàn thành")
+        print(f"✅ Overall index calculation completed")
         
         result = {
             "success": True,
@@ -588,11 +676,11 @@ def analyze_trading_data(file_path: str, question: str = None) -> Dict[str, Any]
             }
         }
         
-        print(f"🎉 Phân tích hoàn thành thành công!")
+        print(f"🎉 Analysis completed successfully!")
         return result
         
     except Exception as e:
-        error_msg = f"Lỗi phân tích: {str(e)}"
+        error_msg = f"Analysis error: {str(e)}"
         print(f"❌ {error_msg}")
         return {
             "success": False,
