@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-API Endpoints cho LUMIR-AI System
-Mỗi agent là một endpoint riêng biệt, có thể sử dụng độc lập hoặc kết hợp
+API Endpoints for LUMIR-AI System
+Each agent is a separate endpoint, which can be used independently or combined
 """
 
 import json
@@ -12,7 +12,7 @@ from datetime import datetime
 import uuid
 import hashlib
 
-# Thêm thư mục gốc vào Python path
+# Add root directory to Python path
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -26,29 +26,31 @@ from tools.data_validator_tool import DataValidator
 
 class LUMIRAPIEndpoints:
     """
-    API Endpoints cho từng agent riêng biệt
-    Mỗi agent có thể hoạt động độc lập hoặc kết hợp với nhau
+    API Endpoints for each agent
+    Each agent can operate independently or combined
     """
     
     def __init__(self):
-        """Khởi tạo các agent"""
+        """Initialize agents"""
         self.question_decomposer = build_question_decomposition_agent()
         self.numerology_agent = build_numerology_agent()
         self.trading_agent = build_trading_agent()
         self.lumir_agent = build_lumir_synthesis_agent()
         self.memory_agent = build_memory_agent()
+        # Chatbot lazy init
+        self._chatbot = None
         
-        # Conversation history cho multi-turn (in-memory cache)
+        # Conversation history for multi-turn (in-memory cache)
         self.conversation_history = {}
         
-        # Thư mục lưu trữ lịch sử hội thoại persist trên đĩa
+        # Directory to persist conversation history on disk
         self._history_dir = Path(__file__).parent / ".memory_cache"
         self._history_dir.mkdir(exist_ok=True, parents=True)
         
         print("✅ LUMIR-AI API Endpoints initialized successfully!")
     
     def _generate_user_uuid(self, user_name: str, birthday: str, username: str) -> str:
-        """Tạo UUID duy nhất cho user"""
+        """Generate a unique UUID for user"""
         try:
             user_name = str(user_name) if user_name else "unknown"
             birthday = str(birthday) if birthday else "unknown"
@@ -61,21 +63,21 @@ class LUMIRAPIEndpoints:
             return hashlib.md5("unknown_user".encode('utf-8')).hexdigest()
     
     def _get_history_file_path(self, user_uuid: str) -> Path:
-        """Đường dẫn file persist history cho user."""
+        """Path to persist history for user."""
         safe_uuid = "".join(c for c in user_uuid if c.isalnum())
         if not safe_uuid:
             safe_uuid = "unknown"
         return self._history_dir / f"user_{safe_uuid}_history.json"
     
     def _load_history_from_disk(self, user_uuid: str) -> List[Dict[str, Any]]:
-        """Đọc conversation history từ file nếu có."""
+        """Read conversation history from file if exists."""
         try:
             history_file = self._get_history_file_path(user_uuid)
             if history_file.exists():
                 with open(history_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 if isinstance(data, list):
-                    # Đảm bảo mỗi turn có các field cơ bản
+                    # Ensure each turn has basic fields
                     normalized: List[Dict[str, Any]] = []
                     for turn in data:
                         if isinstance(turn, dict):
@@ -90,7 +92,7 @@ class LUMIRAPIEndpoints:
         return []
     
     def _save_history_to_disk(self, user_uuid: str, history: List[Dict[str, Any]]):
-        """Ghi conversation history xuống file."""
+        """Save conversation history to file."""
         try:
             history_file = self._get_history_file_path(user_uuid)
             with open(history_file, "w", encoding="utf-8") as f:
@@ -99,14 +101,14 @@ class LUMIRAPIEndpoints:
             print(f"⚠️ Failed to save history to disk for {user_uuid}: {e}")
     
     def _get_user_conversation_history(self, user_uuid: str) -> List[Dict[str, Any]]:
-        """Lấy conversation history của user (RAM); nếu chưa có thì load từ đĩa."""
+        """Get conversation history of user (RAM); if not exists, load from disk."""
         if user_uuid not in self.conversation_history:
-            # Lazy-load từ file persist nếu có
+            # Lazy-load from persist file if exists
             self.conversation_history[user_uuid] = self._load_history_from_disk(user_uuid)
         return self.conversation_history.get(user_uuid, [])
     
     def _update_user_conversation_history(self, user_uuid: str, question: str, response: str):
-        """Cập nhật conversation history của user (RAM + persist)."""
+        """Update conversation history of user (RAM + persist)."""
         if user_uuid not in self.conversation_history:
             self.conversation_history[user_uuid] = self._load_history_from_disk(user_uuid)
         
@@ -118,11 +120,11 @@ class LUMIRAPIEndpoints:
         
         self.conversation_history[user_uuid].append(turn_info)
         
-        # Giới hạn history để tránh quá tải
+        # Limit history to avoid overload
         if len(self.conversation_history[user_uuid]) > 100:
             self.conversation_history[user_uuid] = self.conversation_history[user_uuid][-100:]
         
-        # Persist xuống đĩa sau mỗi cập nhật
+        # Persist to disk after each update
         try:
             self._save_history_to_disk(user_uuid, self.conversation_history[user_uuid])
         except Exception as e:
@@ -141,19 +143,19 @@ class LUMIRAPIEndpoints:
         limit: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Trả về conversation history cho user (để truyền vào synthesize)
+        Return conversation history for user (to pass to synthesize)
         
         Args:
-            user_name: Tên user
-            birthday: Ngày sinh
+            user_name: User name
+            birthday: Birthday
             username: Username
-            limit: Số lượng turn gần nhất (optional)
+            limit: Number of recent turns (optional)
         """
         try:
             user_uuid = self._generate_user_uuid(user_name, birthday, username)
             history = self._get_user_conversation_history(user_uuid)
 
-            # Fallback: nếu history trong RAM rỗng, đọc từ .memory_cache
+            # Fallback: if history in RAM is empty, read from .memory_cache
             if not history:
                 try:
                     cache_dir = Path(__file__).parent / ".memory_cache"
@@ -161,17 +163,17 @@ class LUMIRAPIEndpoints:
                     if cache_file.exists():
                         with open(cache_file, "r", encoding="utf-8") as f:
                             cache_entries = json.load(f)
-                        # Chuyển MemoryEntry → pseudo conversation turns
+                        # Convert MemoryEntry → pseudo conversation turns
                         pseudo_history: List[Dict[str, Any]] = []
                         for entry in cache_entries:
-                            # Bảo vệ dữ liệu thiếu trường
+                            # Protect missing fields
                             key = entry.get("key", "")
                             summary = entry.get("summary", "")
                             context = entry.get("context", "")
                             timestamp = entry.get("timestamp", datetime.now().isoformat())
                             confidence = entry.get("confidence", 0.0)
                             tags = entry.get("tags", [])
-                            # Tạo một turn dạng dễ đọc
+                            # Create a readable turn
                             pseudo_history.append({
                                 "user_question": f"[cache:{key}] {summary}",
                                 "lumir_response": context,
@@ -179,7 +181,7 @@ class LUMIRAPIEndpoints:
                                 "confidence": confidence,
                                 "tags": tags
                             })
-                        # Sắp xếp theo thời gian nếu có timestamp
+                        # Sort by timestamp if exists
                         try:
                             pseudo_history.sort(key=lambda t: t.get("timestamp", ""))
                         except Exception:
@@ -187,10 +189,10 @@ class LUMIRAPIEndpoints:
                         history = pseudo_history
                 except Exception as e:
                     print(f"⚠️ Fallback read from .memory_cache failed: {e}")
-                    # Giữ history rỗng nếu lỗi
+                    # Keep history empty if error
                     history = []
 
-            # Áp dụng limit nếu có
+            # Apply limit if exists
             if limit is not None and isinstance(limit, int) and limit > 0:
                 history = history[-limit:]
 
@@ -219,29 +221,29 @@ class LUMIRAPIEndpoints:
         language: str = "vi"
     ) -> Dict[str, Any]:
         """
-        Endpoint 1: Kiểm tra memory cache
+        Endpoint 1: Check memory cache
         
         Args:
-            question: Câu hỏi của user
-            user_name: Tên user
-            birthday: Ngày sinh
+            question: User's question
+            user_name: User name
+            birthday: Birthday
             username: Username
-            language: Ngôn ngữ
+            language: Language
             
         Returns:
-            Dict chứa kết quả memory check
+            Dict containing memory check result
         """
         
         try:
             print(f"🧠 Memory Check Endpoint - Question: {question}")
             
-            # Tạo user UUID
+            # Create user UUID
             user_uuid = self._generate_user_uuid(user_name, birthday, username)
             
-            # Lấy conversation history
+            # Get conversation history
             conversation_history = self._get_user_conversation_history(user_uuid)
             
-            # Query memory cache
+            # Query memory cache for answer
             memory_query = self.memory_agent.query_memory(
                 user_uuid, question, conversation_history, language
             )
@@ -294,24 +296,24 @@ class LUMIRAPIEndpoints:
         username: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Endpoint 2: Phân tích câu hỏi và quyết định routing
+        Endpoint 2: Analyze question and decide routing
         
         Args:
-            question: Câu hỏi của user
-            user_name: Tên user (optional)
-            birthday: Ngày sinh (optional)
-            excel_path: Đường dẫn file Excel (optional)
-            language: Ngôn ngữ
+            question: User's question
+            user_name: User name (optional)
+            birthday: Birthday (optional)
+            excel_path: Excel file path (optional)
+            language: Language
             username: Username (optional)
             
         Returns:
-            Dict chứa kết quả phân tích câu hỏi
+            Dict containing question analysis result
         """
         
         try:
             print(f"🔍 Question Decomposition Endpoint - Question: {question}")
             
-            # Validate trading data nếu có
+            # Validate trading data if exists
             has_valid_trading_data = False
             if excel_path:
                 validator = DataValidator()
@@ -324,7 +326,7 @@ class LUMIRAPIEndpoints:
                     except Exception:
                         has_valid_trading_data = False
             
-            # Gọi question decomposition agent
+            # Call question decomposition agent
             decomposition_result = self.question_decomposer(
                 question=question,
                 user_name=user_name,
@@ -335,7 +337,7 @@ class LUMIRAPIEndpoints:
                 conversation_history=[]
             )
             
-            # Cập nhật has_valid_trading_data
+            # Update has_valid_trading_data
             decomposition_result["has_valid_trading_data"] = has_valid_trading_data
             
             result = {
@@ -372,25 +374,38 @@ class LUMIRAPIEndpoints:
         language: str = "vi"
     ) -> Dict[str, Any]:
         """
-        Endpoint 3: Phân tích numerology
+        Endpoint 3: Analyze numerology
         
         Args:
-            question: Câu hỏi về numerology
-            user_name: Tên user
-            birthday: Ngày sinh
-            language: Ngôn ngữ
+            question: Question about numerology
+            user_name: User name
+            birthday: Birthday
+            language: Language
             
         Returns:
-            Dict chứa kết quả numerology analysis
+            Dict containing numerology analysis result
         """
         
         try:
             print(f"🔮 Numerology Endpoint - Question: {question}")
             
+            # Handle None or empty question - return empty response instead of error
+            if question is None or question.strip() == "":
+                print("⚠️ Numerology question is None or empty - returning empty response")
+                return {
+                    "endpoint": "numerology",
+                    "success": True,
+                    "question": question,
+                    "user_name": user_name,
+                    "birthday": birthday,
+                    "numerology_response": "",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
             # Convert birthday format to dd/mm/yyyy if needed
             converted_birthday = self._convert_birthday_format(birthday)
             
-            # Gọi numerology agent
+            # Call numerology agent
             inputs = {
                 "question": question,
                 "user_name": user_name,
@@ -478,21 +493,33 @@ class LUMIRAPIEndpoints:
         language: str = "vi"
     ) -> Dict[str, Any]:
         """
-        Endpoint 4: Phân tích trading data
+        Endpoint 4: Analyze trading data
         
         Args:
-            question: Câu hỏi về trading
-            excel_path: Đường dẫn file Excel
-            language: Ngôn ngữ
+            question: Question about trading
+            excel_path: Excel file path
+            language: Language
             
         Returns:
-            Dict chứa kết quả trading analysis
+            Dict containing trading analysis result
         """
         
         try:
             print(f"📈 Trading Endpoint - Question: {question}")
             
-            # Gọi trading agent (let it handle file validation)
+            # Handle None or empty question - return empty response instead of error
+            if question is None or question.strip() == "":
+                print("⚠️ Trading question is None or empty - returning empty response")
+                return {
+                    "endpoint": "trading",
+                    "success": True,
+                    "question": question,
+                    "excel_path": excel_path,
+                    "trading_response": "",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Call trading agent (let it handle file validation)
             inputs = {
                 "question": question,
                 "excel_path": excel_path,
@@ -545,24 +572,24 @@ class LUMIRAPIEndpoints:
         conversation_history: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Endpoint 5: Tổng hợp và tạo final response
+        Endpoint 5: Synthesize and create final response
         
         Args:
-            question: Câu hỏi gốc
-            question_type: Loại câu hỏi
-            numerology_context: Context từ numerology agent
-            trading_context: Context từ trading agent
-            user_name: Tên user
+            question: Original question
+            question_type: Question type
+            numerology_context: Context from numerology agent
+            trading_context: Context from trading agent
+            user_name: User name
             username: Username
-            language: Ngôn ngữ
-            has_trading_data: Có dữ liệu trading không
-            focus_areas: Các lĩnh vực tập trung
-            needs_user_info: Có cần thêm thông tin không
-            suggested_questions: Câu hỏi gợi ý
-            conversation_history: Lịch sử hội thoại
+            language: Language
+            has_trading_data: Has trading data
+            focus_areas: Focus areas
+            needs_user_info: Need user info
+            suggested_questions: Suggested questions
+            conversation_history: Conversation history
             
         Returns:
-            Dict chứa final response từ LUMIR-AI
+            Dict containing final response from LUMIR-AI
         """
         
         try:
@@ -584,7 +611,7 @@ class LUMIRAPIEndpoints:
                 "conversation_history": conversation_history or []
             }
             
-            # Gọi LUMIR-AI agent using invoke method
+            # Call LUMIR-AI agent using invoke method
             lumir_response = self.lumir_agent.invoke(inputs)
             
             api_result = {
@@ -629,15 +656,15 @@ class LUMIRAPIEndpoints:
         Endpoint 6: Complete pipeline (mô phỏng logic test_infer)
         
         Args:
-            question: Câu hỏi của user
-            user_name: Tên user
-            birthday: Ngày sinh
-            excel_path: Đường dẫn file Excel
-            language: Ngôn ngữ
+            question: User's question
+            user_name: User name
+            birthday: Birthday
+            excel_path: Excel file path
+            language: Language
             username: Username
             
         Returns:
-            Dict chứa kết quả hoàn chỉnh
+            Dict containing complete pipeline result
         """
         
         start_time = datetime.now()
@@ -645,8 +672,8 @@ class LUMIRAPIEndpoints:
         try:
             print(f"🚀 Complete Pipeline Endpoint - Question: {question}")
             
-            # Bước 1: Memory Check
-            print("🔍 Bước 1: Memory Check...")
+            # Step 1: Memory Check
+            print("🔍 Step 1: Memory Check...")
             memory_result = self.memory_check_endpoint(
                 question, user_name or "Unknown", birthday or "Unknown", username or "Unknown", language
             )
@@ -654,7 +681,7 @@ class LUMIRAPIEndpoints:
             if memory_result["success"] and memory_result["can_answer_from_cache"] and memory_result["cache_confidence"] > 0.7:
                 print(f"✅ Cache hit - Confidence: {memory_result['cache_confidence']:.2f}")
                 
-                # Cập nhật conversation history
+                # Update conversation history
                 user_uuid = memory_result["user_uuid"]
                 self._update_user_conversation_history(user_uuid, question, memory_result["suggested_response"])
                 
@@ -670,8 +697,8 @@ class LUMIRAPIEndpoints:
                     "timestamp": datetime.now().isoformat()
                 }
             
-            # Bước 2: Question Decomposition
-            print("🔍 Bước 2: Question Decomposition...")
+            # Step 2: Question Decomposition
+            print("🔍 Step 2: Question Decomposition...")
             decomposition_result = self.question_decomposition_endpoint(
                 question, user_name, birthday, excel_path, language, username
             )
@@ -683,12 +710,12 @@ class LUMIRAPIEndpoints:
             question_type = decomposition_data.get("question_type", "general_chat")
             should_call_agents = decomposition_data.get("should_call_agents", False)
             
-            # Bước 3: Execute Specialized Agents (nếu cần)
+            # Step 3: Execute Specialized Agents (if needed)
             numerology_context = ""
             trading_context = ""
             
             if should_call_agents:
-                print("🔄 Bước 3: Executing Specialized Agents...")
+                print("🔄 Step 3: Executing Specialized Agents...")
                 
                 # Numerology Agent
                 if decomposition_data.get("numerology_question") and user_name and birthday:
@@ -709,8 +736,8 @@ class LUMIRAPIEndpoints:
                     if trading_result["success"]:
                         trading_context = trading_result["trading_response"]
             
-            # Bước 4: LUMIR-AI Synthesis
-            print("🤖 Bước 4: LUMIR-AI Synthesis...")
+            # Step 4: LUMIR-AI Synthesis
+            print("🤖 Step 4: LUMIR-AI Synthesis...")
             
             # Lấy conversation history nếu có user info
             conversation_history = []
@@ -736,9 +763,9 @@ class LUMIRAPIEndpoints:
             if not lumir_result["success"]:
                 raise Exception(f"LUMIR-AI synthesis failed: {lumir_result['error']}")
             
-            # Bước 5: Update Memory Cache
+            # Step 5: Update Memory Cache
             if user_name and birthday and username:
-                print("🧠 Bước 5: Updating Memory Cache...")
+                print("🧠 Step 5: Updating Memory Cache...")
                 user_uuid = self._generate_user_uuid(user_name, birthday, username)
                 turn_number = len(conversation_history) + 1
                 
@@ -749,7 +776,7 @@ class LUMIRAPIEndpoints:
                 except Exception as e:
                     print(f"⚠️ Memory update failed: {e}")
                 
-                # Cập nhật conversation history
+                # Update conversation history
                 self._update_user_conversation_history(user_uuid, question, lumir_result["lumir_response"])
             
             # Tính thời gian xử lý
@@ -776,7 +803,7 @@ class LUMIRAPIEndpoints:
             
             print(f"✅ Complete Pipeline completed in {processing_time:.2f}s")
             return result
-            
+
         except Exception as e:
             error_msg = f"Complete pipeline failed: {str(e)}"
             print(f"❌ {error_msg}")
@@ -786,6 +813,33 @@ class LUMIRAPIEndpoints:
                 "success": False,
                 "error": error_msg,
                 "processing_time": (datetime.now() - start_time).total_seconds(),
+                "timestamp": datetime.now().isoformat()
+            }
+
+    # =========================================================================
+    # ENDPOINT 8: CHATBOT RAG (retrieve → rerank → LLM)
+    # =========================================================================
+    def chatbot_endpoint(self, question: str) -> Dict[str, Any]:
+        """Endpoint: RAG chatbot using chatbot.py pipeline."""
+        try:
+            from chatbot import build_chatbot
+            from module.rag_orchestrator import RAGOrchestratorFactory
+            if self._chatbot is None:
+                orch = RAGOrchestratorFactory.create_optimal_orchestrator()
+                self._chatbot = build_chatbot(orch)
+            result = self._chatbot.answer(question)
+            return {
+                "endpoint": "chatbot",
+                "success": True,
+                "question": question,
+                "data": result,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {
+                "endpoint": "chatbot",
+                "success": False,
+                "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -803,17 +857,17 @@ class LUMIRAPIEndpoints:
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Endpoint 7: Quản lý memory cache
+        Endpoint 7: Manage memory cache
         
         Args:
-            action: Hành động ('get_status', 'clear', 'get_summary')
-            user_name: Tên user
-            birthday: Ngày sinh
+            action: Action ('get_status', 'clear', 'get_summary')
+            user_name: User name
+            birthday: Birthday
             username: Username
-            **kwargs: Các tham số khác tùy theo action
+            **kwargs: Other parameters depending on action
             
         Returns:
-            Dict chứa kết quả memory management
+            Dict containing memory management result
         """
         
         try:
@@ -884,13 +938,13 @@ class LUMIRAPIEndpoints:
         language: str = "vi"
     ) -> Dict[str, Any]:
         """
-        Cập nhật memory cache cho user cụ thể
+        Update memory cache for specific user
         
-        Hỗ trợ:
-        - add_entry: Thêm entry mới
-        - update_entry: Cập nhật entry hiện có
-        - bulk_update: Cập nhật nhiều entries cùng lúc
-        - remove_entry: Xóa entry cụ thể
+        Supported actions:
+        - add_entry: Add new entry
+        - update_entry: Update existing entry
+        - bulk_update: Update multiple entries at once
+        - remove_entry: Remove specific entry
         """
         try:
             # Generate user UUID
@@ -1069,7 +1123,7 @@ class LUMIRAPIEndpoints:
 
 def build_lumir_api_endpoints() -> LUMIRAPIEndpoints:
     """
-    Factory function để tạo LUMIR API Endpoints
+    Factory function to create LUMIR API Endpoints
     
     Returns:
         LUMIRAPIEndpoints instance
@@ -1085,18 +1139,18 @@ if __name__ == "__main__":
     print("🚀 LUMIR-AI API Endpoints Demo")
     print("=" * 80)
     
-    # Khởi tạo API endpoints
+    # Initialize API endpoints
     api = build_lumir_api_endpoints()
     
-    # Demo các endpoint
+    # Demo endpoints
     print("\n📋 Available Endpoints:")
-    print("1. memory_check_endpoint() - Kiểm tra memory cache")
-    print("2. question_decomposition_endpoint() - Phân tích câu hỏi")
-    print("3. numerology_endpoint() - Phân tích numerology")
-    print("4. trading_endpoint() - Phân tích trading data")
-    print("5. lumir_synthesis_endpoint() - Tổng hợp LUMIR-AI")
-    print("6. complete_pipeline_endpoint() - Pipeline hoàn chỉnh")
-    print("7. memory_management_endpoint() - Quản lý memory")
+    print("1. memory_check_endpoint() - Check memory cache")
+    print("2. question_decomposition_endpoint() - Analyze question")
+    print("3. numerology_endpoint() - Analyze numerology")
+    print("4. trading_endpoint() - Analyze trading data")
+    print("5. lumir_synthesis_endpoint() - Synthesize LUMIR-AI")
+    print("6. complete_pipeline_endpoint() - Complete pipeline")
+    print("7. memory_management_endpoint() - Manage memory")
     
     print("\n💡 Usage Examples:")
     print("api.memory_check_endpoint(question, user_name, birthday, username, language)")

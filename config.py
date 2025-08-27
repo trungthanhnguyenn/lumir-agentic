@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
+from pathlib import Path
 
 # LangChain integrations
 try:
@@ -18,7 +19,16 @@ except Exception:  # pragma: no cover - fallback if not installed
     ChatGoogleGenerativeAI = None  # type: ignore
 
 
-load_dotenv()
+# Load .env from project root explicitly, fallback to default
+try:
+    project_root = Path(__file__).resolve().parents[1]
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
+    else:
+        load_dotenv()
+except Exception:
+    load_dotenv()
 
 
 def get_env(name: str, default: Optional[str] = None) -> Optional[str]:

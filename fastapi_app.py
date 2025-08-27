@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-FastAPI Application cho LUMIR-AI System
-Chuyển đổi các API endpoints thành HTTP endpoints với user-specific cache memory
+FastAPI Application for LUMIR-AI System
+Convert API endpoints to HTTP endpoints with user-specific cache memory
 """
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -15,13 +15,13 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-# Thêm thư mục gốc vào Python path
+# Add root directory to Python path
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from api_endpoints import build_lumir_api_endpoints
 
-# Khởi tạo FastAPI app
+# Initialize FastAPI app
 app = FastAPI(
     title="LUMIR-AI API",
     description="Smart Multi-Agent Chatbot System for Trading Advice and Emotional Control",
@@ -39,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Khởi tạo LUMIR API endpoints
+# Initialize LUMIR API endpoints
 lumir_api = build_lumir_api_endpoints()
 
 # ============================================================================
@@ -61,20 +61,20 @@ class QuestionDecompositionRequest(BaseModel):
     language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
 
 class NumerologyRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi về numerology")
+    question: Optional[str] = Field(None, description="Câu hỏi về numerology (có thể None)")
     user_name: str = Field(..., description="Tên user")
     birthday: str = Field(..., description="Ngày sinh")
     language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
 
 class TradingRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi về trading")
+    question: Optional[str] = Field(None, description="Câu hỏi về trading (có thể None)")
     language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
 
 class LumirSynthesisRequest(BaseModel):
     question: str = Field(..., description="Câu hỏi gốc")
     question_type: str = Field(default="general_chat", description="Loại câu hỏi")
-    numerology_context: str = Field(default="", description="Context từ numerology agent")
-    trading_context: str = Field(default="", description="Context từ trading agent")
+    numerology_context: Optional[str] = Field(default="", description="Context từ numerology agent (có thể None)")
+    trading_context: Optional[str] = Field(default="", description="Context từ trading agent (có thể None)")
     user_name: str = Field(default="", description="Tên user")
     username: str = Field(default="", description="Username")
     language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
@@ -90,6 +90,9 @@ class CompletePipelineRequest(BaseModel):
     birthday: Optional[str] = Field(None, description="Ngày sinh (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
     language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+
+class ChatbotRequest(BaseModel):
+    question: str = Field(..., description="Câu hỏi người dùng")
 
 class MemoryManagementRequest(BaseModel):
     action: str = Field(..., description="Hành động ('get_status', 'clear', 'get_summary')")
@@ -120,9 +123,9 @@ class MemoryHistoryRequest(BaseModel):
 @app.post("/api/memory/check", response_model=Dict[str, Any])
 async def memory_check_endpoint(request: MemoryCheckRequest):
     """
-    Kiểm tra memory cache cho user cụ thể
+    Check memory cache for specific user
     
-    Mỗi user có cache memory riêng biệt dựa trên user_name, birthday, và username
+    Each user has a separate memory cache based on user_name, birthday, and username
     """
     try:
         result = lumir_api.memory_check_endpoint(
@@ -154,7 +157,7 @@ async def memory_check_endpoint(request: MemoryCheckRequest):
 @app.post("/api/memory/history", response_model=Dict[str, Any])
 async def memory_history_endpoint(request: MemoryHistoryRequest):
     """
-    Lấy conversation history để truyền vào synthesize endpoint
+    Get conversation history to pass to synthesize endpoint
     """
     try:
         result = lumir_api.memory_history_endpoint(
@@ -189,7 +192,7 @@ async def question_decomposition_endpoint(
     language: str = Form(default="vi"),
     excel_file: Optional[UploadFile] = File(None)
 ):
-    # Lưu file tạm thời và truyền excel_path
+    # Save temporary file and pass excel_path
     excel_path = None
     if excel_file:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
@@ -202,13 +205,13 @@ async def question_decomposition_endpoint(
             question=question,
             user_name=user_name,
             birthday=birthday,
-            excel_path=excel_path,  # Truyền đường dẫn file
+            excel_path=excel_path,  # Pass file path
             language=language,
             username=username
         )
         return result
     finally:
-        # Xóa file tạm
+        # Delete temporary file
         if excel_path and os.path.exists(excel_path):
             os.unlink(excel_path)
 
@@ -219,9 +222,9 @@ async def question_decomposition_endpoint(
 @app.post("/api/numerology/analyze", response_model=Dict[str, Any])
 async def numerology_endpoint(request: NumerologyRequest):
     """
-    Phân tích numerology cho user cụ thể
+    Analyze numerology for specific user
     
-    Mỗi user có cache memory riêng biệt
+    Each user has a separate memory cache
     """
     try:
         result = lumir_api.numerology_endpoint(
@@ -251,39 +254,41 @@ async def numerology_endpoint(request: NumerologyRequest):
 
 @app.post("/api/trading/analyze", response_model=Dict[str, Any])
 async def trading_endpoint(
-    question: str = Form(...),
+    question: Optional[str] = Form(None),
     language: str = Form(default="vi"),
-    excel_file: UploadFile = File(...)
+    excel_file: Optional[UploadFile] = File(None)
 ):
     """
-    Phân tích trading data với file Excel upload
+    Phân tích trading data
     
-    File Excel được lưu tạm thời và xử lý, sau đó xóa
+    Hỗ trợ cả hai trường hợp:
+    - JSON without file: only analyze question (no trading data)
+    - multipart/form-data with file: read Excel and pass temporary file path to agent
     """
+    temp_path = None
     try:
-        # Lưu file tạm thời
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
-            content = await excel_file.read()
-            temp_file.write(content)
-            temp_file_path = temp_file.name
+        # If file upload, save temporary to disk
+        if excel_file is not None:
+            try:
+                suffix = ".xlsx"
+                filename = getattr(excel_file, "filename", "uploaded.xlsx") or "uploaded.xlsx"
+                if filename.lower().endswith(".xls"):
+                    suffix = ".xls"
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    file_bytes = await excel_file.read()
+                    tmp.write(file_bytes)
+                    temp_path = tmp.name
+            except Exception:
+                temp_path = None
         
-        try:
-            result = lumir_api.trading_endpoint(
-                question=question,
-                excel_path=temp_file_path,
-                language=language
-            )
-            
-            if result["success"]:
-                return JSONResponse(content=result, status_code=200)
-            else:
-                return JSONResponse(content=result, status_code=400)
-                
-        finally:
-            # Xóa file tạm thời
-            if os.path.exists(temp_file_path):
-                os.unlink(temp_file_path)
-                
+        result = lumir_api.trading_endpoint(
+            question=question,
+            excel_path=temp_path or "",
+            language=language
+        )
+        
+        status = 200 if result.get("success") else 400
+        return JSONResponse(content=result, status_code=status)
     except Exception as e:
         error_response = {
             "endpoint": "trading",
@@ -292,6 +297,13 @@ async def trading_endpoint(
             "timestamp": datetime.now().isoformat()
         }
         return JSONResponse(content=error_response, status_code=500)
+    finally:
+        # Clean up temporary file
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
 
 # ============================================================================
 # ENDPOINT 5: LUMIR-AI SYNTHESIS
@@ -300,16 +312,23 @@ async def trading_endpoint(
 @app.post("/api/lumir/synthesize", response_model=Dict[str, Any])
 async def lumir_synthesis_endpoint(request: LumirSynthesisRequest):
     """
-    Tổng hợp và tạo final response từ LUMIR-AI
+    Synthesize and create final response from LUMIR-AI
     
-    Kết hợp thông tin từ các agent khác để tạo response hoàn chỉnh
+    Combine information from other agents to create complete response
     """
     try:
+        # Handle empty context from agents - convert to empty string if None
+        numerology_context = request.numerology_context if request.numerology_context is not None else ""
+        trading_context = request.trading_context if request.trading_context is not None else ""
+        
+        print(f"🔮 Numerology context: {repr(numerology_context)}")
+        print(f"📈 Trading context: {repr(trading_context)}")
+        
         result = lumir_api.lumir_synthesis_endpoint(
             question=request.question,
             question_type=request.question_type,
-            numerology_context=request.numerology_context,
-            trading_context=request.trading_context,
+            numerology_context=numerology_context,
+            trading_context=trading_context,
             user_name=request.user_name,
             username=request.username,
             language=request.language,
@@ -341,17 +360,20 @@ async def lumir_synthesis_endpoint(request: LumirSynthesisRequest):
 @app.post("/api/pipeline/complete", response_model=Dict[str, Any])
 async def complete_pipeline_endpoint(request: CompletePipelineRequest):
     """
-    Complete pipeline - mô phỏng logic test_infer
+    Complete pipeline - simulate test_infer logic
     
-    Đây là endpoint chính để sử dụng toàn bộ hệ thống LUMIR-AI
-    Mỗi user có cache memory riêng biệt dựa trên user_name, birthday, và username
+    This is the main endpoint to use the entire LUMIR-AI system
+    Each user has a separate memory cache based on user_name, birthday, and username
     """
     try:
+        print(f"🔄 Complete Pipeline - Question: {request.question}")
+        print(f"👤 User: {request.user_name}, Birthday: {request.birthday}, Username: {request.username}")
+        
         result = lumir_api.complete_pipeline_endpoint(
             question=request.question,
             user_name=request.user_name,
             birthday=request.birthday,
-            excel_path=None,  # Không có file upload trong endpoint này
+            excel_path=None,  # No file upload in this endpoint
             language=request.language,
             username=request.username
         )
@@ -371,15 +393,35 @@ async def complete_pipeline_endpoint(request: CompletePipelineRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
+# ENDPOINT 8: CHATBOT RAG (retrieve → rerank → LLM)
+# ============================================================================
+
+@app.post("/api/chat", response_model=Dict[str, Any])
+async def chatbot_endpoint(request: ChatbotRequest):
+    try:
+        result = lumir_api.chatbot_endpoint(question=request.question)
+        if result.get("success", False):
+            return JSONResponse(content=result, status_code=200)
+        return JSONResponse(content=result, status_code=400)
+    except Exception as e:
+        error_response = {
+            "endpoint": "chatbot",
+            "success": False,
+            "error": f"Internal server error: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+        return JSONResponse(content=error_response, status_code=500)
+
+# ============================================================================
 # ENDPOINT 7: MEMORY MANAGEMENT
 # ============================================================================
 
 @app.post("/api/memory/manage", response_model=Dict[str, Any])
 async def memory_management_endpoint(request: MemoryManagementRequest):
     """
-    Quản lý memory cache cho user cụ thể
+    Manage memory cache for specific user
     
-    Mỗi user có cache memory riêng biệt dựa trên user_name, birthday, và username
+    Each user has a separate memory cache based on user_name, birthday, and username
     """
     try:
         result = lumir_api.memory_management_endpoint(
@@ -410,13 +452,13 @@ async def memory_management_endpoint(request: MemoryManagementRequest):
 @app.post("/api/memory/update", response_model=Dict[str, Any])
 async def memory_update_endpoint(request: MemoryUpdateRequest):
     """
-    Cập nhật memory cache cho user cụ thể
+    Update memory cache for specific user
     
-    Hỗ trợ:
-    - add_entry: Thêm entry mới
-    - update_entry: Cập nhật entry hiện có
-    - bulk_update: Cập nhật nhiều entries cùng lúc
-    - remove_entry: Xóa entry cụ thể
+    Support:
+    - add_entry: Add new entry
+    - update_entry: Update existing entry
+    - bulk_update: Update multiple entries at once
+    - remove_entry: Remove specific entry
     """
     try:
         result = lumir_api.memory_update_endpoint(
@@ -450,7 +492,7 @@ async def memory_update_endpoint(request: MemoryUpdateRequest):
 
 @app.get("/")
 async def root():
-    """Root endpoint với thông tin hệ thống"""
+    """Root endpoint with system information"""
     return {
         "message": "LUMIR-AI API System",
         "version": "1.0.0",
@@ -486,7 +528,7 @@ async def health_check():
 
 @app.get("/api/info")
 async def api_info():
-    """Thông tin chi tiết về API"""
+    """Detailed information about API"""
     return {
         "api_name": "LUMIR-AI API",
         "version": "1.0.0",
