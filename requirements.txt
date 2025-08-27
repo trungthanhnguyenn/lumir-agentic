@@ -1,23 +1,50 @@
-langgraph
-langsmith
-langchain[openai]
-langchain-openai
-langchain-google-genai
-google-generativeai
-fastapi
-uvicorn[standard]
-python-dotenv
-pytz
-pandas
-numpy
-openpyxl
-xlrd
-matplotlib
-boto3
-python-docx
-langchain-google-genai
-google-generativeai
-pydantic>=2
+# === Core LangChain & LangGraph (đồng bộ 0.3.x) ===
+langchain-core==0.3.74
+langgraph==0.2.45
+langsmith==0.3.45
+
+# === LLM providers (đã nâng để tương thích 0.3.x) ===
+langchain-openai==0.3.0
+langchain-google-genai>=2.0.3
+langchain-huggingface>=0.1.2     # phiên bản mới nhất đòi tokenizers>=0.19.1
+
+
+# === FastAPI & Server ===
+fastapi==0.115.5
+uvicorn[standard]==0.34.0
+
+# === Data processing ===
+python-dotenv==1.0.1
+pytz==2024.2
+pandas==2.2.3
+openpyxl==3.1.5
+xlrd==2.0.1
+numpy==1.26.4                    # tăng lên để tương thích torch 2.2+
+
+# === Vector DB ===
+qdrant-client==1.12.0
+chromadb==0.5.18
+faiss-cpu==1.8.0.post1
+
+# === Embedding & Transformers (đồng bộ) ===
+sentence-transformers==3.2.1
+transformers>=4.51.0           # tăng để hợp tokenizers 0.21.4
+torch==2.2.2
+tokenizers>=0.21.0 # phiên bản mới nhất hợp transformers 4.46
+
+# === Document processing ===
+python-docx==1.1.2
+python-pptx==0.6.23
+PyPDF2==3.0.1
+langdetect==1.0.9
+
+# === Text processing ===
+tiktoken==0.7.0
+
+# === Gradio (giữ nguyên nếu cần demo) ===
 gradio==5.34.1
 gradio_client==1.10.3
-parlant
+
+# === Optional extras ===
+boto3==1.35.0
+matplotlib==3.9.2
