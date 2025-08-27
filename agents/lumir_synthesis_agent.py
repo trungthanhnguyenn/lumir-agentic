@@ -18,15 +18,15 @@ def _read_prompt() -> str:
 
 def _detect_abnormal_behavior(numerology_context: str, trading_context: str, question: str) -> List[str]:
     """
-    Phát hiện hành vi lệch chuẩn từ context
+    Detect abnormal behavior from context
     
     Args:
-        numerology_context: Context từ numerology agent
-        trading_context: Context từ trading agent
-        question: Câu hỏi gốc của user
+        numerology_context: Context from numerology agent
+        trading_context: Context from trading agent
+        question: Original question from user
         
     Returns:
-        List các hành vi lệch chuẩn phát hiện được
+        List of abnormal behaviors detected
     """
     abnormal_behaviors = []
     
@@ -74,10 +74,10 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     needs_user_info = input_dict.get("needs_user_info", False)
     suggested_questions = input_dict.get("suggested_questions", [])
     
-    # Phát hiện hành vi lệch chuẩn
+    # Detect abnormal behavior
     abnormal_behaviors = _detect_abnormal_behavior(numerology_context, trading_context, question)
     
-    # Xác định loại câu trả lời
+    # Determine response type
     response_type = "comprehensive"
     if question_type == "general_chat":
         response_type = "general_chat"
@@ -90,7 +90,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     elif not numerology_context:
         response_type = "missing_numerology_data"
     
-    # Chuẩn bị context summary
+    # Prepare context summary
     context_summary = []
     if numerology_context:
         context_summary.append("✅ Có phân tích tính cách và tâm lý")
@@ -144,16 +144,6 @@ Câu hỏi của {username}: {question}
 ⚠️ HÀNH VI LỆCH CHUẨN PHÁT HIỆN:
 {abnormal_behaviors}
 
-🎯 LĨNH VỰC TẬP TRUNG:
-{focus_areas}
-
-💡 LOẠI CÂU TRẢ LỜI: {response_type}
-
-🔍 CẦN THÊM THÔNG TIN: {needs_user_info}
-💬 CÂU HỎI GỢI Ý: {suggested_questions}
-
-🌐 NGÔN NGỮ YÊU CẦU: {language}
-
 Hãy đưa ra tư vấn toàn diện với vai trò LUMIR-AI:
 """)
     ])
@@ -175,13 +165,13 @@ Hãy đưa ra tư vấn toàn diện với vai trò LUMIR-AI:
 
 def create_memory_context(conversation_history: List[Dict[str, Any]]) -> str:
     """
-    Tạo context từ conversation history cho multi-turn chat
+    Create context from conversation history for multi-turn chat
     
     Args:
-        conversation_history: Lịch sử hội thoại
+        conversation_history: Conversation history
         
     Returns:
-        String chứa context từ history
+        String containing context from history
     """
     if not conversation_history:
         return ""
@@ -189,14 +179,14 @@ def create_memory_context(conversation_history: List[Dict[str, Any]]) -> str:
     context_parts = []
     context_parts.append("📝 LỊCH SỬ HỘI THOẠI:")
     
-    for i, turn in enumerate(conversation_history[-5:], 1):  # Lấy 5 turn gần nhất
+    for i, turn in enumerate(conversation_history[-5:], 1):  # Get last 5 turns
         user_question = turn.get("user_question", "")
         lumir_response = turn.get("lumir_response", "")
         
         if user_question and lumir_response:
             context_parts.append(f"Turn {i}:")
             context_parts.append(f"User: {user_question}")
-            context_parts.append(f"LUMIR: {lumir_response[:200]}...")  # Giới hạn độ dài
+            context_parts.append(f"LUMIR: {lumir_response[:200]}...")  # Limit length
             context_parts.append("")
     
     return "\n".join(context_parts)
@@ -225,30 +215,30 @@ def build_lumir_with_memory():
         conversation_history: List[Dict[str, Any]] = None
     ) -> str:
         """
-        LUMIR-AI với memory cho multi-turn chat
+        LUMIR-AI with memory for multi-turn chat
         
         Args:
-            question: Câu hỏi hiện tại
-            question_type: Loại câu hỏi
-            numerology_context: Context từ numerology agent
-            trading_context: Context từ trading agent
+            question: Current question
+            question_type: Question type
+            numerology_context: Context from numerology agent
+            trading_context: Context from trading agent
             user_name: Tên user
             username: Username
-            language: Ngôn ngữ
-            has_trading_data: Có dữ liệu trading không
-            focus_areas: Các lĩnh vực tập trung
-            needs_user_info: Có cần thêm thông tin không
-            suggested_questions: Câu hỏi gợi ý
-            conversation_history: Lịch sử hội thoại
+            language: Language
+            has_trading_data: Has trading data
+            focus_areas: Focus areas
+            needs_user_info: Needs user info
+            suggested_questions: Suggested questions
+            conversation_history: Conversation history
             
         Returns:
-            Câu trả lời từ LUMIR-AI
+            Response from LUMIR-AI
         """
         
-        # Tạo memory context
+        # Create memory context
         memory_context = create_memory_context(conversation_history or [])
         
-        # Chuẩn bị input
+        # Prepare input
         input_data = {
             "question": question,
             "question_type": question_type,
@@ -264,7 +254,7 @@ def build_lumir_with_memory():
             "memory_context": memory_context
         }
         
-        # Gọi synthesis agent
+        # Call synthesis agent
         agent = build_lumir_synthesis_agent()
         response = agent.invoke(input_data)
         

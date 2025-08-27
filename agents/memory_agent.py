@@ -14,34 +14,34 @@ from config import get_openai_llm
 
 
 class MemoryEntry(BaseModel):
-    """Một entry trong memory cache"""
-    key: str = Field(description="Key để tìm kiếm (câu hỏi hoặc topic)")
-    summary: str = Field(description="Tóm tắt kiến thức quan trọng")
-    context: str = Field(description="Context liên quan")
-    timestamp: str = Field(description="Thời gian tạo")
-    confidence: float = Field(description="Độ tin cậy của thông tin (0-1)")
-    tags: List[str] = Field(description="Tags để phân loại")
-    source_turns: List[int] = Field(description="Các turn gốc tạo ra kiến thức này")
+    """One entry in memory cache"""
+    key: str = Field(description="Key to search (question or topic)")
+    summary: str = Field("Summary of important knowledge")
+    context: str = Field("Context related")
+    timestamp: str = Field("Creation time")
+    confidence: float = Field("Confidence of information (0-1)")
+    tags: List[str] = Field("Tags to classify")
+    source_turns: List[int] = Field("Source turns that created this knowledge")
 
 
 class MemoryQuery(BaseModel):
-    """Kết quả query memory"""
-    can_answer: bool = Field(description="Có thể trả lời từ cache không")
-    relevant_entries: List[MemoryEntry] = Field(description="Các entry liên quan")
-    suggested_response: str = Field(description="Gợi ý câu trả lời từ cache")
-    confidence: float = Field(description="Độ tin cậy tổng thể")
-    needs_refresh: bool = Field(description="Có cần refresh cache không")
+    """Result of memory query"""
+    can_answer: bool = Field("Can answer from cache")
+    relevant_entries: List[MemoryEntry] = Field("Relevant entries")
+    suggested_response: str = Field("Suggested response from cache")
+    confidence: float = Field("Overall confidence")
+    needs_refresh: bool = Field("Need to refresh cache")
 
 
 class MemoryAgent:
     """
-    Memory Agent thông minh để quản lý cache cho multi-turn conversations
+    Memory Agent smart to manage cache for multi-turn conversations
     
-    Chức năng:
-    1. Tóm tắt conversation history thành knowledge cache
-    2. Query cache để trả lời nhanh các câu hỏi follow-up
-    3. Quản lý cache theo user với UUID
-    4. Tự động cleanup và refresh cache
+    Features:
+    1. Summarize conversation history into knowledge cache
+    2. Query cache to answer follow-up questions quickly
+    3. Manage cache per user with UUID
+    4. Automatically clean up and refresh cache
     """
     
     def __init__(self, cache_dir: str = ".memory_cache"):
@@ -65,9 +65,9 @@ class MemoryAgent:
             self.max_cache_age_days = 1
         
     def _generate_user_uuid(self, user_name: str, birthday: str, username: str) -> str:
-        """Tạo UUID duy nhất cho user dựa trên thông tin cá nhân"""
+        """Create unique UUID for user based on personal information"""
         try:
-            # Đảm bảo các tham số không None và có giá trị
+            # Ensure parameters are not None and have values
             user_name = str(user_name) if user_name else "unknown"
             birthday = str(birthday) if birthday else "unknown"
             username = str(username) if username else "unknown"
@@ -80,13 +80,13 @@ class MemoryAgent:
             return hashlib.md5("unknown_user".encode('utf-8')).hexdigest()
     
     def _get_cache_file_path(self, user_uuid: str) -> Path:
-        """Lấy đường dẫn file cache cho user"""
+        """Get cache file path for user"""
         try:
-            # Đảm bảo user_uuid là string hợp lệ
+            # Ensure user_uuid is a valid string
             if not user_uuid or not isinstance(user_uuid, str):
                 user_uuid = "unknown_user"
             
-            # Sanitize user_uuid để tránh ký tự không hợp lệ trong tên file
+            # Sanitize user_uuid to avoid invalid characters in file name
             safe_uuid = "".join(c for c in user_uuid if c.isalnum() or c in '_-')
             if not safe_uuid:
                 safe_uuid = "unknown_user"
@@ -97,7 +97,7 @@ class MemoryAgent:
             return self.cache_dir / "user_unknown_memory.json"
     
     def _load_user_cache(self, user_uuid: str) -> List[MemoryEntry]:
-        """Load cache của user từ file"""
+        """Load cache from file for user"""
         cache_file = self._get_cache_file_path(user_uuid)
         if not cache_file.exists():
             return []
@@ -106,13 +106,13 @@ class MemoryAgent:
             with open(cache_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 
-                # Validate và tạo MemoryEntry objects
+                # Validate and create MemoryEntry objects
                 entries = []
                 for entry in data:
                     try:
-                        # Đảm bảo các field bắt buộc có mặt
+                        # Ensure required fields are present
                         if isinstance(entry, dict) and 'key' in entry:
-                            # Set default values cho các field thiếu
+                            # Set default values for missing fields
                             entry_data = {
                                 'key': entry.get('key', 'unknown'),
                                 'summary': entry.get('summary', ''),
@@ -139,7 +139,7 @@ class MemoryAgent:
             return []
     
     def _save_user_cache(self, user_uuid: str, cache: List[MemoryEntry]):
-        """Lưu cache của user vào file"""
+        """Save cache for user to file"""
         cache_file = self._get_cache_file_path(user_uuid)
         try:
             # Convert MemoryEntry objects to dictionaries
@@ -148,7 +148,7 @@ class MemoryAgent:
                 if hasattr(entry, 'dict'):
                     entry_dict = entry.dict()
                 else:
-                    # Fallback nếu entry không phải MemoryEntry object
+                    # Fallback if entry is not a MemoryEntry object
                     entry_dict = {
                         'key': getattr(entry, 'key', 'unknown'),
                         'summary': getattr(entry, 'summary', ''),
@@ -169,14 +169,14 @@ class MemoryAgent:
             print(f"❌ Cache data: {cache}")
     
     def _cleanup_old_entries(self, cache: List[MemoryEntry]) -> List[MemoryEntry]:
-        """Xóa các entry cũ và quá hạn"""
+        """Delete old and expired entries"""
         if not cache:
             return []
             
         now = datetime.now()
         cutoff_date = now - timedelta(days=self.max_cache_age_days)
         
-        # Lọc theo thời gian
+        # Filter by time
         fresh_cache = []
         for entry in cache:
             try:
@@ -185,22 +185,22 @@ class MemoryAgent:
                     if entry_date > cutoff_date:
                         fresh_cache.append(entry)
                 else:
-                    # Nếu không có timestamp, giữ lại entry
+                    # If no timestamp, keep entry
                     fresh_cache.append(entry)
             except Exception as e:
                 print(f"⚠️ Error parsing timestamp for entry {entry.key}: {e}")
-                # Giữ lại entry nếu có lỗi parse timestamp
+                # Keep entry if there's an error parsing timestamp
                 fresh_cache.append(entry)
         
-        # Giới hạn kích thước cache
+        # Limit cache size
         if len(fresh_cache) > self.max_cache_size:
-            # Sắp xếp theo confidence và timestamp, giữ lại những entry tốt nhất
+            # Sort by confidence and timestamp, keep the best entries
             try:
                 fresh_cache.sort(key=lambda x: (getattr(x, 'confidence', 0.0), getattr(x, 'timestamp', '')))
-                fresh_cache = fresh_cache[-self.max_cache_size:]  # Giữ lại những entry mới nhất
+                fresh_cache = fresh_cache[-self.max_cache_size:]  # Keep the newest entries
             except Exception as e:
                 print(f"⚠️ Error sorting cache: {e}")
-                # Nếu sort thất bại, giữ lại những entry cuối cùng
+                # If sorting fails, keep the last entries
                 fresh_cache = fresh_cache[-self.max_cache_size:]
         
         print(f"🧹 Cache cleanup: {len(cache)} → {len(fresh_cache)} entries")
@@ -214,7 +214,7 @@ class MemoryAgent:
         language: str = "vi"
     ) -> List[MemoryEntry]:
         """
-        Sử dụng LLM để trích xuất kiến thức quan trọng từ conversation
+        Use LLM to extract important knowledge from conversation
         """
         
         try:

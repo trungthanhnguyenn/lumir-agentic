@@ -68,6 +68,9 @@ def analyze_and_decompose_question(
                 except Exception:
                     has_valid_trading_data = False
         
+        # Kiểm tra user đã login chưa
+        user_logged_in = bool(user_name and birthday and username)
+        
         # Sử dụng LLM để phân tích thông minh
         llm = get_openai_llm()
         parser = JsonOutputParser(pydantic_object=QuestionDecomposition)
@@ -96,6 +99,7 @@ Thông tin người dùng:
 - Có dữ liệu trading hợp lệ: {has_valid_trading_data}
 - Ngôn ngữ: {language}
 - Username: {username}
+- User đã login: {user_logged_in}
 
 Lịch sử hội thoại gần đây:
 {context_from_history}
@@ -105,6 +109,12 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
 2. Quyết định có cần gọi agent chuyên biệt không
 3. Nếu cần thêm thông tin, gợi ý câu hỏi phù hợp
 4. Không cứng nhắc, hãy tự nhiên như con người
+
+**LƯU Ý QUAN TRỌNG**: Nếu user chưa login (không có user_name, birthday, username) và câu hỏi liên quan đến:
+- Thông tin chung về hệ thống LUMIR/LUMIR-AI
+- Hướng dẫn sử dụng
+- Câu hỏi về trading hoặc thần số học nhưng không cần dữ liệu cá nhân
+- Thì nên phân loại là `general_chat` để sử dụng LUMIRChatbot
 """)
         ])
         
@@ -118,6 +128,7 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
             "has_valid_trading_data": has_valid_trading_data,
             "language": language,
             "username": username or "Không có",
+            "user_logged_in": user_logged_in,
             "context_from_history": context_from_history or "Không có"
         })
         
@@ -129,15 +140,16 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
         
     except Exception as e:
         print(f"❌ Question decomposition failed: {e}")
-        # Fallback analysis - trả về general chat
+        # Fallback analysis - trả về general chat nếu user chưa login
+        fallback_type = "general_chat" if not all([user_name, birthday, username]) else "needs_more_info"
         return {
-            "question_type": "general_chat",
+            "question_type": fallback_type,
             "should_call_agents": False,
             "numerology_question": None,
             "trading_question": None,
             "reasoning": f"Fallback analysis due to error: {str(e)}",
             "focus_areas": [],
-            "needs_user_info": False,
+            "needs_user_info": not all([user_name, birthday, username]),
             "suggested_questions": [],
             "has_valid_trading_data": False
         }

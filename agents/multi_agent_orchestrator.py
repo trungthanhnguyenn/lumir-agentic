@@ -10,6 +10,10 @@ from agents.trading_agent import build_trading_agent
 from agents.lumir_synthesis_agent import build_lumir_with_memory
 from agents.memory_agent import build_memory_agent
 
+# Import LUMIRChatbot for general questions
+from chatbot import build_chatbot
+from module.rag_orchestrator import RAGOrchestratorFactory
+
 
 class MultiAgentOrchestrator:
     """
@@ -28,6 +32,15 @@ class MultiAgentOrchestrator:
         self.trading_agent = build_trading_agent()
         self.lumir_agent = build_lumir_with_memory()
         self.memory_agent = build_memory_agent()
+        
+        # Khởi tạo LUMIRChatbot cho general questions
+        try:
+            self.rag_orchestrator = RAGOrchestratorFactory.create_optimal_orchestrator()
+            self.lumir_chatbot = build_chatbot(self.rag_orchestrator)
+            print("✅ LUMIRChatbot initialized successfully")
+        except Exception as e:
+            print(f"⚠️ Warning: LUMIRChatbot initialization failed: {e}")
+            self.lumir_chatbot = None
         
         # Memory cho multi-turn chat
         self.conversation_history = []
@@ -127,6 +140,50 @@ class MultiAgentOrchestrator:
                 print("💬 Bước 3: Xử lý trực tiếp (không gọi agent)...")
                 numerology_context = ""
                 trading_context = ""
+                
+                # Xử lý general_chat với LUMIRChatbot nếu có
+                if question_type == "general_chat" and self.lumir_chatbot:
+                    print("🤖 Sử dụng LUMIRChatbot cho general question...")
+                    try:
+                        chatbot_result = self.lumir_chatbot.answer(question)
+                        if chatbot_result.get("success"):
+                            # Trả lời trực tiếp từ chatbot, không cần synthesis
+                            chatbot_response = chatbot_result.get("answer", "")
+                            
+                            # Cập nhật conversation history
+                            self._update_conversation_history(question, chatbot_response, user_name, birthday, username, language)
+                            
+                            # Tạo kết quả cuối cùng
+                            end_time = datetime.now()
+                            processing_time = (end_time - start_time).total_seconds()
+                            
+                            result = {
+                                "success": True,
+                                "question": question,
+                                "response": chatbot_response,
+                                "processing_time": processing_time,
+                                "question_type": question_type,
+                                "decomposition_result": decomposition_result,
+                                "context_summary": {
+                                    "numerology_available": False,
+                                    "trading_available": False,
+                                    "response_type": "general_chat_direct",
+                                    "needs_user_info": False,
+                                    "suggested_questions": [],
+                                    "source": "lumir_chatbot"
+                                },
+                                "timestamp": end_time.isoformat(),
+                                "chatbot_result": chatbot_result
+                            }
+                            
+                            print(f"✅ Xử lý general_chat hoàn thành trong {processing_time:.2f}s")
+                            return result
+                        else:
+                            print(f"⚠️ LUMIRChatbot không thể trả lời: {chatbot_result.get('reason', 'unknown')}")
+                            # Fallback to normal synthesis flow
+                    except Exception as e:
+                        print(f"❌ LUMIRChatbot error: {e}")
+                        # Fallback to normal synthesis flow
             
             # Bước 4: Tổng hợp với LUMIR-AI
             print("🤖 Bước 4: Tổng hợp với LUMIR-AI...")
@@ -208,18 +265,20 @@ class MultiAgentOrchestrator:
         tasks_to_run = []
         
         # Numerology task
-        if decomposition_result.get("numerology_question") and user_name and birthday:
+        numerology_question = decomposition_result.get("numerology_question")
+        if numerology_question and numerology_question.strip() and user_name and birthday:
             tasks_to_run.append(
                 ("numerology", self._execute_numerology_agent, 
-                 decomposition_result["numerology_question"], user_name, birthday, language)
+                 numerology_question, user_name, birthday, language)
             )
         
         # Trading task
-        if (decomposition_result.get("trading_question") and 
+        trading_question = decomposition_result.get("trading_question")
+        if (trading_question and trading_question.strip() and 
             decomposition_result.get("has_valid_trading_data") and excel_path):
             tasks_to_run.append(
                 ("trading", self._execute_trading_agent, 
-                 decomposition_result["trading_question"], excel_path, language)
+                 trading_question, excel_path, language)
             )
         
         # Thực thi song song
