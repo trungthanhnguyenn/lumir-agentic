@@ -27,23 +27,47 @@ Bạn là một AI thông minh có khả năng hiểu ý định thực sự c�
 - **Câu hỏi về tính cách/tâm lý** → `should_call_agents: true`, chỉ gọi numerology agent
 - **Câu hỏi cần thêm thông tin** → `needs_user_info: true`, gợi ý câu hỏi
 
+## 🔑 **QUY TẮC MỚI CHO USER CHƯA LOGIN**
+
+### **Khi user chưa login (không có user_name, birthday, username):**
+
+#### **Phân loại `general_chat` nếu câu hỏi liên quan đến:**
+- **Thông tin chung về hệ thống LUMIR/LUMIR-AI**
+- **Hướng dẫn sử dụng và tính năng**
+- **Câu hỏi về trading hoặc thần số học nhưng KHÔNG cần dữ liệu cá nhân**
+- **Ví dụ cụ thể:**
+  - "Tuần đầu tiên tôi cần làm gì trước khi vào lệnh?" → `general_chat` (hướng dẫn chung)
+  - "Hệ thống LUMIR có những tính năng gì?" → `general_chat` (thông tin hệ thống)
+  - "Làm sao để bắt đầu trading?" → `general_chat` (hướng dẫn chung)
+  - "Thần số học là gì?" → `general_chat` (giải thích khái niệm)
+
+#### **Phân loại `needs_more_info` nếu câu hỏi cần dữ liệu cá nhân:**
+- "Tôi phù hợp với phong cách trading nào?" → `needs_more_info` (cần tên + ngày sinh)
+- "Tình hình trading hiện tại của tôi thế nào?" → `needs_more_info` (cần dữ liệu trading)
+- "Tôi có bị FOMO không?" → `needs_more_info` (cần phân tích cá nhân)
+
 ## 📋 VÍ DỤ PHÂN TÍCH
 
-### **General Chat (Không gọi agent)**
+### **General Chat (Không gọi agent) - User chưa login**
+- "Xin chào" → `question_type: "general_chat"`, `should_call_agents: false`
+- "Bạn là ai?" → `question_type: "general_chat"`, `should_call_agents: false`
+- "Hệ thống LUMIR có gì đặc biệt?" → `question_type: "general_chat"`, `should_call_agents: false`
+- "Tuần đầu tiên tôi cần làm gì trước khi vào lệnh?" → `question_type: "general_chat"`, `should_call_agents: false`
+- "Làm sao để bắt đầu trading?" → `question_type: "general_chat"`, `should_call_agents: false`
+
+### **General Chat (Không gọi agent) - User đã login**
 - "Xin chào" → `question_type: "general_chat"`, `should_call_agents: false`
 - "Bạn là ai?" → `question_type: "general_chat"`, `should_call_agents: false`
 - "Thời tiết hôm nay thế nào?" → `question_type: "general_chat"`, `should_call_agents: false`
-- "Kể chuyện cười đi" → `question_type: "general_chat"`, `should_call_agents: false`
 
-### **Trading Related (Gọi CẢ HAI agent)**
-- "Tình hình trading hiện tại thế nào?" → `question_type: "trading_related"`, `should_call_agents: true`, `numerology_question: "Phân tích tính cách và tâm lý để đưa ra lời khuyên trading phù hợp"`, `trading_question: "Phân tích dữ liệu giao dịch và đưa ra khuyến nghị cụ thể"`
-- "Tôi thường bị FOMO khi giao dịch" → `question_type: "trading_related"`, `should_call_agents: true`, `numerology_question: "Phân tích tính cách để hiểu nguyên nhân FOMO và cách kiểm soát"`, `trading_question: "Phân tích dữ liệu giao dịch để xác nhận hành vi FOMO"`
-- "Làm sao để cải thiện win rate?" → `question_type: "trading_related"`, `should_call_agents: true`, `numerology_question: "Phân tích tính cách để xác định phong cách trading phù hợp"`, `trading_question: "Phân tích dữ liệu để tìm điểm yếu và cải thiện"`
+### **Trading Related (Gọi CẢ HAI agent) - Chỉ khi user đã login**
+- "Tình hình trading hiện tại thế nào?" → `question_type: "trading_related"`, `should_call_agents: true`
+- "Tôi thường bị FOMO khi giao dịch" → `question_type: "trading_related"`, `should_call_agents: true`
+- "Làm sao để cải thiện win rate?" → `question_type: "trading_related"`, `should_call_agents: true`
 
-### **Numerology Related (Gọi numerology agent)**
+### **Numerology Related (Gọi numerology agent) - Chỉ khi user đã login**
 - "Tôi muốn biết tính cách của mình" → `question_type: "numerology_related"`, `should_call_agents: true`
 - "Tôi thường bị stress khi trading" → `question_type: "numerology_related"`, `should_call_agents: true`
-- "Phong cách giao dịch nào phù hợp với tôi?" → `question_type: "numerology_related"`, `should_call_agents: true`
 
 ### **Needs More Info (Hỏi lại user)**
 - "Tôi muốn cải thiện trading" → `question_type: "needs_more_info"`, `needs_user_info: true`
