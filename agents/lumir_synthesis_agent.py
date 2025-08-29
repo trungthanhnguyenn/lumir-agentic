@@ -15,6 +15,41 @@ def _read_prompt() -> str:
     prompt_path = base_dir / "prompts" / "lumir_synthesis_prompt.txt"
     return prompt_path.read_text(encoding="utf-8")
 
+def _sanitize_numerology_context(numerology_context: str) -> str:
+    """
+    Remove sensitive numerology terms and transform to safe alternatives
+    """
+    if not numerology_context:
+        return ""
+    
+    # Dictionary of transformations
+    transformations = {
+        # Direct term replacements
+        "thần số học": "phân tích tính cách",
+        "numerology": "phân tích tính cách",
+        "con số cá nhân": "đặc điểm cá nhân",
+        "số định mệnh": "đặc điểm bẩm sinh",
+        "chỉ số": "đặc điểm",
+        
+        # Pattern replacements for numbered references
+        r"ngày cá nhân số \d+": "hôm nay",
+        r"đường đời số \d+": "đặc điểm tính cách",
+        r"số \d+ trong": "đặc điểm trong",
+        
+        # Remove specific number references
+        r"là số \d+": "có đặc điểm",
+        r"thuộc nhóm \d+": "có xu hướng",
+    }
+    
+    sanitized = numerology_context
+    for old, new in transformations.items():
+        if old.startswith('r"'):  # regex pattern
+            import re
+            sanitized = re.sub(old[2:-1], new, sanitized)
+        else:  # direct replacement
+            sanitized = sanitized.replace(old, new)
+    
+    return sanitized
 
 def _detect_abnormal_behavior(numerology_context: str, trading_context: str, question: str) -> List[str]:
     """
@@ -73,6 +108,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     focus_areas = input_dict.get("focus_areas", [])
     needs_user_info = input_dict.get("needs_user_info", False)
     suggested_questions = input_dict.get("suggested_questions", [])
+    conversation_history = input_dict.get("conversation_history", [])
     
     # Detect abnormal behavior
     abnormal_behaviors = _detect_abnormal_behavior(numerology_context, trading_context, question)
@@ -93,11 +129,17 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     # Prepare context summary
     context_summary = []
     if numerology_context:
-        context_summary.append("✅ Có phân tích tính cách và tâm lý")
+        numerology_context = _sanitize_numerology_context(numerology_context)
+        context_summary.append(" Có phân tích tính cách và tâm lý")
     if trading_context:
-        context_summary.append("✅ Có phân tích dữ liệu giao dịch")
+        context_summary.append(" Có phân tích dữ liệu giao dịch")
     if not context_summary:
-        context_summary.append("⚠️ Chưa có dữ liệu phân tích chuyên sâu")
+        context_summary.append(" Chưa có dữ liệu phân tích chuyên sâu")
+    
+    # Format conversation history for display
+    conversation_context = ""
+    if conversation_history:
+        conversation_context = create_memory_context(conversation_history)
     
     return {
         "question": question,
@@ -114,6 +156,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         "context_summary": context_summary,
         "needs_user_info": needs_user_info,
         "suggested_questions": suggested_questions,
+        "conversation_history": conversation_context,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -131,20 +174,26 @@ def build_lumir_synthesis_agent():
         ("human", """
 Câu hỏi của {username}: {question}
 
-📊 LOẠI CÂU HỎI: {question_type}
-📊 TÓM TẮT NGỮ CẢNH:
+LOẠI CÂU HỎI: {question_type}
+TÓM TẮT NGỮ CẢNH:
 {context_summary}
 
-🔮 PHÂN TÍCH TÍNH CÁCH VÀ TÂM LÝ:
+THÔNG TIN TÍNH CÁCH VÀ TÂM LÝ CỦA NGƯỜI DÙNG:
+- Nếu trong nội dung có nhắc đến các **con số cá nhân** hoặc các **cụm từ liên quan đến thần số học** thì bạn cần tránh nhắc trực tiếp mà sử dụng các thuật ngữ chung thay thế.
 {numerology_context}
 
-📈 PHÂN TÍCH DỮ LIỆU GIAO DỊCH:
+PHÂN TÍCH DỮ LIỆU GIAO DỊCH:
 {trading_context}
 
-⚠️ HÀNH VI LỆCH CHUẨN PHÁT HIỆN:
+HÀNH VI LỆCH CHUẨN PHÁT HIỆN:
 {abnormal_behaviors}
 
-Hãy đưa ra tư vấn toàn diện với vai trò LUMIR-AI:
+LỊCH SỬ HỘI THOẠI:
+{conversation_history}
+
+Từ những thông tin trên hãy đưa ra tư vấn hữu ích và thân thiện với vai trò LUMIR-AI:
+- Nếu ngữ cảnh có nhắc đến các **con số cá nhân** hoặc các **cụm từ liên quan đến thần số học** thì bạn cần tránh nhắc trực tiếp mà sử dụng các thuật ngữ chung thay thế.
+- Nếu không có thông về hành vi lệch chuẩn, hoặc lịch sử hội thoại thì không cần trả về.
 """)
     ])
     

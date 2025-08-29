@@ -184,7 +184,52 @@ Báo cáo chi tiết:
         # Prepare the data first
         prepared_data = _prepare_trading_data(inputs)
         
-        # Kiểm tra xem có trading data không
+        # Kiểm tra flag has_trading_data từ endpoint
+        has_trading_data = inputs.get("has_trading_data", False)
+        
+        # Nếu endpoint báo không có trading data, trả về lời khuyên chung
+        if not has_trading_data:
+            return f"""
+🔍 **PHÂN TÍCH CÂU HỎI**: {prepared_data['question']}
+
+⚠️ **TRẠNG THÁI**: Không có dữ liệu trading để phân tích
+
+💡 **LỜI KHUYÊN CHUNG DÀNH CHO TRADER**:
+
+🎯 **Nguyên tắc cơ bản**:
+• Luôn có kế hoạch giao dịch rõ ràng trước khi vào lệnh
+• Sử dụng stop-loss và take-profit để quản lý rủi ro
+• Không bao giờ đầu tư quá 2-5% vốn vào một lệnh
+• Ghi chép lại mọi giao dịch để học hỏi
+
+🧠 **Tâm lý giao dịch**:
+• Kiểm soát cảm xúc - không để FOMO hoặc sợ hãi chi phối
+• Chấp nhận thua lỗ là một phần của trading
+• Kiên nhẫn chờ cơ hội tốt thay vì giao dịch liên tục
+• Tập trung vào quá trình thay vì kết quả ngắn hạn
+
+📊 **Quản lý vốn**:
+• Xác định rõ mức rủi ro chấp nhận được
+• Đa dạng hóa danh mục đầu tư
+• Không sử dụng đòn bẩy quá cao
+• Luôn giữ một phần vốn dự phòng
+
+🚀 **Để được tư vấn cụ thể và cá nhân hóa**:
+• **Đăng nhập vào hệ thống LUMIR-AI** với thông tin cá nhân
+• **Cung cấp dữ liệu trading** (file Excel) để phân tích chi tiết
+• **Kết nối với numerology analysis** để hiểu tính cách trading phù hợp
+• **Nhận Behavioral Report** để phát hiện patterns và cải thiện
+
+📈 **Các bước tiếp theo**:
+1. Tạo tài khoản và đăng nhập vào LUMIR-AI
+2. Cung cấp thông tin cá nhân (tên, ngày sinh)
+3. Upload file Excel chứa lịch sử giao dịch
+4. Nhận phân tích chi tiết và tư vấn cá nhân hóa
+
+Bạn có muốn tôi hướng dẫn cách bắt đầu với LUMIR-AI không?
+"""
+        
+        # Kiểm tra xem có trading data thực tế không
         if not prepared_data.get("has_trading_data", False):
             # Trường hợp không có trading data - đưa ra lời khuyên chung
             if prepared_data.get("error_type") == "missing_data":

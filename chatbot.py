@@ -89,23 +89,143 @@ class LUMIRChatbot:
         total_chars = sum(len((c.payload.get("content", "") or "")) for c in contexts)
         return total_chars >= 300
 
-    def _build_prompt(self, question: str, contexts: List[SearchResult]) -> str:
+    def _analyze_user_context(self, question: str, user_name: str, user_birthday: str, username: str, trading_data: bool) -> Dict[str, Any]:
+        """
+        Analyze user context to understand login status and available information
+        """
+        # Check login status
+        is_logged_in = bool(username and username.strip())
+        
+        # Check personal info availability
+        has_personal_info = bool(user_name and user_name.strip() and user_birthday and user_birthday.strip())
+        
+        # Check trading data availability
+        has_trading_info = bool(trading_data)
+        
+        # Analyze question type to determine what information is needed
+        question_lower = question.lower()
+        
+        # Check if question needs trading analysis
+        # needs_trading_data = any(word in question_lower for word in [
+        #     "trading", "giao dịch", "lệnh", "profit", "lỗ", "win rate", "hiệu suất", 
+        #     "thị trường", "cổ phiếu", "forex", "crypto", "đầu tư", "đầu tư"
+        # ])
+        
+        # # Check if question needs personal analysis (numerology, psychology)
+        # needs_personal_info = any(word in question_lower for word in [
+        #     "tính cách", "tâm lý", "cảm xúc", "thần số học", "numerology", 
+        #     "bản thân", "tôi", "mình", "cá nhân", "phù hợp", "nên làm gì",
+        #     "kiểm soát", "quản lý", "cải thiện", "thay đổi"
+        # ])
+        
+        # Determine if current info is sufficient for the question
+        info_sufficient = True
+        missing_info = []
+        
+        if not has_trading_info:
+            info_sufficient = False
+            missing_info.append("dữ liệu giao dịch")
+            
+        if not has_personal_info:
+            info_sufficient = False
+            missing_info.append("thông tin cá nhân (tên và ngày sinh)")
+        
+        return {
+            "is_logged_in": is_logged_in,
+            "has_personal_info": has_personal_info,
+            "has_trading_info": has_trading_info,
+            # "needs_trading_data": needs_trading_data,
+            # "needs_personal_info": needs_personal_info,
+            "info_sufficient": info_sufficient,
+            "missing_info": missing_info,
+            "question_type": self._classify_question_type(question_lower)
+        }
+    
+    def _classify_question_type(self, question_lower: str) -> str:
+        """Classify question type to determine appropriate response strategy"""
+        if any(word in question_lower for word in ["trading", "giao dịch", "lệnh", "profit", "lỗ"]):
+            return "trading_related"
+        elif any(word in question_lower for word in ["tính cách", "tâm lý", "cảm xúc", "thần số học"]):
+            return "personal_analysis"
+        elif any(word in question_lower for word in ["hệ thống", "tính năng", "hướng dẫn", "làm thế nào"]):
+            return "system_info"
+        else:
+            return "general"
+    
+    def _generate_smart_suggestions(self, user_context: Dict[str, Any], question: str) -> str:
+        """
+        Generate intelligent suggestions based on user context and question
+        """
+        suggestions = []
+        
+        if not user_context["is_logged_in"]:
+            # User not logged in
+            if user_context["question_type"] == "trading_related":
+                suggestions.append("💡 **Để được tư vấn trading chi tiết:** Đăng nhập và cung cấp dữ liệu giao dịch của bạn")
+            elif user_context["question_type"] == "personal_analysis":
+                suggestions.append("💡 **Để được phân tích tính cách:** Đăng nhập và cung cấp tên cùng ngày sinh")
+            else:
+                suggestions.append("💡 **Để trải nghiệm đầy đủ:** Đăng nhập vào hệ thống LUMIR")
+                suggestions.append("🔐 **Tài khoản miễn phí:** Tạo tài khoản để sử dụng các tính năng nâng cao")
+        else:
+            # User is logged in but may be missing some info
+            if user_context["question_type"] == "trading_related" and not user_context["has_trading_info"]:
+                suggestions.append("📊 **Cần dữ liệu giao dịch:** Upload file Excel hoặc kết nối tài khoản MT4/MT5 để được phân tích chi tiết")
+            elif user_context["question_type"] == "personal_analysis" and not user_context["has_personal_info"]:
+                suggestions.append("👤 **Cần thông tin cá nhân:** Cập nhật tên và ngày sinh trong hồ sơ để được phân tích tính cách")
+            
+            if user_context["info_sufficient"]:
+                suggestions.append("✅ **Thông tin đầy đủ:** Bạn có thể sử dụng đầy đủ các tính năng của LUMIR")
+        
+        # Add general helpful suggestions
+        if user_context["question_type"] == "system_info":
+            suggestions.append("📚 **Tài liệu hướng dẫn:** Xem thêm tài liệu chi tiết trong phần Help")
+        
+        if not suggestions:
+            suggestions = [
+                "💡 **Khám phá thêm:** Hệ thống LUMIR có nhiều tính năng thú vị để bạn khám phá",
+                "🤝 **Hỗ trợ:** Nếu cần hỗ trợ thêm, hãy liên hệ đội ngũ chăm sóc khách hàng"
+            ]
+        
+        return "\n".join(suggestions)
+
+    def _build_prompt(self, question: str, contexts: List[SearchResult], user_context: Dict[str, Any]) -> str:
         ctx_text = "\n\n".join((c.payload.get("content", "") or "") for c in contexts)
         
         # Analyze context to create smart suggestions
         context_analysis = self._analyze_context_for_suggestions(contexts)
+        
+        # Build user status context
+        user_status = f"""
+**Trạng thái người dùng:**
+- Đã đăng nhập: {'✅ Có' if user_context['is_logged_in'] else 'Chưa'}
+- Có thông tin cá nhân: {'✅ Có' if user_context['has_personal_info'] else 'Chưa'}
+- Có dữ liệu giao dịch: {'✅ Có' if user_context['has_trading_info'] else 'Chưa'}
+- Loại câu hỏi: {user_context['question_type']}
+- Thông tin đủ: {'✅ Đủ' if user_context['info_sufficient'] else 'Thiếu: ' + ', '.join(user_context['missing_info'])}
+"""
         
         system = (
             "Bạn là trợ lý của hệ thống LUMIR - Nền tảng hỗ trợ trader giao dịch hiệu quả, sản phẩm của BEQ-Holdings. "
             "Mục tiêu của bạn là giải đáp thắc mắc của khách hàng, đồng thời giới thiệu các tính năng nổi bật của LUMIR một cách chuyên nghiệp, gần gũi. "
             "Hãy luôn trả lời đúng trọng tâm, dựa trên ngữ cảnh cung cấp.\n\n"
             "Quy tắc:\n"
+            "- Sử dụng cách xưng hô bằng tên **LUMIR**\n"
             "- Nếu câu hỏi nằm ngoài kiến thức LUMIR/LUMIR-AI: từ chối lịch sự và giải thích về những gì bạn có thể làm được. Sau đó gợi ý đăng nhập để trò chuyện với LUMIR-AI\n"
             "- Nếu ngữ cảnh chưa đủ để trả lời chính xác: yêu cầu bổ sung thông tin và nêu rõ còn thiếu gì. Hãy sử dụng những câu hỏi gợi mở để khách hàng cung cấp thêm dữ liệu.\n"
             "- Tránh bịa đặt.\n"
             "- Sau khi trả lời, **nếu nội dung câu hỏi** liên quan đến một tính năng của LUMIR, hãy khéo léo giới thiệu tính năng đó và khuyến khích khách hàng trải nghiệm.\n"
             "- Sử dụng tiếng Việt.\n"
             f"- Dựa trên context, gợi ý thêm: {context_analysis}\n"
+            f"- Thông tin người dùng: {user_status}\n"
+            "- **QUAN TRỌNG**: Dựa vào trạng thái người dùng để đưa ra gợi ý phù hợp. Không gợi ý đăng nhập nếu đã đăng nhập rồi.\n\n"
+            "**Xử lý trường hợp thiếu thông tin:**\n"
+            "- Nếu user chưa cung cấp đủ thông tin để trả lời câu hỏi, hãy:\n"
+            "  1. Sử dụng context có sẵn để giải thích LUMIR có thể giúp gì\n"
+            "  2. Giải thích tại sao cần thêm thông tin\n"
+            "  3. Hướng dẫn cụ thể user cần làm gì tiếp theo\n"
+            "  4. Khuyến khích đăng nhập và cung cấp thông tin cần thiết\n"
+            "- Hãy tự nhiên, không hiển thị raw context data, mà tạo response dễ hiểu dựa trên context đó"
         )
         user = (
             f"Câu hỏi: {question}\n\n"
@@ -167,14 +287,13 @@ class LUMIRChatbot:
         # General suggestions
         if not suggestions:
             suggestions = [
-                "• Bạn có thể đăng nhập để trải nghiệm đầy đủ tính năng",
                 "• Hệ thống có thể phân tích dữ liệu cá nhân để đưa ra lời khuyên",
                 "• Bạn có thể tham gia cộng đồng trader để học hỏi kinh nghiệm"
             ]
         
         return "\n".join(suggestions)
 
-    def answer(self, question: str) -> Dict[str, Any]:
+    def answer(self, question: str, user_name: str, user_birthday: str, username: str, trading_data: bool) -> Dict[str, Any]:
         # 1) retrieve
         retrieved = self._retrieve(question, k=10)
 
@@ -202,7 +321,16 @@ class LUMIRChatbot:
         # 3) rerank top-5
         top5 = self.reranker.rerank(question, retrieved, top_n=10)
 
-        # 4) context sufficiency
+        # 4) Analyze user context
+        user_context = self._analyze_user_context(question, user_name, user_birthday, username, trading_data)
+        
+        # 5) Check if we need to handle needs_user_info case
+        if not user_context["info_sufficient"] and user_context["question_type"] in ["trading_related", "personal_analysis"]:
+            # Let LLM handle this naturally with the improved prompt
+            # The prompt now includes specific guidance for handling insufficient user information
+            pass  # Continue to normal LLM processing
+        
+        # 6) Check context sufficiency for other cases
         if not self._has_enough_context(top5):
             return {
                 "success": False,
@@ -223,17 +351,52 @@ class LUMIRChatbot:
                 "reranked": len(top5)
             }
 
-        # 5) LLM generate
-        prompt = self._build_prompt(question, top5)
+        # 7) Generate smart suggestions
+        smart_suggestions = self._generate_smart_suggestions(user_context, question)
+
+        # 8) LLM generate with user context
+        prompt = self._build_prompt(question, top5, user_context)
         llm = self.llm
         output = llm.invoke(prompt)
         text = getattr(output, "content", None) or str(output)
+        
+        # 9) Append smart suggestions if needed
+        final_answer = text
+        if not user_context["info_sufficient"] and user_context["question_type"] in ["trading_related", "personal_analysis"]:
+            final_answer += f"\n\n{smart_suggestions}"
+        
         return {
             "success": True,
-            "answer": text,
+            "answer": final_answer,
             "retrieved": len(retrieved),
-            "reranked": len(top5)
+            "reranked": len(top5),
+            "user_context": user_context,
+            "suggestions": smart_suggestions,
+            "response_type": "full_response"
         }
+
+    def _extract_relevant_context(self, question: str, contexts: List[SearchResult]) -> str:
+        """
+        Extract relevant context information to provide a meaningful response
+        even when user needs to provide more information
+        """
+        if not contexts:
+            return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
+        
+        # Find most relevant context
+        relevant_contexts = []
+        for ctx in contexts[:3]:  # Top 3 most relevant
+            content = ctx.payload.get("content", "")
+            if content and len(content) > 50:  # Only meaningful content
+                relevant_contexts.append(content)
+        
+        if relevant_contexts:
+            context_summary = " ".join(relevant_contexts)
+            # Clean up and make it more natural
+            context_summary = context_summary.replace("\n", " ").replace("  ", " ")
+            return f"Dựa trên kiến thức về LUMIR, {context_summary.lower()}"
+        else:
+            return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
 
 
 def build_chatbot(orchestrator: RAGOrchestrator) -> LUMIRChatbot:
@@ -248,17 +411,17 @@ def run_chat(question: str) -> Dict[str, Any]:
     return bot.answer(question)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python chatbot.py 'your question here'")
-        sys.exit(1)
-    q = " ".join(sys.argv[1:]).strip()
-    resp = run_chat(q)
-    print("=== Chatbot Result ===")
-    for k, v in resp.items():
-        if k == "answer":
-            print(f"{k}:\n{v}")
-        else:
-            print(f"{k}: {v}")
+# if __name__ == "__main__":
+#     if len(sys.argv) < 2:
+#         print("Usage: python chatbot.py 'your question here'")
+#         sys.exit(1)
+#     q = " ".join(sys.argv[1:]).strip()
+#     resp = run_chat(q)
+#     print("=== Chatbot Result ===")
+#     for k, v in resp.items():
+#         if k == "answer":
+#             print(f"{k}:\n{v}")
+#         else:
+#             print(f"{k}: {v}")
 
 

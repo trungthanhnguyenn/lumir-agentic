@@ -576,11 +576,11 @@ def build_numerology_agent():
             "human",
             (
                 "Câu hỏi: {question}\n\n"
-                "Khoá chọn: {selected_keys}\n\n"
-                "Số liệu: {numbers}\n\n"
-                "Ý nghĩa: {meanings}\n\n"
-                "Tài liệu: {docs}\n\n"
-                "Ngôn ngữ: {language}\n"
+                "Chỉ số phân tích phù hợp: {selected_keys}\n\n"
+                "Số: {numbers}\n\n"
+                "Ý nghĩa của chỉ số: {meanings}\n\n"
+                "Tài liệu tham chiếu: {docs}\n\n"
+                "Ngôn ngữ phản hồi yêu cầu: {language}\n"
             ),
         ),
     ])

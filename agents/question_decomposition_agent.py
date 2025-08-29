@@ -56,7 +56,7 @@ def analyze_and_decompose_question(
     try:
         # Validate trading data nếu có
         has_valid_trading_data = False
-        if excel_path:
+        if excel_path and excel_path.strip():
             validator = DataValidator()
             import os
             if os.path.exists(excel_path):
@@ -65,8 +65,18 @@ def analyze_and_decompose_question(
                     df = pd.read_excel(excel_path)
                     validation = validator.validate_excel_dataframe(df)
                     has_valid_trading_data = validation["is_valid"]
-                except Exception:
+                except Exception as e:
+                    print(f"⚠️ Error validating trading data: {e}")
                     has_valid_trading_data = False
+            else:
+                # File không tồn tại
+                has_valid_trading_data = False
+        else:
+            # Không có đường dẫn file
+            has_valid_trading_data = False
+        
+        # Đảm bảo has_valid_trading_data luôn là boolean
+        has_valid_trading_data = bool(has_valid_trading_data)
         
         # Kiểm tra user đã login chưa
         user_logged_in = bool(user_name and birthday and username)
@@ -110,11 +120,13 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
 3. Nếu cần thêm thông tin, gợi ý câu hỏi phù hợp
 4. Không cứng nhắc, hãy tự nhiên như con người
 
-**LƯU Ý QUAN TRỌNG**: Nếu user chưa login (không có user_name, birthday, username) và câu hỏi liên quan đến:
-- Thông tin chung về hệ thống LUMIR/LUMIR-AI
-- Hướng dẫn sử dụng
-- Câu hỏi về trading hoặc thần số học nhưng không cần dữ liệu cá nhân
-- Thì nên phân loại là `general_chat` để sử dụng LUMIRChatbot
+**LƯU Ý QUAN TRỌNG**: Nên phân loại là `general_chat` để sử dụng LUMIRChatbot cho các trường hợp:
+1. User chưa login (không có user_name, birthday, username) 
+2. Câu hỏi liên quan đến:
+    - Thông tin chung về hệ thống LUMIR/LUMIR-AI hay quỹ BEQ-Holdings hoặc BEQ
+    - Hướng dẫn sử dụng LUMIR
+    - Câu hỏi về trading hoặc thần số học nhưng không cần dữ liệu cá nhân hoặc thông tin cá nhân
+
 """)
         ])
         
