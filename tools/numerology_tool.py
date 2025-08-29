@@ -290,7 +290,7 @@ class CalNum:
     
     def reduce_number_no_master(self, n: int) -> int:
         """
-        Reduce number to single digit.
+        Reduce number to single digit. (1-9)
         """
         while n > 9:
             n = sum(int(digit) for digit in str(n))
@@ -675,6 +675,25 @@ class CalNum:
             "milestone_3": milestone_3,
             "milestone_4": milestone_4
         }
+        
+    def calculate_generation_number(self) -> int:
+        """
+        Calculate Generation Number.
+        
+        Formula: reduceNumber(year) (keep master number 11/22/33)
+        """
+        generation = sum(int(digit) for digit in str(self.year))
+        return self.reduce_number_with_masters(generation)
+
+    def calculate_attitude_number(self) -> int:
+        """
+        Calculate Attitude Number.
+        
+        Formula: reduceNumber(sum(int(digit) for digit in str(self.day + self.month))) (always 1 digit)
+        """
+        sum_day = sum(int(digit) for digit in str(self.day))
+        sum_month = sum(int(digit) for digit in str(self.month))
+        return self.reduce_number_no_master(sum_day + sum_month)
 
     def calculate_challenge(self) -> Dict[str, int]:
         """
@@ -797,6 +816,8 @@ class CalNum:
             "challenge": self.calculate_challenge(),
             "rational_thinking": self.calculate_rational_thinking(),
             "age_milestones": self.calculate_age_milestones(),
-            "alignment_signals": self.calculate_alignment_signals()
+            "alignment_signals": self.calculate_alignment_signals(),
+            "generation": self.calculate_generation_number(),
+            "attitude": self.calculate_attitude_number()
         }
 
