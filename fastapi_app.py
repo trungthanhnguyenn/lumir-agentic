@@ -93,6 +93,10 @@ class CompletePipelineRequest(BaseModel):
 
 class ChatbotRequest(BaseModel):
     question: str = Field(..., description="Câu hỏi người dùng")
+    user_name: Optional[str] = Field(None, description="Tên user (optional)")
+    user_birthday: Optional[str] = Field(None, description="Ngày sinh (optional)")
+    username: Optional[str] = Field(None, description="Username (optional)")
+    trading_data: Optional[bool] = Field(False, description="User có dữ liệu trading không (optional)")
 
 class MemoryManagementRequest(BaseModel):
     action: str = Field(..., description="Hành động ('get_status', 'clear', 'get_summary')")
@@ -266,6 +270,8 @@ async def trading_endpoint(
     - multipart/form-data with file: read Excel and pass temporary file path to agent
     """
     temp_path = None
+    has_trading_data = False
+    
     try:
         # If file upload, save temporary to disk
         if excel_file is not None:
@@ -278,13 +284,19 @@ async def trading_endpoint(
                     file_bytes = await excel_file.read()
                     tmp.write(file_bytes)
                     temp_path = tmp.name
+                    has_trading_data = True  # Có file upload
             except Exception:
                 temp_path = None
+                has_trading_data = False
+        else:
+            # Không có file upload
+            has_trading_data = False
         
         result = lumir_api.trading_endpoint(
             question=question,
             excel_path=temp_path or "",
-            language=language
+            language=language,
+            has_trading_data=has_trading_data
         )
         
         status = 200 if result.get("success") else 400
@@ -399,7 +411,13 @@ async def complete_pipeline_endpoint(request: CompletePipelineRequest):
 @app.post("/api/chat", response_model=Dict[str, Any])
 async def chatbot_endpoint(request: ChatbotRequest):
     try:
-        result = lumir_api.chatbot_endpoint(question=request.question)
+        result = lumir_api.chatbot_endpoint(
+            question=request.question,
+            user_name=request.user_name or "",
+            user_birthday=request.user_birthday or "",
+            username=request.username or "",
+            trading_data=request.trading_data or False
+        )
         if result.get("success", False):
             return JSONResponse(content=result, status_code=200)
         return JSONResponse(content=result, status_code=400)

@@ -273,7 +273,7 @@ def reset_chat(session_id_state):
     new_session = get_or_create_session()
     # Add welcome message to new session
     # Gradio format: [user_message, bot_response]
-    welcome_msg = [None, "👋 Xin chào! Tôi là Lumir-AI, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
+    welcome_msg = [None, "👋 Xin chào! Tôi là Lumir, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
     new_session['history'] = [{"role": "assistant", "content": welcome_msg[1]}]  # Keep role-based for API
     return [welcome_msg], new_session['session_id'], "", "", "", has_trading_data_checkbox.value
 
@@ -662,7 +662,7 @@ with gr.Blocks(theme=custom_theme, css=CSS, title="LUMIR") as demo:
         <div class="header-content">
             <img src="{LOGO_BASE64}" alt="BEQ-HOLDING Logo" class="company-logo">
             <div class="header-text">
-                <h1>Lumir-AI Smart Trading Assistant</h1>
+                <h1>Lumir Smart Trading Platform</h1>
                 <p>Powered by BEQ-HOLDINGS</p>
             </div>
         </div>
@@ -800,24 +800,15 @@ with gr.Blocks(theme=custom_theme, css=CSS, title="LUMIR") as demo:
         # Add welcome message to new sessions
         if not session['history']:
             # Gradio format: [user_message, bot_response]
-            welcome_msg = [None, "👋 Xin chào! Tôi là Lumir-AI, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
+            welcome_msg = [None, "👋 Xin chào! Tôi là Lumir, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Trả lời các câu hỏi liên quan đến hệ thống LUMIR và LUMIR-AI\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
             session['history'] = [{"role": "assistant", "content": welcome_msg[1]}]  # Keep role-based for API
             initial_history = [welcome_msg]
         else:
             # Convert role-based history to Gradio format
-            api_history = load_session_history(session['session_id'])
-            initial_history = []
-            for turn in api_history:
-                if turn.get("role") == "user":
-                    initial_history.append([turn.get("content", ""), None])
-                elif turn.get("role") == "assistant":
-                    if initial_history and initial_history[-1][1] is None:
-                        initial_history[-1][1] = turn.get("content", "")
-                    else:
-                        initial_history.append([None, turn.get("content", "")])
-        
-        # Keep the current checkbox value instead of resetting to False
-                return session['session_id'], "", "", "", "", has_trading_data_checkbox.value, initial_history
+            initial_history = load_session_history(session['session_id'])
+
+        # Keep the current checkbox value; ensure empty strings for text inputs
+        return session['session_id'], "", "", "", "", has_trading_data_checkbox.value, initial_history
     
     def clear_chat_fields(has_trading_data_state):
         """Clear chat fields but preserve checkbox state"""
@@ -828,7 +819,7 @@ with gr.Blocks(theme=custom_theme, css=CSS, title="LUMIR") as demo:
         new_session = get_or_create_session()
         # Add welcome message to new session
         # Gradio format: [user_message, bot_response]
-        welcome_msg = [None, "👋 Xin chào! Tôi là Lumir-AI, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
+        welcome_msg = [None, "👋 Xin chào! Tôi là Lumir, trợ lý tài chính chuyên về trading.\n\n🔹 Tôi có thể giúp bạn:\n• Phân tích thị trường và xu hướng\n• Tư vấn chiến lược đầu tư\n• Trả lời các câu hỏi liên quan đến hệ thống LUMIR và LUMIR-AI\n• Giải đáp các câu hỏi về tài chính\n\nHãy cho tôi biết bạn cần hỗ trợ gì nhé! 😊"]
         new_session['history'] = [{"role": "assistant", "content": welcome_msg[1]}]  # Keep role-based for API
         return [welcome_msg], new_session['session_id'], "", "", "", has_trading_data
     

@@ -490,7 +490,8 @@ class LUMIRAPIEndpoints:
         self,
         question: str,
         excel_path: str,
-        language: str = "vi"
+        language: str = "vi",
+        has_trading_data: bool = False
     ) -> Dict[str, Any]:
         """
         Endpoint 4: Analyze trading data
@@ -499,6 +500,7 @@ class LUMIRAPIEndpoints:
             question: Question about trading
             excel_path: Excel file path
             language: Language
+            has_trading_data: Whether user has valid trading data
             
         Returns:
             Dict containing trading analysis result
@@ -506,6 +508,7 @@ class LUMIRAPIEndpoints:
         
         try:
             print(f"📈 Trading Endpoint - Question: {question}")
+            print(f"📊 Has Trading Data: {has_trading_data}")
             
             # Handle None or empty question - return empty response instead of error
             if question is None or question.strip() == "":
@@ -515,15 +518,17 @@ class LUMIRAPIEndpoints:
                     "success": True,
                     "question": question,
                     "excel_path": excel_path,
+                    "has_trading_data": has_trading_data,
                     "trading_response": "",
                     "timestamp": datetime.now().isoformat()
                 }
             
-            # Call trading agent (let it handle file validation)
+            # Call trading agent with has_trading_data flag
             inputs = {
                 "question": question,
                 "excel_path": excel_path,
-                "language": language
+                "language": language,
+                "has_trading_data": has_trading_data
             }
             
             result = self.trading_agent(inputs)  # Call the wrapper function directly
@@ -534,6 +539,7 @@ class LUMIRAPIEndpoints:
                 "success": True,
                 "question": question,
                 "excel_path": excel_path,
+                "has_trading_data": has_trading_data,
                 "trading_response": trading_response,
                 "timestamp": datetime.now().isoformat()
             }
@@ -731,7 +737,7 @@ class LUMIRAPIEndpoints:
                     decomposition_data.get("has_valid_trading_data") and excel_path):
                     print("📈 Calling Trading Agent...")
                     trading_result = self.trading_endpoint(
-                        decomposition_data["trading_question"], excel_path, language
+                        decomposition_data["trading_question"], excel_path, language, decomposition_data.get("has_valid_trading_data", False)
                     )
                     if trading_result["success"]:
                         trading_context = trading_result["trading_response"]
@@ -819,27 +825,74 @@ class LUMIRAPIEndpoints:
     # =========================================================================
     # ENDPOINT 8: CHATBOT RAG (retrieve → rerank → LLM)
     # =========================================================================
-    def chatbot_endpoint(self, question: str) -> Dict[str, Any]:
-        """Endpoint: RAG chatbot using chatbot.py pipeline."""
+    def chatbot_endpoint(self, question: str, user_name: str = "", user_birthday: str = "", username: str = "", trading_data: bool = False) -> Dict[str, Any]:
+        """
+        Endpoint: RAG chatbot using chatbot.py pipeline with intelligent user context analysis.
+        
+        Args:
+            question: User question
+            user_name: User's full name (optional)
+            user_birthday: User's birthday in DD/MM/YYYY format (optional)
+            username: Username in app (optional)
+            trading_data: Whether user has trading data (boolean)
+            
+        Returns:
+            Dict containing chatbot response with user context analysis
+        """
         try:
             from chatbot import build_chatbot
             from module.rag_orchestrator import RAGOrchestratorFactory
+            
             if self._chatbot is None:
                 orch = RAGOrchestratorFactory.create_optimal_orchestrator()
                 self._chatbot = build_chatbot(orch)
-            result = self._chatbot.answer(question)
+            
+            # Call chatbot with all user context parameters
+            result = self._chatbot.answer(
+                question=question,
+                user_name=user_name,
+                user_birthday=user_birthday,
+                username=username,
+                trading_data=trading_data
+            )
+            
+            # Extract user context for response
+            user_context = result.get("user_context", {})
+            suggestions = result.get("suggestions", "")
+            
             return {
                 "endpoint": "chatbot",
                 "success": True,
                 "question": question,
-                "data": result,
+                "user_context": {
+                    "is_logged_in": user_context.get("is_logged_in", False),
+                    "has_personal_info": user_context.get("has_personal_info", False),
+                    "has_trading_info": user_context.get("has_trading_info", False),
+                    "question_type": user_context.get("question_type", "general"),
+                    "info_sufficient": user_context.get("info_sufficient", True),
+                    "missing_info": user_context.get("missing_info", [])
+                },
+                "answer": result.get("answer", ""),
+                "suggestions": suggestions,
+                "retrieved": result.get("retrieved", 0),
+                "reranked": result.get("reranked", 0),
                 "timestamp": datetime.now().isoformat()
             }
+            
         except Exception as e:
             return {
                 "endpoint": "chatbot",
                 "success": False,
                 "error": str(e),
+                "question": question,
+                "user_context": {
+                    "is_logged_in": bool(username),
+                    "has_personal_info": bool(user_name and user_birthday),
+                    "has_trading_info": trading_data,
+                    "question_type": "unknown",
+                    "info_sufficient": False,
+                    "missing_info": ["system_error"]
+                },
                 "timestamp": datetime.now().isoformat()
             }
 
