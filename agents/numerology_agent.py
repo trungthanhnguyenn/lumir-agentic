@@ -40,27 +40,39 @@ mapping_definition = {
     "rational_thinking": """Tư duy lý trí là chỉ số phản ánh cách bạn phân tích thị trường và đưa ra quyết định giao dịch. Về cơ bản, chỉ số này nói lên nhiều điều về cách bạn xử lý thông tin và hành động trong những phiên thị trường biến động mạnh."""
 }
 
+tbi_definitions = {
+    "edi": "Emotional Drive Index - chỉ số này phản ánh khát khao hành vi sâu thẳm chi phối quyết định giao dịch. Nó lý giải cách trader phản ứng với thị trường và áp lực cảm xúc.",
+    "ppai": "Path Potential Alignment Index - đo lường mức độ liên kết giữa hành trình hành vi gốc (Path) và vai trò tiềm năng cần đạt (Potential). Chỉ số này cho trader biết những hành vi nào cần rèn luyện và điều chỉnh để vừa tốt nghiệp được bài học hành vi cốt lõi, vừa hoàn thành sứ mệnh giao dịch và tiến hóa thành phiên bản Elite Trader.",
+    "spi": "Skill Potential Index - cho thấy vai trò hành vi cốt lõi mà một trader cần phát huy để đạt đỉnh cao trong giao dịch. Khi bạn hoàn thiện chỉ số này bạn sẽ vừa thỏa mãn đam mê, vừa tạo ra tác động tích cực trong cộng đồng trader. Chỉ số `SPI` không chỉ phản ánh điểm mạnh hiện tại, mà còn chỉ ra năng lực tiềm ẩn cần khai thác để trở thành Elite Trader.",
+    "cmi": "Crisis Management Index - phản ánh cách trader ứng phó với khó khăn và áp lực trong giao dịch. Chỉ số này cho biết khả năng giữ vững sự tỉnh táo, phân tích tình huống và lựa chọn hành động đúng đắn khi thị trường biến động.",
+    "mpi": "Market Persona Index - phản ánh cách trader được thị trường và cộng đồng nhìn nhận thông qua hành vi, năng lượng và phong cách giao dịch mà họ thể hiện ra ngoài. Chỉ số này giúp trader phát đi “tín hiệu tính cách” tới thế giới – sự tự tin, thận trọng, sáng tạo hay quyết đoán – và giúp họ nhận biết mức độ nhất quán giữa bản chất bên trong và hình ảnh bên ngoài.",
+    "ri": "Resilience Index – phản ánh giai đoạn bạn đạt độ chín trong tư duy và sức bền giao dịch. Chỉ số này thể cho bạn biết thời điểm năng lượng, trải nghiệm và khả năng kiểm soát rủi ro được phát huy mạnh mẽ nhất. Chỉ số `RI` tập trung vào chiến lược, kỷ luật và quản trị vốn để tối ưu hiệu suất và xây dựng sự bền vững dài hạn trong hành trình trading.",
+    "ioci": "Inner Outer Coherence Index - là chỉ số đo lường mức độ hòa hợp giữa động lực nội tâm và cách bạn thể hiện ra bên ngoài trong giao dịch. Chỉ số `IOCI` đóng vai trò như chiếc cầu nối giữa cách bạn nhìn nhận bản thân và hình ảnh mà thị trường, cộng đồng thấy ở bạn. `IOCI` giúp trader nhận ra sự khác biệt giữa “tôi thật sự là ai” và “tôi đang thể hiện như thế nào”, từ đó đưa ra điều chỉnh để duy trì sự nhất quán, giảm hiểu lầm và củng cố niềm tin.",
+    "tai": "Trading Attitude Index - phản ánh thái độ và góc nhìn cốt lõi mà trader mang vào thị trường. Chỉ số `TAI` cho thấy cách bạn tiếp nhận tình huống, cơ hội và rủi ro trong từng giai đoạn giao dịch. Chỉ số này giúp bạn chủ động điều chỉnh thái độ để duy trì kỷ luật, tập trung và đón nhận giá trị tích cực từ thị trường."
+    
+}
+
 
 class IndicatorSelection(BaseModel):
-    selected_keys: List[str] = Field(description="Một danh sách các key chỉ số thần số học liên quan nhất đến câu hỏi của người dùng.")
+    selected_keys: List[str] = Field(description="A list of key numerology indicators most relevant to the user's question.")
 
 def _infer_keys_from_llm(question: str) -> List[str]:
     """
-    Sử dụng LLM để phân tích ngữ nghĩa câu hỏi và chọn các key chỉ số phù hợp.
+    Use LLM to analyze the semantic question and select the appropriate key indicators.
     
     Args:
-        question (str): Câu hỏi của người dùng.
+        question (str): The user's question.
         
     Returns:
-        List[str]: Danh sách các key chỉ số được chọn.
+        List[str]: The list of selected key indicators.
     """
     llm = get_openai_llm()
     parser = JsonOutputParser(pydantic_object=IndicatorSelection)
 
-    # Chuyển đổi mapping_definition thành chuỗi để đưa vào prompt
+    # Convert mapping_definition to string to insert into prompt
     indicator_definitions = "\n".join([f"- **{key}**: {value}" for key, value in mapping_definition.items()])
     
-    # Prompt nâng cao cho LLM
+    # Prompt for LLM
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
@@ -181,7 +193,7 @@ def _infer_keys_from_llm(question: str) -> List[str]:
         ("human", "Câu hỏi của người dùng: {question}"),
     ])
     
-    # Chuỗi xử lý
+    # Processing string
     key_selection_chain = (
         {
             "question": RunnablePassthrough(), 
@@ -194,16 +206,16 @@ def _infer_keys_from_llm(question: str) -> List[str]:
     )
 
     try:
-        # Gọi chuỗi và lấy kết quả
+        # Call chain and get result
         result = key_selection_chain.invoke({"question": question})
         selected_keys = result.get("selected_keys", [])
         
-        # Đảm bảo các chỉ số ưu tiên luôn có mặt
+        # Ensure the priority indicators always present
         final_keys = list(dict.fromkeys(["life_path", "personal_day"] + selected_keys))
         
-        # Giới hạn số lượng chỉ số để tránh quá tải
+        # Limit the number of indicators to avoid overloading
         if len(final_keys) > 8:
-            # Ưu tiên giữ lại các chỉ số quan trọng nhất
+            # Priority indicators
             priority_indicators = ["life_path", "personal_day", "life_purpose", "balance", "soul", "personality"]
             final_keys = [key for key in final_keys if key in priority_indicators or len([k for k in final_keys if k in priority_indicators]) < 6]
             final_keys = final_keys[:8]
@@ -212,7 +224,7 @@ def _infer_keys_from_llm(question: str) -> List[str]:
         return final_keys
         
     except Exception as e:
-        print(f"❌ Lỗi khi gọi LLM để chọn key: {e}")
+        print(f"Error when calling LLM to select key: {e}")
         # Fallback to basic indicators
         return ["life_path", "personal_day"]
 
@@ -319,7 +331,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     cal = CalNum(dob=profile["dob"], name=profile["name"], current_date=normalized_current)
     numbers = cal.get_personal_date_num()
 
-    # Sử dụng LLM để chọn indicators thay vì keyword matching
+    # Use LLM to select indicators
     selected_keys = _infer_keys_from_llm(question)
 
     # Get age_milestones from CalNum calculation
@@ -407,8 +419,8 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         pass
 
     # Fetch documents for all selected keys
-    print(f"�� Fetching documents for {len(selected_keys)} selected keys...")
-    print(f"📅 Current milestone info: {milestone_info}")
+    print(f"Fetching documents for {len(selected_keys)} selected keys...")
+    print(f"Current milestone info: {milestone_info}")
     
     for key in selected_keys:
         print(f"  Processing key: {key}")
@@ -421,7 +433,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                 milestone_value = numbers.get("milestone_phase", {}).get(f"milestone_{milestone_ord}")
                 if not isinstance(milestone_value, int):
                     docs[f"{key}_error"] = f"Invalid milestone value: {milestone_value}"
-                    print(f"    ⚠️ Invalid milestone value: {milestone_value}")
+                    print(f"Invalid milestone value: {milestone_value}")
                     continue
                 try:
                     doc_content = s3.get_document_text_for_numerology(
@@ -431,16 +443,16 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                     )
                     if doc_content:
                         docs[key] = doc_content
-                        print(f"    ✅ Milestone doc fetched: {len(str(doc_content))} chars")
+                        print(f"Milestone doc fetched: {len(str(doc_content))} chars")
                     else:
                         docs[f"{key}_error"] = "Empty content"
-                        print(f"    ⚠️ Milestone doc fetch returned empty content")
+                        print(f"Milestone doc fetch returned empty content")
                 except Exception as e:
                     docs[f"{key}_error"] = str(e)
-                    print(f"    ❌ Milestone doc exception: {e}")
+                    print(f"Milestone doc exception: {e}")
                 continue
             except Exception as e:
-                print(f"    ⚠️ Invalid milestone key '{key}': {e}")
+                print(f"Invalid milestone key '{key}': {e}")
 
         if key.startswith("challenge_"):
             try:
@@ -449,7 +461,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                 challenge_value = numbers.get("challenge", {}).get(f"challenge_{challenge_ord}")
                 if not isinstance(challenge_value, int):
                     docs[f"{key}_error"] = f"Invalid challenge value: {challenge_value}"
-                    print(f"    ⚠️ Invalid challenge value: {challenge_value}")
+                    print(f"Invalid challenge value: {challenge_value}")
                     continue
                 try:
                     doc_content = s3.get_document_text_for_numerology(
@@ -459,78 +471,77 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                     )
                     if doc_content:
                         docs[key] = doc_content
-                        print(f"    ✅ Challenge doc fetched: {len(str(doc_content))} chars")
+                        print(f"Challenge doc fetched: {len(str(doc_content))} chars")
                     else:
                         docs[f"{key}_error"] = "Empty content"
-                        print(f"    ⚠️ Challenge doc fetch returned empty content")
+                        print(f"Challenge doc fetch returned empty content")
                 except Exception as e:
                     docs[f"{key}_error"] = str(e)
-                    print(f"    ❌ Challenge doc exception: {e}")
+                    print(f"Challenge doc exception: {e}")
                 continue
             except Exception as e:
-                print(f"    ⚠️ Invalid challenge key '{key}': {e}")
+                print(f"Invalid challenge key '{key}': {e}")
 
         if key in indicator_mapping:
             s3_type, number_value = indicator_mapping[key]
-            print(f"    S3 type: {s3_type}, number value: {number_value}")
-            
-            # Handle single integer values
+
             if isinstance(number_value, int):
                 try:
                     doc_content = s3.get_document_text_for_numerology(s3_type, number_value)
-                    if doc_content and not doc_content.startswith("Lỗi"):
+                    if doc_content and not doc_content.startswith("Error"):
                         docs[key] = doc_content
-                        print(f"    ✅ Document fetched: {len(doc_content)} chars")
+                        print(f"Document fetched: {len(doc_content)} chars")
                     else:
                         docs[f"{key}_error"] = doc_content
-                        print(f"    ⚠️ Document fetch failed: {doc_content}")
+                        print(f"Document fetch failed: {doc_content}")
                 except Exception as e:
                     docs[f"{key}_error"] = str(e)
-                    print(f"    ❌ Exception: {e}")
+                    print(f"Exception: {e}")
             # Handle list values (for passion and missing_aspects)
             elif isinstance(number_value, list) and len(number_value) > 0:
-                print(f"    📋 Processing list of {len(number_value)} values: {number_value}")
+                print(f"Processing list of {len(number_value)} values: {number_value}")
                 combined_content = []
                 for i, num in enumerate(number_value):
                     if isinstance(num, int):
                         try:
                             doc_content = s3.get_document_text_for_numerology(s3_type, num)
-                            if doc_content and not doc_content.startswith("Lỗi"):
+                            if doc_content and not doc_content.startswith("Error"):
                                 combined_content.append(f"--- Số {num} ---\n{doc_content}")
-                                print(f"      ✅ Document {i+1} fetched for number {num}: {len(doc_content)} chars")
+                                # print(f"Document {i+1} fetched for number {num}: {len(doc_content)} chars")
                             else:
-                                print(f"      ⚠️ Document {i+1} fetch failed for number {num}: {doc_content}")
+                                # print(f"Document {i+1} fetch failed for number {num}: {doc_content}")
+                                pass
                         except Exception as e:
-                            print(f"      ❌ Exception for number {num}: {e}")
+                            print(f"Exception for number {num}: {e}")
                     else:
-                        print(f"      ⚠️ Invalid number in list: {num}")
+                        print(f"Invalid number in list: {num}")
                 
                 if combined_content:
                     docs[key] = "\n\n".join(combined_content)
-                    print(f"    ✅ Combined documents fetched: {len(docs[key])} chars total")
+                    print(f"Combined documents fetched: {len(docs[key])} chars total")
                 else:
                     docs[f"{key}_error"] = "No valid documents could be fetched from the list"
-                    print(f"    ⚠️ No valid documents fetched from list")
+                    print(f"No valid documents fetched from list")
             else:
                 docs[f"{key}_error"] = f"Invalid number value: {number_value}"
-                print(f"    ⚠️ Invalid number value: {number_value}")
+                print(f"Invalid number value: {number_value}")
         else:
             # For indicators not in S3 mapping, use the calculated values and meanings
             print(f"    Using calculated value for: {key}")
             
             if key in numbers:
                 if key not in docs:
-                    docs[key] = f"Giá trị: {numbers[key]}"
+                    docs[key] = f"Value: {numbers[key]}"
             elif key == milestone_info["milestone_name"]:
                 # Current milestone with age context
                 if key not in docs:
                     milestone_value = numbers.get("milestone_phase", {}).get(f"milestone_{milestone_info['current_milestone']}")
-                    docs[key] = f"{milestone_info['milestone_description']} - Giá trị: {milestone_value}"
+                    docs[key] = f"{milestone_info['milestone_description']} - Value: {milestone_value}"
             elif key == milestone_info["challenge_name"]:
                 # Current challenge with age context
                 if key not in docs:
                     challenge_value = numbers.get("challenge", {}).get(f"challenge_{milestone_info['current_milestone']}")
-                    docs[key] = f"{milestone_info['challenge_description']} - Giá trị: {challenge_value}"
+                    docs[key] = f"{milestone_info['challenge_description']} - Value: {challenge_value}"
             elif key.startswith("challenge_"):
                 challenge_num = key.split("_")[1]
                 challenge_value = numbers.get("challenge", {}).get(f"challenge_{challenge_num}")
@@ -543,7 +554,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                     docs[key] = f"Giai đoạn {milestone_num}: {milestone_value}"
             else:
                 if key not in docs:
-                    docs[key] = f"Giá trị: {numbers.get(key, 'N/A')}"
+                    docs[key] = f"Value: {numbers.get(key, 'N/A')}"
 
     # Provide mapping meanings for selected keys
     meanings: Dict[str, str] = {}
@@ -570,7 +581,7 @@ def build_numerology_agent():
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
-            _read_prompt() + "\n\n## 🌐 LANGUAGE INSTRUCTION\n**IMPORTANT**: You MUST respond in the language specified by the user. If the user's language is 'vi' (Vietnamese), respond in Vietnamese. If the user's language is 'en' (English), respond in English. If the user's language is 'zh' (Chinese), respond in Chinese. Maintain this language consistency throughout your response.\n\nBạn luôn ưu tiên hai thư mục: Đường đời (life_path) và Ngày cá nhân (personal_day).\nTận dụng dữ liệu 'numbers', 'meanings' và 'docs' để trả lời ngắn gọn, thực tiễn cho trader.",
+            _read_prompt() + "\n\n## LANGUAGE INSTRUCTION\n**IMPORTANT**: You MUST respond in the language specified by the user. If the user's language is 'vi' (Vietnamese), respond in Vietnamese. If the user's language is 'en' (English), respond in English. If the user's language is 'zh' (Chinese), respond in Chinese. Maintain this language consistency throughout your response.\n\nYou always prioritize two folders: Life_path (life_path) and Personal_day (personal_day).\nUtilize the 'numbers', 'meanings' and 'docs' data to answer concisely and practically for traders.",
         ),
         (
             "human",

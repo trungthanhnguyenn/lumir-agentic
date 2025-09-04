@@ -17,13 +17,13 @@ from module.rag_orchestrator import RAGOrchestratorFactory
 
 class MultiAgentOrchestrator:
     """
-    Multi-Agent Orchestrator - Điều phối hệ thống LUMIR-AI thông minh
+    Multi-Agent Orchestrator - Orchestrate LUMIR-AI smart multi-agent
     
-    Hệ thống bao gồm:
-    1. Question Decomposition Agent - Phân tích câu hỏi thông minh
-    2. Intelligent Routing - Quyết định có gọi agent hay không
-    3. LUMIR-AI Synthesis Agent - Tổng hợp và trả lời tự nhiên
-    4. Multi-turn Memory - Ghi nhớ context hội thoại
+    System includes:
+    1. Question Decomposition Agent - Smart question decomposition
+    2. Intelligent Routing - Determine if agent should be called
+    3. LUMIR-AI Synthesis Agent - Synthesize and answer naturally
+    4. Multi-turn Memory - Remember conversation context
     """
     
     def __init__(self):
@@ -33,16 +33,16 @@ class MultiAgentOrchestrator:
         self.lumir_agent = build_lumir_with_memory()
         self.memory_agent = build_memory_agent()
         
-        # Khởi tạo LUMIRChatbot cho general questions
+        # Initialize LUMIRChatbot for general questions
         try:
             self.rag_orchestrator = RAGOrchestratorFactory.create_optimal_orchestrator()
             self.lumir_chatbot = build_chatbot(self.rag_orchestrator)
-            print("✅ LUMIRChatbot initialized successfully")
+            print("LUMIRChatbot initialized successfully")
         except Exception as e:
-            print(f"⚠️ Warning: LUMIRChatbot initialization failed: {e}")
+            print(f"Warning: LUMIRChatbot initialization failed: {e}")
             self.lumir_chatbot = None
         
-        # Memory cho multi-turn chat
+        # Memory for multi-turn chat
         self.conversation_history = []
         
     def process_user_question(
@@ -55,42 +55,42 @@ class MultiAgentOrchestrator:
         username: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Xử lý câu hỏi của user qua hệ thống multi-agent thông minh
+        Process user question through smart multi-agent system
         
         Args:
-            question: Câu hỏi của user
-            user_name: Tên user
-            birthday: Ngày sinh
-            excel_path: Đường dẫn file Excel
-            language: Ngôn ngữ
+            question: User question
+            user_name: User name
+            birthday: Birthday
+            excel_path: Excel file path
+            language: Language
             username: Username
             
         Returns:
-            Dict chứa kết quả xử lý
+            Dict containing the result of processing
         """
         
         start_time = datetime.now()
         
         try:
-            print(f"🚀 Bắt đầu xử lý câu hỏi: {question}")
+            print(f"Start processing question: {question}")
             
-            # Kiểm tra memory cache trước
+            # Check memory cache first
             user_uuid = self.memory_agent._generate_user_uuid(user_name, birthday, username)
             memory_query = self.memory_agent.query_memory(
                 user_uuid, question, self.conversation_history, language
             )
             
             if memory_query.can_answer and memory_query.confidence > 0.7:
-                print(f"✅ Trả lời từ cache (confidence: {memory_query.confidence:.2f})")
+                print(f"Answer from cache (confidence: {memory_query.confidence:.2f})")
                 
-                # Cập nhật conversation history
+                # Update conversation history
                 self._update_conversation_history(question, memory_query.suggested_response, user_name, birthday, username, language)
                 
                 return {
                     "success": True,
                     "question": question,
                     "response": memory_query.suggested_response,
-                    "processing_time": 0.1,  # Cache response nhanh
+                    "processing_time": 0.1,  # Cache response quickly
                     "question_type": "cached_response",
                     "decomposition_result": {"source": "memory_cache"},
                     "context_summary": {
@@ -105,10 +105,10 @@ class MultiAgentOrchestrator:
                     "cache_confidence": memory_query.confidence
                 }
             else:
-                print(f"❌ Cache không đủ thông tin (confidence: {memory_query.confidence:.2f})")
+                print(f"Cache không đủ thông tin (confidence: {memory_query.confidence:.2f})")
             
-            # Bước 1: Phân tích câu hỏi một cách thông minh
-            print("🔍 Bước 1: Phân tích câu hỏi thông minh...")
+            # Bước 1: Smart question decomposition
+            print("Step 1: Smart question decomposition...")
             decomposition_result = self.question_decomposer(
                 question=question,
                 user_name=user_name,
@@ -119,41 +119,41 @@ class MultiAgentOrchestrator:
                 conversation_history=self.conversation_history
             )
             
-            print(f"✅ Phân tích hoàn thành: {decomposition_result}")
+            print(f"Analysis completed: {decomposition_result}")
             
-            # Bước 2: Quyết định routing thông minh
+            # Step 2: Smart routing decision
             question_type = decomposition_result.get("question_type", "general_chat")
             should_call_agents = decomposition_result.get("should_call_agents", False)
             
-            print(f"🎯 Loại câu hỏi: {question_type}")
-            print(f"🔀 Có gọi agent: {should_call_agents}")
+            print(f"Question type: {question_type}")
+            print(f"Call agent: {should_call_agents}")
             
             # Bước 3: Xử lý theo loại câu hỏi
             if should_call_agents:
-                # Gọi các agent chuyên biệt
-                print("🔄 Bước 3: Gọi các agent chuyên biệt...")
+                # Call specialized agents
+                print("Step 3: Call specialized agents...")
                 numerology_context, trading_context = self._execute_specialized_agents(
                     decomposition_result, user_name, birthday, excel_path, language
                 )
             else:
-                # Không gọi agent - xử lý trực tiếp
-                print("💬 Bước 3: Xử lý trực tiếp (không gọi agent)...")
+                # No agent - process directly
+                print("Step 3: Process directly (no agent)...")
                 numerology_context = ""
                 trading_context = ""
                 
-                # Xử lý general_chat với LUMIRChatbot nếu có
+                # Process general_chat with LUMIRChatbot if available
                 if question_type == "general_chat" and self.lumir_chatbot:
-                    print("🤖 Sử dụng LUMIRChatbot cho general question...")
+                    print("Using LUMIRChatbot for general question...")
                     try:
                         chatbot_result = self.lumir_chatbot.answer(question)
                         if chatbot_result.get("success"):
-                            # Trả lời trực tiếp từ chatbot, không cần synthesis
+                            # Direct response from chatbot, no synthesis
                             chatbot_response = chatbot_result.get("answer", "")
                             
-                            # Cập nhật conversation history
+                            # Update conversation history
                             self._update_conversation_history(question, chatbot_response, user_name, birthday, username, language)
                             
-                            # Tạo kết quả cuối cùng
+                            # Create final result
                             end_time = datetime.now()
                             processing_time = (end_time - start_time).total_seconds()
                             
@@ -176,17 +176,17 @@ class MultiAgentOrchestrator:
                                 "chatbot_result": chatbot_result
                             }
                             
-                            print(f"✅ Xử lý general_chat hoàn thành trong {processing_time:.2f}s")
+                            print(f"General_chat completed in {processing_time:.2f}s")
                             return result
                         else:
-                            print(f"⚠️ LUMIRChatbot không thể trả lời: {chatbot_result.get('reason', 'unknown')}")
+                            print(f"LUMIRChatbot cannot answer: {chatbot_result.get('reason', 'unknown')}")
                             # Fallback to normal synthesis flow
                     except Exception as e:
-                        print(f"❌ LUMIRChatbot error: {e}")
+                        print(f"LUMIRChatbot error: {e}")
                         # Fallback to normal synthesis flow
             
-            # Bước 4: Tổng hợp với LUMIR-AI
-            print("🤖 Bước 4: Tổng hợp với LUMIR-AI...")
+            # Step 4: Synthesize with LUMIR-AI
+            print("Step 4: Synthesize with LUMIR-AI...")
             
             lumir_response = self.lumir_agent(
                 question=question,
@@ -203,10 +203,10 @@ class MultiAgentOrchestrator:
                 conversation_history=self.conversation_history
             )
             
-            # Cập nhật conversation history
+            # Update conversation history
             self._update_conversation_history(question, lumir_response, user_name, birthday, username, language)
             
-            # Tạo kết quả cuối cùng
+            # Create final result
             end_time = datetime.now()
             processing_time = (end_time - start_time).total_seconds()
             
@@ -227,12 +227,12 @@ class MultiAgentOrchestrator:
                 "timestamp": end_time.isoformat()
             }
             
-            print(f"✅ Xử lý hoàn thành trong {processing_time:.2f}s")
+            print(f"Processing completed in {processing_time:.2f}s")
             return result
             
         except Exception as e:
-            error_msg = f"Lỗi xử lý: {str(e)}"
-            print(f"❌ {error_msg}")
+            error_msg = f"Processing error: {str(e)}"
+            print(f"{error_msg}")
             
             # Fallback response
             fallback_response = self._create_fallback_response(
@@ -256,12 +256,12 @@ class MultiAgentOrchestrator:
         excel_path: str,
         language: str
     ) -> tuple[str, str]:
-        """Thực thi các agent chuyên biệt song song"""
+        """Execute specialized agents in parallel"""
         
         numerology_context = ""
         trading_context = ""
         
-        # Tạo tasks cho parallel execution
+        # Create tasks for parallel execution
         tasks_to_run = []
         
         # Numerology task
@@ -281,7 +281,7 @@ class MultiAgentOrchestrator:
                  trading_question, excel_path, language)
             )
         
-        # Thực thi song song
+        # Execute in parallel
         if tasks_to_run:
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 future_to_task_name = {}
@@ -298,12 +298,12 @@ class MultiAgentOrchestrator:
                         elif task_name == "trading":
                             trading_context = result
                     except Exception as e:
-                        print(f"❌ {task_name} agent failed: {e}")
+                        print(f"{task_name} agent failed: {e}")
         
         return numerology_context, trading_context
     
     def _execute_numerology_agent(self, question: str, user_name: str, birthday: str, language: str = "vi") -> str:
-        """Thực thi numerology agent"""
+        """Execute numerology agent"""
         try:
             inputs = {
                 "question": question,
@@ -314,11 +314,11 @@ class MultiAgentOrchestrator:
             result = self.numerology_agent.invoke(inputs)
             return str(result) if result else ""
         except Exception as e:
-            print(f"❌ Numerology agent error: {e}")
+            print(f"Numerology agent error: {e}")
             return ""
     
     def _execute_trading_agent(self, question: str, excel_path: str, language: str = "vi") -> str:
-        """Thực thi trading agent"""
+        """Execute trading agent"""
         try:
             inputs = {
                 "question": question,
@@ -328,11 +328,11 @@ class MultiAgentOrchestrator:
             result = self.trading_agent.invoke(inputs)
             return str(result) if result else ""
         except Exception as e:
-            print(f"❌ Trading agent error: {e}")
+            print(f"Trading agent error: {e}")
             return ""
     
     def _update_conversation_history(self, question: str, response: str, user_name: str = None, birthday: str = None, username: str = None, language: str = "vi"):
-        """Cập nhật conversation history và memory cache"""
+        """Update conversation history and memory cache"""
         turn_info = {
             "user_question": question,
             "lumir_response": response,
@@ -341,27 +341,27 @@ class MultiAgentOrchestrator:
         
         self.conversation_history.append(turn_info)
         
-        # Giới hạn history để tránh quá tải
+        # Limit history to avoid overloading
         if len(self.conversation_history) > 10:
             self.conversation_history = self.conversation_history[-10:]
         
-        # Cập nhật memory cache nếu có thông tin user
+        # Update memory cache if user information is available
         if user_name and birthday and username:
             try:
                 user_uuid = self.memory_agent._generate_user_uuid(user_name, birthday, username)
                 turn_number = len(self.conversation_history)
                 
-                # Cập nhật memory cache
+                # Update memory cache
                 self.memory_agent.update_memory(
                     user_uuid, question, response, turn_number, language
                 )
                 
-                print(f"🧠 Memory cache updated for user {user_uuid}")
+                print(f"Memory cache updated for user {user_uuid}")
             except Exception as e:
-                print(f"❌ Error updating memory cache: {e}")
+                print(f"Error updating memory cache: {e}")
     
     def _determine_response_type(self, question_type: str, numerology_context: str, trading_context: str) -> str:
-        """Xác định loại response dựa trên question_type"""
+        """Determine response type based on question_type"""
         if question_type == "general_chat":
             return "general_chat"
         elif question_type == "needs_more_info":
@@ -376,7 +376,7 @@ class MultiAgentOrchestrator:
             return "general"
     
     def _create_fallback_response(self, question: str, user_name: str, username: str, language: str) -> str:
-        """Tạo fallback response khi có lỗi"""
+        """Create fallback response when error occurs"""
         
         if language == "en":
             return f"""I apologize, {username}. I'm experiencing some technical difficulties right now.
@@ -389,7 +389,7 @@ class MultiAgentOrchestrator:
 **For Personalized Advice:**
 Please try again later or contact support for assistance. I'm here to help you with your trading journey!"""
         else:
-            return f"""Xin lỗi {username}, tôi đang gặp một số vấn đề kỹ thuật.
+            return f"""I apologize {username}, I'm experiencing some technical issues.
 
 **Lời khuyên chung:**
 • Tập trung vào **quản lý rủi ro** khi giao dịch
@@ -400,15 +400,15 @@ Please try again later or contact support for assistance. I'm here to help you w
 Vui lòng thử lại sau hoặc liên hệ hỗ trợ để được trợ giúp. Tôi luôn sẵn sàng hỗ trợ bạn trong hành trình trading!"""
     
     def get_conversation_history(self) -> List[Dict[str, Any]]:
-        """Lấy conversation history"""
+        """Get conversation history"""
         return self.conversation_history.copy()
     
     def clear_conversation_history(self):
-        """Xóa conversation history"""
+        """Clear conversation history"""
         self.conversation_history = []
     
     def get_system_status(self) -> Dict[str, Any]:
-        """Lấy trạng thái hệ thống"""
+        """Get system status"""
         return {
             "status": "operational",
             "agents": {
@@ -423,7 +423,7 @@ Vui lòng thử lại sau hoặc liên hệ hỗ trợ để được trợ giú
         }
     
     def get_memory_status(self, user_name: str, birthday: str, username: str) -> Dict[str, Any]:
-        """Lấy trạng thái memory cache của user"""
+        """Get memory cache status of user"""
         if not all([user_name, birthday, username]):
             return {"error": "Missing user information"}
         
@@ -434,7 +434,7 @@ Vui lòng thử lại sau hoặc liên hệ hỗ trợ để được trợ giú
             return {"error": str(e)}
     
     def clear_user_memory(self, user_name: str, birthday: str, username: str) -> Dict[str, Any]:
-        """Xóa memory cache của user"""
+        """Clear memory cache of user"""
         if not all([user_name, birthday, username]):
             return {"error": "Missing user information"}
         
@@ -446,7 +446,7 @@ Vui lòng thử lại sau hoặc liên hệ hỗ trợ để được trợ giú
             return {"error": str(e)}
 
 
-# Factory function để tạo orchestrator
+# Factory function to build orchestrator
 def build_multi_agent_orchestrator() -> MultiAgentOrchestrator:
     """
     Build multi-agent orchestrator

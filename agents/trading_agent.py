@@ -38,9 +38,9 @@ def _prepare_trading_data(input_dict: dict) -> dict:
             prof = input_dict["profile"]
             validator.validate_profile(prof.get("user_name"), prof.get("birthday"))
 
-        # Kiểm tra xem có file_path không
+        # Check if file_path is provided
         if not excel_path:
-            print("⚠️ Không có file trading data được cung cấp")
+            print("No trading data provided")
             return {
                 "question": question,
                 "language": language,
@@ -61,11 +61,11 @@ def _prepare_trading_data(input_dict: dict) -> dict:
                 "error_type": "missing_data"
             }
 
-        # Sử dụng trading tool mới để phân tích - hỗ trợ cả file path và trading data
+        # Use new trading tool to analyze - support both file path and trading data from endpoint
         trading_analysis = analyze_trading_data(
             file_path=excel_path, 
             question=question,
-            trading_data=input_dict.get("trading_data"),  # Dữ liệu từ API endpoint
+            trading_data=input_dict.get("trading_data"),  # Data from API endpoint
             excel_path=excel_path
         )
         
@@ -79,12 +79,12 @@ def _prepare_trading_data(input_dict: dict) -> dict:
                 "has_trading_data": False
             }
         
-        # Lấy kết quả từ trading tool
+        # Get result from trading tool
         trading_result = trading_analysis["full_result"]
         analysis_result = trading_analysis["analysis_result"]
         comprehensive_report = trading_analysis["report"]
         
-        # Create a comprehensive summary for the agent (structured JSON)
+        # Create a comprehensive summary for the agent (structured JSON) - summary for the agent
         data_summary = {
             "total_trades": trading_result["trades"],
             "total_profit": trading_result["net_profit"],
@@ -103,7 +103,7 @@ def _prepare_trading_data(input_dict: dict) -> dict:
             } if 'close_time' in trading_analysis["data"].columns else None
         }
         
-        # Flatten the data structure for the prompt template
+        # Flatten the data structure for the prompt template - summary for the prompt
         prompt_data = {
             "question": question,
             "total_trades": data_summary["total_trades"],
@@ -125,7 +125,7 @@ def _prepare_trading_data(input_dict: dict) -> dict:
         return prompt_data
         
     except Exception as e:
-        print(f"❌ Lỗi trong _prepare_trading_data: {e}")
+        print(f"Error in _prepare_trading_data: {e}")
         return {
             "question": question,
             "error": str(e),
@@ -184,43 +184,43 @@ Báo cáo chi tiết:
         # Prepare the data first
         prepared_data = _prepare_trading_data(inputs)
         
-        # Kiểm tra flag has_trading_data từ endpoint
+        # Check flag has_trading_data from endpoint
         has_trading_data = inputs.get("has_trading_data", False)
         
-        # Nếu endpoint báo không có trading data, trả về lời khuyên chung
+        # If endpoint says no trading data, return general advice
         if not has_trading_data:
             return f"""
-🔍 **PHÂN TÍCH CÂU HỎI**: {prepared_data['question']}
+**PHÂN TÍCH CÂU HỎI**: {prepared_data['question']}
 
-⚠️ **TRẠNG THÁI**: Không có dữ liệu trading để phân tích
+**TRẠNG THÁI**: Không có dữ liệu trading để phân tích
 
-💡 **LỜI KHUYÊN CHUNG DÀNH CHO TRADER**:
+**LỜI KHUYÊN CHUNG DÀNH CHO TRADER**:
 
-🎯 **Nguyên tắc cơ bản**:
+**Nguyên tắc cơ bản**:
 • Luôn có kế hoạch giao dịch rõ ràng trước khi vào lệnh
 • Sử dụng stop-loss và take-profit để quản lý rủi ro
 • Không bao giờ đầu tư quá 2-5% vốn vào một lệnh
 • Ghi chép lại mọi giao dịch để học hỏi
 
-🧠 **Tâm lý giao dịch**:
+**Tâm lý giao dịch**:
 • Kiểm soát cảm xúc - không để FOMO hoặc sợ hãi chi phối
 • Chấp nhận thua lỗ là một phần của trading
 • Kiên nhẫn chờ cơ hội tốt thay vì giao dịch liên tục
 • Tập trung vào quá trình thay vì kết quả ngắn hạn
 
-📊 **Quản lý vốn**:
+**Quản lý vốn**:
 • Xác định rõ mức rủi ro chấp nhận được
 • Đa dạng hóa danh mục đầu tư
 • Không sử dụng đòn bẩy quá cao
 • Luôn giữ một phần vốn dự phòng
 
-🚀 **Để được tư vấn cụ thể và cá nhân hóa**:
+**Để được tư vấn cụ thể và cá nhân hóa**:
 • **Đăng nhập vào hệ thống LUMIR-AI** với thông tin cá nhân
 • **Cung cấp dữ liệu trading** (file Excel) để phân tích chi tiết
 • **Kết nối với numerology analysis** để hiểu tính cách trading phù hợp
 • **Nhận Behavioral Report** để phát hiện patterns và cải thiện
 
-📈 **Các bước tiếp theo**:
+**Các bước tiếp theo**:
 1. Tạo tài khoản và đăng nhập vào LUMIR-AI
 2. Cung cấp thông tin cá nhân (tên, ngày sinh)
 3. Upload file Excel chứa lịch sử giao dịch
@@ -229,42 +229,42 @@ Báo cáo chi tiết:
 Bạn có muốn tôi hướng dẫn cách bắt đầu với LUMIR-AI không?
 """
         
-        # Kiểm tra xem có trading data thực tế không
+        # Check if there is actual trading data
         if not prepared_data.get("has_trading_data", False):
-            # Trường hợp không có trading data - đưa ra lời khuyên chung
+            # Case with no trading data - give general advice
             if prepared_data.get("error_type") == "missing_data":
                 return f"""
-🔍 **PHÂN TÍCH CÂU HỎI**: {prepared_data['question']}
+**PHÂN TÍCH CÂU HỎI**: {prepared_data['question']}
 
-⚠️ **TRẠNG THÁI**: Không có dữ liệu trading để phân tích
+**TRẠNG THÁI**: Không có dữ liệu trading để phân tích
 
-💡 **LỜI KHUYÊN CHUNG DÀNH CHO TRADER**:
+**LỜI KHUYÊN CHUNG DÀNH CHO TRADER**:
 
-🎯 **Nguyên tắc cơ bản**:
+**Nguyên tắc cơ bản**:
 • Luôn có kế hoạch giao dịch rõ ràng trước khi vào lệnh
 • Sử dụng stop-loss và take-profit để quản lý rủi ro
 • Không bao giờ đầu tư quá 2-5% vốn vào một lệnh
 • Ghi chép lại mọi giao dịch để học hỏi
 
-🧠 **Tâm lý giao dịch**:
+**Tâm lý giao dịch**:
 • Kiểm soát cảm xúc - không để FOMO hoặc sợ hãi chi phối
 • Chấp nhận thua lỗ là một phần của trading
 • Kiên nhẫn chờ cơ hội tốt thay vì giao dịch liên tục
 • Tập trung vào quá trình thay vì kết quả ngắn hạn
 
-📊 **Quản lý vốn**:
+**Quản lý vốn**:
 • Xác định rõ mức rủi ro chấp nhận được
 • Đa dạng hóa danh mục đầu tư
 • Không sử dụng đòn bẩy quá cao
 • Luôn giữ một phần vốn dự phòng
 
-🚀 **Để được tư vấn cụ thể và cá nhân hóa**:
+**Để được tư vấn cụ thể và cá nhân hóa**:
 • **Đăng nhập vào hệ thống LUMIR-AI** với thông tin cá nhân
 • **Cung cấp dữ liệu trading** (file Excel) để phân tích chi tiết
 • **Kết nối với numerology analysis** để hiểu tính cách trading phù hợp
 • **Nhận Behavioral Report** để phát hiện patterns và cải thiện
 
-📈 **Các bước tiếp theo**:
+**Các bước tiếp theo**:
 1. Tạo tài khoản và đăng nhập vào LUMIR-AI
 2. Cung cấp thông tin cá nhân (tên, ngày sinh)
 3. Upload file Excel chứa lịch sử giao dịch
@@ -274,19 +274,19 @@ Bạn có muốn tôi hướng dẫn cách bắt đầu với LUMIR-AI không?
 """
             elif prepared_data.get("error_type") == "file_error":
                 return f"""
-❌ **LỖI ĐỌC FILE**: Không thể đọc file Excel
+**LỖI ĐỌC FILE**: Không thể đọc file Excel
 
-🔍 **Câu hỏi**: {prepared_data['question']}
+**Câu hỏi**: {prepared_data['question']}
 
-⚠️ **Vấn đề**: File Excel có thể bị hỏng hoặc không đúng format
+**Vấn đề**: File Excel có thể bị hỏng hoặc không đúng format
 
-🔧 **Nguyên nhân có thể**:
+**Nguyên nhân có thể**:
 • File bị hỏng trong quá trình upload
 • File không phải định dạng Excel (.xlsx, .xls)
 • File có encoding không tương thích
 • File quá lớn hoặc quá nhỏ
 
-💡 **Giải pháp**:
+**Giải pháp**:
 1. **Kiểm tra file**: Đảm bảo file là .xlsx hoặc .xls
 2. **Thử lại**: Upload lại file Excel
 3. **Format file**: Đảm bảo file có các cột cần thiết:
@@ -296,7 +296,7 @@ Bạn có muốn tôi hướng dẫn cách bắt đầu với LUMIR-AI không?
    - net_profit (lợi nhuận ròng)
 4. **Liên hệ hỗ trợ**: Nếu vẫn gặp vấn đề
 
-📋 **Format Excel chuẩn**:
+**Format Excel chuẩn**:
 | symbol | side | close_time | net_profit | ... |
 |--------|------|------------|------------|-----|
 | EURUSD | BUY  | 2024-01-01 | 100.50     | ... |
@@ -304,15 +304,15 @@ Bạn có muốn tôi hướng dẫn cách bắt đầu với LUMIR-AI không?
 Bạn có thể thử upload lại file không?
 """
             else:
-                # Trường hợp có lỗi khác
+                # Other error
                 return f"""
-❌ **LỖI PHÂN TÍCH**: {prepared_data.get('error', 'Unknown error')}
+**LỖI PHÂN TÍCH**: {prepared_data.get('error', 'Unknown error')}
 
-🔍 **Câu hỏi**: {prepared_data['question']}
+**Câu hỏi**: {prepared_data['question']}
 
-⚠️ **Vấn đề**: {prepared_data.get('error_type', 'unknown')}
+**Vấn đề**: {prepared_data.get('error_type', 'unknown')}
 
-💡 **Giải pháp**: 
+**Giải pháp**: 
 • Kiểm tra lại file Excel có đúng format không
 • Đảm bảo file không bị hỏng
 • Thử upload lại file
@@ -320,12 +320,12 @@ Bạn có thể thử upload lại file không?
 Nếu vẫn gặp vấn đề, vui lòng liên hệ hỗ trợ kỹ thuật.
 """
         
-        # Trường hợp có trading data - tạo báo cáo chi tiết
-        # Create a simplified data structure for the prompt
+        # Case with trading data - create detailed report
+        # Create a simplified data structure for the prompt - report for the prompt
         prompt_data = {
             "question": prepared_data["question"],
             "data_summary": f"""
-📊 TÓM TẮT DỮ LIỆU:
+### TÓM TẮT DỮ LIỆU:
 - Tổng số lệnh: {prepared_data.get('total_trades', 0)}
 - Tổng lợi nhuận: {prepared_data.get('total_profit', 0):,.2f}
 - Tỷ lệ thắng: {prepared_data.get('win_rate', 0)}%

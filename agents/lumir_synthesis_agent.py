@@ -65,21 +65,21 @@ def _detect_abnormal_behavior(numerology_context: str, trading_context: str, que
     """
     abnormal_behaviors = []
     
-    # Phát hiện FOMO
+    # Extract FOMO from question
     fomo_keywords = ["fomo", "sợ bỏ lỡ", "vào lệnh vội", "chạy theo đám đông", "mua đỉnh"]
     if any(keyword in question.lower() for keyword in fomo_keywords):
         abnormal_behaviors.append("FOMO - Sợ bỏ lỡ cơ hội")
     
-    # Phát hiện revenge trading
+    # Extract revenge trading from question
     revenge_keywords = ["trả thù", "gỡ gạc", "lấy lại", "bù lỗ", "revenge"]
     if any(keyword in question.lower() for keyword in revenge_keywords):
         abnormal_behaviors.append("Revenge Trading - Giao dịch trả thù")
     
-    # Phát hiện overtrading
+    # Extract overtrading from trading context
     if trading_context and "rapid_fire" in trading_context.lower():
         abnormal_behaviors.append("Overtrading - Giao dịch quá nhiều")
     
-    # Phát hiện emotional trading
+    # Extract emotional trading from question
     emotion_keywords = ["stress", "lo lắng", "sợ hãi", "tham lam", "tức giận"]
     if any(keyword in question.lower() for keyword in emotion_keywords):
         abnormal_behaviors.append("Emotional Trading - Giao dịch theo cảm xúc")
@@ -89,13 +89,41 @@ def _detect_abnormal_behavior(numerology_context: str, trading_context: str, que
 
 def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Chuẩn bị dữ liệu cho synthesis agent
+    Prepare data for synthesis agent
     
     Args:
-        input_dict: Input từ user
+        input_dict: Input from user
+        question: Question
+        question_type: Type of question
+        numerology_context: Context from numerology agent
+        trading_context: Context from trading agent
+        user_name: User name
+        username: Username
+        language: Language
+        has_trading_data: Whether trading data is valid
+        focus_areas: Focus areas if any
+        needs_user_info: Whether to ask for more user info
+        suggested_questions: Suggested questions to ask user if needed
+        conversation_history: Conversation history for context
         
     Returns:
-        Dict chứa dữ liệu đã chuẩn bị
+        Dict containing prepared data
+        "question": Question
+        "question_type": Type of question
+        "numerology_context": Context from numerology agent
+        "trading_context": Context from trading agent
+        "user_name": User name
+        "username": Username
+        "language": Language
+        "has_trading_data": Whether trading data is valid
+        "focus_areas": Focus areas if any
+        "abnormal_behaviors": Abnormal behaviors if any
+        "response_type": Response type
+        "context_summary": Context summary
+        "needs_user_info": Whether to ask for more user info
+        "suggested_questions": Suggested questions to ask user if needed
+        "conversation_history": Conversation history for context
+        "timestamp": Timestamp
     """
     question = input_dict.get("question", "")
     question_type = input_dict.get("question_type", "general_chat")
@@ -226,7 +254,7 @@ def create_memory_context(conversation_history: List[Dict[str, Any]]) -> str:
         return ""
     
     context_parts = []
-    context_parts.append("📝 LỊCH SỬ HỘI THOẠI:")
+    context_parts.append("LỊCH SỬ HỘI THOẠI:")
     
     for i, turn in enumerate(conversation_history[-5:], 1):  # Get last 5 turns
         user_question = turn.get("user_question", "")

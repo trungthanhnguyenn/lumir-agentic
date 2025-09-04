@@ -54,9 +54,9 @@ class MemoryAgent:
             self.max_cache_size = 100  # entries per user
             self.max_cache_age_days = 1  # days
             
-            print(f"✅ Memory Agent initialized with cache directory: {self.cache_dir}")
+            print(f"Memory Agent initialized with cache directory: {self.cache_dir}")
         except Exception as e:
-            print(f"❌ Error initializing Memory Agent: {e}")
+            print(f"Error initializing Memory Agent: {e}")
             # Fallback initialization
             self.cache_dir = Path(".memory_cache")
             self.cache_dir.mkdir(exist_ok=True, parents=True)
@@ -75,7 +75,7 @@ class MemoryAgent:
             user_string = f"{user_name}_{birthday}_{username}"
             return hashlib.md5(user_string.encode('utf-8')).hexdigest()
         except Exception as e:
-            print(f"❌ Error generating UUID: {e}")
+            print(f"Error generating UUID: {e}")
             # Fallback UUID
             return hashlib.md5("unknown_user".encode('utf-8')).hexdigest()
     
@@ -93,7 +93,7 @@ class MemoryAgent:
                 
             return self.cache_dir / f"user_{safe_uuid}_memory.json"
         except Exception as e:
-            print(f"❌ Error getting cache file path: {e}")
+            print(f"Error getting cache file path: {e}")
             return self.cache_dir / "user_unknown_memory.json"
     
     def _load_user_cache(self, user_uuid: str) -> List[MemoryEntry]:
@@ -131,11 +131,11 @@ class MemoryAgent:
                         print(f"⚠️ Error creating MemoryEntry from {entry}: {e}")
                         continue
                 
-                print(f"✅ Cache loaded successfully: {len(entries)} entries")
+                print(f"Cache loaded successfully: {len(entries)} entries")
                 return entries
                 
         except Exception as e:
-            print(f"❌ Error loading cache: {e}")
+            print(f"Error loading cache: {e}")
             return []
     
     def _save_user_cache(self, user_uuid: str, cache: List[MemoryEntry]):
@@ -163,10 +163,10 @@ class MemoryAgent:
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)
                 
-            print(f"✅ Cache saved successfully: {len(cache_data)} entries")
+            print(f"Cache saved successfully: {len(cache_data)} entries")
         except Exception as e:
-            print(f"❌ Error saving cache: {e}")
-            print(f"❌ Cache data: {cache}")
+            print(f"Error saving cache: {e}")
+            print(f"Cache data: {cache}")
     
     def _cleanup_old_entries(self, cache: List[MemoryEntry]) -> List[MemoryEntry]:
         """Delete old and expired entries"""
@@ -188,7 +188,7 @@ class MemoryAgent:
                     # If no timestamp, keep entry
                     fresh_cache.append(entry)
             except Exception as e:
-                print(f"⚠️ Error parsing timestamp for entry {entry.key}: {e}")
+                print(f"Error parsing timestamp for entry {entry.key}: {e}")
                 # Keep entry if there's an error parsing timestamp
                 fresh_cache.append(entry)
         
@@ -199,7 +199,7 @@ class MemoryAgent:
                 fresh_cache.sort(key=lambda x: (getattr(x, 'confidence', 0.0), getattr(x, 'timestamp', '')))
                 fresh_cache = fresh_cache[-self.max_cache_size:]  # Keep the newest entries
             except Exception as e:
-                print(f"⚠️ Error sorting cache: {e}")
+                print(f"Error sorting cache: {e}")
                 # If sorting fails, keep the last entries
                 fresh_cache = fresh_cache[-self.max_cache_size:]
         
@@ -268,16 +268,16 @@ Trích xuất kiến thức quan trọng:
 """)
             ])
         except Exception as e:
-            print(f"❌ Error creating prompt: {e}")
+            print(f"Error creating prompt: {e}")
             return []
         
         try:
-            # Kiểm tra LLM có sẵn không
+            # Check if LLM is available
             if not self.llm:
-                print("⚠️ LLM not available, skipping knowledge extraction")
+                print("LLM not available, skipping knowledge extraction")
                 return []
                 
-            # Gọi LLM trực tiếp để tránh vấn đề với parser
+            # Call LLM directly to avoid parser issues
             try:
                 response = self.llm.invoke(prompt.format_messages(
                     turn_number=turn_number,
@@ -286,36 +286,36 @@ Trích xuất kiến thức quan trọng:
                     language=language
                 ))
             except Exception as e:
-                print(f"❌ Error invoking LLM: {e}")
+                print(f"Error invoking LLM: {e}")
                 return []
             
-            # Kiểm tra response
+            # Check response
             if not response or not hasattr(response, 'content'):
-                print("⚠️ Invalid LLM response")
+                print("Invalid LLM response")
                 return []
                 
-            # Parse response thủ công
+            # Parse response manually
             content = response.content
             if not content:
-                print("⚠️ Empty LLM response")
+                print("Empty LLM response")
                 return []
                 
-            print(f"🔍 LLM Response: {content[:200]}...")
+            print(f"LLM Response: {content[:200]}...")
             
-            # Tìm JSON trong response - cải thiện regex
+            # Find JSON in response - improve regex for better matching
             import re
             import json
             
-            # Tìm JSON array
+            # Find JSON array
             json_match = re.search(r'\[\s*\{.*\}\s*\]', content, re.DOTALL)
             if not json_match:
-                # Thử tìm JSON object đơn lẻ
+                # Try finding single JSON object
                 json_match = re.search(r'\{\s*"key".*\}', content, re.DOTALL)
                 if json_match:
-                    # Wrap trong array
+                    # Wrap in array
                     json_str = f"[{json_match.group()}]"
                 else:
-                    print("⚠️ No JSON found in LLM response")
+                    print("No JSON found in LLM response")
                     return []
             else:
                 json_str = json_match.group()
@@ -329,17 +329,17 @@ Trích xuất kiến thức quan trọng:
                 
                 parsed_data = json.loads(json_str)
                 
-                # Đảm bảo parsed_data là list
+                # Ensure parsed_data is a list
                 if not isinstance(parsed_data, list):
                     parsed_data = [parsed_data]
                 
-                # Tạo MemoryEntry objects
+                # Create MemoryEntry objects
                 entries = []
                 for item in parsed_data:
                     try:
                         # Validate required fields
                         if not isinstance(item, dict) or 'key' not in item:
-                            print(f"⚠️ Invalid item format: {item}")
+                            print(f"Invalid item format: {item}")
                             continue
                             
                         entry = MemoryEntry(
@@ -352,20 +352,20 @@ Trích xuất kiến thức quan trọng:
                             source_turns=[turn_number]
                         )
                         entries.append(entry)
-                        print(f"✅ Created memory entry: {entry.key} (confidence: {entry.confidence})")
+                        print(f"Created memory entry: {entry.key} (confidence: {entry.confidence})")
                     except Exception as e:
-                        print(f"⚠️ Error creating entry from {item}: {e}")
+                        print(f"Error creating entry from {item}: {e}")
                         continue
                 
                 return entries
                 
             except json.JSONDecodeError as e:
-                print(f"❌ JSON parsing error: {e}")
-                print(f"❌ Raw JSON string: {json_str}")
+                print(f"JSON parsing error: {e}")
+                print(f"Raw JSON string: {json_str}")
                 return []
                 
         except Exception as e:
-            print(f"❌ Error extracting knowledge: {e}")
+            print(f"Error extracting knowledge: {e}")
             return []
     
     def update_memory(
@@ -377,36 +377,36 @@ Trích xuất kiến thức quan trọng:
         language: str = "vi"
     ) -> None:
         """
-        Cập nhật memory cache với conversation mới
+        Update memory cache with new conversation
         """
         
-        # Load cache hiện tại
+        # Load current cache
         cache = self._load_user_cache(user_uuid)
         
-        # Trích xuất kiến thức mới
+        # Extract new knowledge
         if not self.llm:
-            print("⚠️ LLM not available, skipping memory update")
+            print("LLM not available, skipping memory update")
             return
             
         new_entries = self._extract_knowledge_from_conversation(
             user_question, lumir_response, turn_number, language
         )
         
-        # Thêm source turn info - đảm bảo tất cả entries đều có source_turns
+        # Add source turn info - ensure all entries have source_turns
         for i, entry in enumerate(new_entries):
             if not hasattr(entry, 'source_turns') or not entry.source_turns:
-                # Tạo entry mới với source_turns
+                # Create new entry with source_turns
                 entry_dict = entry.dict() if hasattr(entry, 'dict') else entry
                 entry_dict['source_turns'] = [turn_number]
                 new_entries[i] = MemoryEntry(**entry_dict)
             else:
-                # Đảm bảo turn_number có trong source_turns
+                # Ensure turn_number is in source_turns
                 if turn_number not in entry.source_turns:
                     entry.source_turns.append(turn_number)
         
-        # Merge với cache cũ (tránh duplicate)
+        # Merge with old cache (avoid duplicates)
         for new_entry in new_entries:
-            # Tìm entry tương tự trong cache
+            # Find similar entry in cache
             similar_entry = None
             for old_entry in cache:
                 if (new_entry.key == old_entry.key and 
@@ -415,21 +415,21 @@ Trích xuất kiến thức quan trọng:
                     break
             
             if similar_entry:
-                # Update entry cũ
+                # Update old entry
                 similar_entry.summary = new_entry.summary
                 similar_entry.confidence = max(similar_entry.confidence, new_entry.confidence)
                 similar_entry.timestamp = new_entry.timestamp
                 if hasattr(similar_entry, 'source_turns') and turn_number not in similar_entry.source_turns:
                     similar_entry.source_turns.append(turn_number)
             else:
-                # Thêm entry mới
+                # Add new entry
                 cache.append(new_entry)
         
-        # Cleanup và lưu
+        # Cleanup and save
         cache = self._cleanup_old_entries(cache)
         self._save_user_cache(user_uuid, cache)
         
-        print(f"✅ Memory updated: {len(new_entries)} new entries, total: {len(cache)}")
+        print(f"Memory updated: {len(new_entries)} new entries, total: {len(cache)}")
     
     def query_memory(
         self, 
@@ -439,7 +439,7 @@ Trích xuất kiến thức quan trọng:
         language: str = "vi"
     ) -> MemoryQuery:
         """
-        Query memory cache để xem có thể trả lời nhanh không
+        Query memory cache to see if it can answer quickly
         """
         
         # Load cache
@@ -453,9 +453,9 @@ Trích xuất kiến thức quan trọng:
                 needs_refresh=False
             )
         
-        # Kiểm tra LLM có sẵn không
+        # Check if LLM is available
         if not self.llm:
-            print("⚠️ LLM not available, returning default memory query")
+            print("LLM not available, returning default memory query")
             return MemoryQuery(
                 can_answer=False,
                 relevant_entries=[],
@@ -464,7 +464,7 @@ Trích xuất kiến thức quan trọng:
                 needs_refresh=False
             )
             
-        # Chuẩn bị data trước khi tạo prompt
+        # Prepare data before creating prompt
         cache_entries = "\n".join([
             f"- {entry.key}: {entry.summary} (confidence: {entry.confidence})"
             for entry in cache
@@ -476,7 +476,7 @@ Trích xuất kiến thức quan trọng:
         ])
         
         try:
-            # Sử dụng LLM để đánh giá relevance
+            # Use LLM to evaluate relevance
             prompt = ChatPromptTemplate.from_messages([
                 ("system", """Bạn là Memory Query Agent. Nhiệm vụ: Đánh giá xem cache có thể trả lời câu hỏi hiện tại không.
 
@@ -520,7 +520,7 @@ Conversation history (recent 3 turns):
 """)
             ])
         except Exception as e:
-            print(f"❌ Error creating prompt in query_memory: {e}")
+            print(f"Error creating prompt in query_memory: {e}")
             return MemoryQuery(
                 can_answer=False,
                 relevant_entries=[],
@@ -529,7 +529,7 @@ Conversation history (recent 3 turns):
                 needs_refresh=False
             )
         
-        # Gọi LLM trực tiếp để tránh vấn đề với parser
+        # Call LLM directly to avoid parser issues
         try:
             response = self.llm.invoke(prompt.format_messages(
                 current_question=current_question,
@@ -538,7 +538,7 @@ Conversation history (recent 3 turns):
                 language=language
             ))
         except Exception as e:
-            print(f"❌ Error invoking LLM in query_memory: {e}")
+            print(f"Error invoking LLM in query_memory: {e}")
             return MemoryQuery(
                 can_answer=False,
                 relevant_entries=[],
@@ -547,9 +547,9 @@ Conversation history (recent 3 turns):
                 needs_refresh=False
             )
         
-        # Kiểm tra response
+        # Check response
         if not response or not hasattr(response, 'content'):
-            print("⚠️ Invalid LLM response in query_memory")
+            print("Invalid LLM response in query_memory")
             return MemoryQuery(
                 can_answer=False,
                 relevant_entries=[],
@@ -558,10 +558,10 @@ Conversation history (recent 3 turns):
                 needs_refresh=False
             )
             
-        # Parse response thủ công
+        # Parse response manually
         content = response.content
         if not content:
-            print("⚠️ Empty LLM response in query_memory")
+            print("Empty LLM response in query_memory")
             return MemoryQuery(
                 can_answer=False,
                 relevant_entries=[],
@@ -570,9 +570,9 @@ Conversation history (recent 3 turns):
                 needs_refresh=False
             )
             
-        print(f"🔍 Memory Query LLM Response: {content[:200]}...")
+        print(f"Memory Query LLM Response: {content[:200]}...")
         
-        # Tìm JSON trong response
+        # Find JSON in response
         import re
         json_match = re.search(r'\{.*\}', content, re.DOTALL)
         if json_match:
@@ -584,14 +584,14 @@ Conversation history (recent 3 turns):
             try:
                 parsed_data = json.loads(json_str)
                 
-                # Tìm các entry liên quan trước
+                # Find relevant entries
                 relevant_entries = [
                     entry for entry in cache 
                     if entry.key.lower() in current_question.lower() or
                        any(tag.lower() in current_question.lower() for tag in entry.tags)
                 ]
                 
-                # Tạo MemoryQuery object với relevant_entries đã có
+                # Create MemoryQuery object with relevant_entries
                 result = MemoryQuery(
                     can_answer=parsed_data.get('can_answer', False),
                     confidence=float(parsed_data.get('confidence', 0.0)),
@@ -600,16 +600,16 @@ Conversation history (recent 3 turns):
                     relevant_entries=relevant_entries
                 )
                 
-                print(f"✅ Memory query successful: can_answer={result.can_answer}, confidence={result.confidence}")
+                print(f"Memory query successful: can_answer={result.can_answer}, confidence={result.confidence}")
                 return result
                 
             except json.JSONDecodeError as e:
-                print(f"❌ JSON parsing error in query_memory: {e}")
-                print(f"❌ Raw JSON string: {json_str}")
+                print(f"JSON parsing error in query_memory: {e}")
+                print(f"Raw JSON string: {json_str}")
         else:
-            print("⚠️ No JSON found in memory query response")
+            print("No JSON found in memory query response")
         
-        # Fallback nếu parsing thất bại
+        # Fallback if parsing fails
         return MemoryQuery(
             can_answer=False,
             relevant_entries=[],
@@ -619,17 +619,17 @@ Conversation history (recent 3 turns):
         )
     
     def get_memory_summary(self, user_uuid: str) -> Dict[str, Any]:
-        """Lấy summary của memory cache"""
+        """Get summary of memory cache"""
         cache = self._load_user_cache(user_uuid)
         
         if not cache:
             return {"status": "empty", "count": 0}
         
         try:
-            # Thống kê
+            # Statistics
             total_entries = len(cache)
             
-            # Tính average confidence an toàn
+            # Calculate average confidence
             confidence_values = []
             for entry in cache:
                 if hasattr(entry, 'confidence') and entry.confidence is not None:
@@ -664,7 +664,7 @@ Conversation history (recent 3 turns):
                 if timestamps:
                     last_updated = max(timestamps)
             except Exception as e:
-                print(f"⚠️ Error getting last updated: {e}")
+                print(f"Error getting last updated: {e}")
             
             return {
                 "status": "active",
@@ -675,7 +675,7 @@ Conversation history (recent 3 turns):
             }
             
         except Exception as e:
-            print(f"❌ Error generating memory summary: {e}")
+            print(f"Error generating memory summary: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -689,26 +689,26 @@ Conversation history (recent 3 turns):
         language: str = "vi"
     ) -> bool:
         """
-        Thêm entry mới vào memory cache
+        Add new entry to memory cache
         
         Args:
-            user_uuid: UUID của user
-            entry_data: Dữ liệu entry (phải có 'key' field)
-            language: Ngôn ngữ
+            user_uuid: UUID of user
+            entry_data: Entry data (must contain 'key' field)
+            language: Language
             
         Returns:
-            bool: True nếu thành công, False nếu thất bại
+            bool: True if successful, False if failed
         """
         try:
             # Validate entry_data
             if "key" not in entry_data:
-                print("❌ Entry data must contain 'key' field")
+                print("Entry data must contain 'key' field")
                 return False
             
-            # Load cache hiện tại
+            # Load current cache
             cache = self._load_user_cache(user_uuid)
             
-            # Tạo MemoryEntry object
+            # Create MemoryEntry object
             entry = MemoryEntry(
                 key=entry_data["key"],
                 summary=entry_data.get("summary", ""),
@@ -719,7 +719,7 @@ Conversation history (recent 3 turns):
                 source_turns=entry_data.get("source_turns", [1])  # Default to turn 1
             )
             
-            # Kiểm tra xem key đã tồn tại chưa
+            # Check if key exists
             existing_entry = None
             for old_entry in cache:
                 if old_entry.key == entry.key:
@@ -735,20 +735,20 @@ Conversation history (recent 3 turns):
                 existing_entry.tags = list(set(existing_entry.tags + entry.tags))
                 if 1 not in existing_entry.source_turns:
                     existing_entry.source_turns.append(1)
-                print(f"✅ Updated existing entry: {entry.key}")
+                print(f"Updated existing entry: {entry.key}")
             else:
                 # Add new entry
                 cache.append(entry)
-                print(f"✅ Added new entry: {entry.key}")
+                print(f"Added new entry: {entry.key}")
             
-            # Cleanup và lưu
+            # Cleanup and save
             cache = self._cleanup_old_entries(cache)
             self._save_user_cache(user_uuid, cache)
             
             return True
             
         except Exception as e:
-            print(f"❌ Error adding memory entry: {e}")
+            print(f"Error adding memory entry: {e}")
             return False
     
     def update_memory_entry(
@@ -759,22 +759,22 @@ Conversation history (recent 3 turns):
         language: str = "vi"
     ) -> bool:
         """
-        Cập nhật entry hiện có trong memory cache
+        Update existing entry in memory cache
         
         Args:
-            user_uuid: UUID của user
-            entry_key: Key của entry cần cập nhật
-            entry_data: Dữ liệu mới để cập nhật
-            language: Ngôn ngữ
+            user_uuid: UUID of user
+            entry_key: Key of entry to update
+            entry_data: New data to update
+            language: Language
             
         Returns:
-            bool: True nếu thành công, False nếu thất bại
+            bool: True if successful, False if failed
         """
         try:
-            # Load cache hiện tại
+            # Load current cache
             cache = self._load_user_cache(user_uuid)
             
-            # Tìm entry cần cập nhật
+            # Find entry to update
             target_entry = None
             for entry in cache:
                 if entry.key == entry_key:
@@ -782,10 +782,10 @@ Conversation history (recent 3 turns):
                     break
             
             if not target_entry:
-                print(f"❌ Entry with key '{entry_key}' not found")
+                print(f"Entry with key '{entry_key}' not found")
                 return False
             
-            # Cập nhật các field được cung cấp
+            # Update provided fields
             if "summary" in entry_data:
                 target_entry.summary = entry_data["summary"]
             if "context" in entry_data:
@@ -797,17 +797,17 @@ Conversation history (recent 3 turns):
             if "source_turns" in entry_data:
                 target_entry.source_turns = entry_data["source_turns"]
             
-            # Cập nhật timestamp
+            # Update timestamp
             target_entry.timestamp = datetime.now().isoformat()
             
-            # Lưu cache
+            # Save cache
             self._save_user_cache(user_uuid, cache)
-            print(f"✅ Updated entry: {entry_key}")
+            print(f"Updated entry: {entry_key}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Error updating memory entry: {e}")
+            print(f"Error updating memory entry: {e}")
             return False
     
     def remove_memory_entry(
@@ -816,57 +816,57 @@ Conversation history (recent 3 turns):
         entry_key: str
     ) -> bool:
         """
-        Xóa entry cụ thể khỏi memory cache
+        Remove specific entry from memory cache
         
         Args:
-            user_uuid: UUID của user
-            entry_key: Key của entry cần xóa
+            user_uuid: UUID of user
+            entry_key: Key of entry to remove
             
         Returns:
-            bool: True nếu thành công, False nếu thất bại
+            bool: True if successful, False if failed
         """
         try:
-            # Load cache hiện tại
+            # Load current cache
             cache = self._load_user_cache(user_uuid)
             
-            # Tìm và xóa entry
+            # Find and remove entry
             original_count = len(cache)
             cache = [entry for entry in cache if entry.key != entry_key]
             
             if len(cache) == original_count:
-                print(f"❌ Entry with key '{entry_key}' not found")
+                print(f"Entry with key '{entry_key}' not found")
                 return False
             
-            # Lưu cache đã cập nhật
+            # Save updated cache
             self._save_user_cache(user_uuid, cache)
-            print(f"✅ Removed entry: {entry_key}")
+            print(f"Removed entry: {entry_key}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Error removing memory entry: {e}")
+            print(f"Error removing memory entry: {e}")
             return False
 
     def clear_user_memory(self, user_uuid: str) -> None:
-        """Xóa toàn bộ memory của user"""
+        """Clear all memory for user"""
         try:
             cache_file = self._get_cache_file_path(user_uuid)
             if cache_file.exists():
                 cache_file.unlink()
-                print(f"✅ Memory cleared for user {user_uuid}")
+                print(f"Memory cleared for user {user_uuid}")
             else:
-                print(f"ℹ️ No memory file found for user {user_uuid}")
+                print(f"No memory file found for user {user_uuid}")
         except Exception as e:
-            print(f"❌ Error clearing memory for user {user_uuid}: {e}")
+            print(f"Error clearing memory for user {user_uuid}: {e}")
 
 
 def build_memory_agent(cache_dir: str = ".memory_cache") -> MemoryAgent:
-    """Factory function để tạo memory agent"""
+    """Factory function to create memory agent"""
     try:
         agent = MemoryAgent(cache_dir)
-        print(f"✅ Memory Agent built successfully with cache dir: {cache_dir}")
+        print(f"Memory Agent built successfully with cache dir: {cache_dir}")
         return agent
     except Exception as e:
-        print(f"❌ Error building Memory Agent: {e}")
-        # Fallback: tạo agent với cache directory mặc định
+        print(f"Error building Memory Agent: {e}")
+        # Fallback: create agent with default cache directory
         return MemoryAgent(".memory_cache")

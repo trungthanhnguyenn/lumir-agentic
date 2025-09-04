@@ -11,15 +11,15 @@ from tools.data_validator_tool import DataValidator
 
 
 class QuestionDecomposition(BaseModel):
-    """Kết quả phân tích và tạo câu hỏi con"""
-    question_type: str = Field(description="Loại câu hỏi: 'trading_related', 'numerology_related', 'general_chat', 'needs_more_info'")
-    should_call_agents: bool = Field(description="Có nên gọi các agent chuyên biệt không")
-    numerology_question: Optional[str] = Field(description="Câu hỏi cho numerology agent (null nếu không cần)")
-    trading_question: Optional[str] = Field(description="Câu hỏi cho trading agent (null nếu không cần)")
-    reasoning: str = Field(description="Lý do cho việc phân tích và routing")
-    focus_areas: List[str] = Field(description="Các lĩnh vực tập trung nếu có")
-    needs_user_info: bool = Field(description="Có cần hỏi thêm thông tin từ user không")
-    suggested_questions: List[str] = Field(description="Các câu hỏi gợi ý để hỏi user nếu cần thêm thông tin")
+    """Result of analysis and create sub-question"""
+    question_type: str = Field(description="Question type: 'trading_related', 'numerology_related', 'general_chat', 'needs_more_info'")
+    should_call_agents: bool = Field(description="Should call specialized agents")
+    numerology_question: Optional[str] = Field(description="Question for numerology agent (null if not needed)")
+    trading_question: Optional[str] = Field(description="Question for trading agent (null if not needed)")
+    reasoning: str = Field(description="Reasoning for analysis and routing")
+    focus_areas: List[str] = Field(description="Focus areas if any")
+    needs_user_info: bool = Field(description="Whether to ask for more user info")
+    suggested_questions: List[str] = Field(description="Suggested questions to ask user if needed")
 
 
 def _read_prompt() -> str:
@@ -38,23 +38,32 @@ def analyze_and_decompose_question(
     conversation_history: List[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Phân tích câu hỏi một cách thông minh và tự nhiên
+    Analyze and decompose question in a smart and natural way
     
     Args:
-        question: Câu hỏi gốc của user
-        user_name: Tên user
-        birthday: Ngày sinh
-        excel_path: Đường dẫn file Excel trading
-        language: Ngôn ngữ (vi, en, etc.)
-        username: Username để gọi tên
-        conversation_history: Lịch sử hội thoại để context
+        question: Original user question
+        user_name: User name
+        birthday: Birthday
+        excel_path: Path to Excel file containing trading data
+        language: Language (vi, en, etc.)
+        username: Username to call name
+        conversation_history: Conversation history for context
         
     Returns:
-        Dict chứa kết quả phân tích thông minh
+        Dict containing smart analysis result
+        "question_type": Type of question
+        "should_call_agents": Whether to call specialized agents
+        "numerology_question": Question for numerology agent
+        "trading_question": Question for trading agent
+        "reasoning": Reasoning for analysis and routing
+        "focus_areas": Focus areas if any
+        "needs_user_info": Whether to ask for more user info
+        "suggested_questions": Suggested questions to ask user if needed
+        "has_valid_trading_data": Whether trading data is valid
     """
     
     try:
-        # Validate trading data nếu có
+        # Validate trading data if exists
         has_valid_trading_data = False
         if excel_path and excel_path.strip():
             validator = DataValidator()
@@ -66,32 +75,32 @@ def analyze_and_decompose_question(
                     validation = validator.validate_excel_dataframe(df)
                     has_valid_trading_data = validation["is_valid"]
                 except Exception as e:
-                    print(f"⚠️ Error validating trading data: {e}")
+                    print(f"Error validating trading data: {e}")
                     has_valid_trading_data = False
             else:
-                # File không tồn tại
+                # File does not exist
                 has_valid_trading_data = False
         else:
-            # Không có đường dẫn file
+            # No file path provided
             has_valid_trading_data = False
         
-        # Đảm bảo has_valid_trading_data luôn là boolean
+        # Ensure has_valid_trading_data is always a boolean
         has_valid_trading_data = bool(has_valid_trading_data)
         
-        # Kiểm tra user đã login chưa
+        # Check if user is logged in
         user_logged_in = bool(user_name and birthday and username)
         
-        # Sử dụng LLM để phân tích thông minh
+        # Use LLM to analyze smartly
         llm = get_openai_llm()
         parser = JsonOutputParser(pydantic_object=QuestionDecomposition)
         
-        # Tạo context từ conversation history
+        # Create context from conversation history
         context_from_history = ""
         if conversation_history:
-            recent_turns = conversation_history[-3:]  # Lấy 3 turn gần nhất
+            recent_turns = conversation_history[-3:]  # Get last 3 turns
             context_parts = []
             for turn in recent_turns:
-                user_q = turn.get("user_question", "")[:100]  # Giới hạn độ dài
+                user_q = turn.get("user_question", "")[:100]  # Limit length
                 if user_q:
                     context_parts.append(f"User: {user_q}")
             if context_parts:
@@ -144,15 +153,15 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
             "context_from_history": context_from_history or "Không có"
         })
         
-        # Cập nhật has_valid_trading_data từ validation thực tế
+        # Update has_valid_trading_data from actual validation
         result["has_valid_trading_data"] = has_valid_trading_data
         
-        print(f"🔍 Question Decomposition Result: {result}")
+        print(f"Question Decomposition Result: {result}")
         return result
         
     except Exception as e:
-        print(f"❌ Question decomposition failed: {e}")
-        # Fallback analysis - trả về general chat nếu user chưa login
+        print(f"Question decomposition failed: {e}")
+        # Fallback analysis - return general chat if user is not logged in
         fallback_type = "general_chat" if not all([user_name, birthday, username]) else "needs_more_info"
         return {
             "question_type": fallback_type,
