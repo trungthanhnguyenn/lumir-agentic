@@ -1,8 +1,3 @@
-"""
-RAG Orchestrator Module
-Điều phối toàn bộ hệ thống RAG - Tối ưu cho trading documents
-"""
-
 import os
 import time
 from pathlib import Path
@@ -10,7 +5,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import json
 
-# Import các module cần thiết
+# Import necessary modules
 from .document.document_processor import DocumentProcessor, DocumentChunk, DocumentInfo
 from .document.embedding_manager import EmbeddingManager, EmbeddingManagerFactory
 from .database.qdrant_manager import QdrantManager, SearchResult, RAGCollectionManager
@@ -18,10 +13,10 @@ from .database.qdrant_manager import QdrantManager, SearchResult, RAGCollectionM
 
 @dataclass
 class RAGQuery:
-    """Query cho hệ thống RAG"""
+    """Query for RAG system"""
     text: str
     language: str = "vi"
-    collection_filter: Optional[str] = None  # 'faq' hoặc 'knowledge_base'
+    collection_filter: Optional[str] = None  # 'faq' or 'knowledge_base'
     chunk_type_filter: Optional[str] = None
     source_file_filter: Optional[str] = None
     document_type_filter: Optional[str] = None  # faq_behavior, faq_training, handbook, presentation
@@ -31,7 +26,7 @@ class RAGQuery:
 
 @dataclass
 class RAGResponse:
-    """Response từ hệ thống RAG"""
+    """Response from RAG system"""
     query: str
     results: List[SearchResult]
     total_results: int
@@ -43,8 +38,8 @@ class RAGResponse:
 
 class RAGOrchestrator:
     """
-    RAG Orchestrator - Điều phối toàn bộ hệ thống RAG
-    Tối ưu cho trading documents với 2 collections chính
+    RAG Orchestrator - Orchestrate the entire RAG system
+    Optimized for trading documents with 2 main collections
     """
     
     def __init__(self, 
@@ -58,85 +53,85 @@ class RAGOrchestrator:
         self.qdrant_host = qdrant_host
         self.qdrant_port = qdrant_port
         
-        # Khởi tạo các components
+        # Initialize components
         self._initialize_components(embedding_model, embedding_provider)
         
-        print(f"🚀 RAG Orchestrator initialized")
-        print(f"📁 Documents directory: {self.documents_dir}")
-        print(f"🗄️ Qdrant: {qdrant_host}:{qdrant_port}")
-        print(f"🔤 Embedding: {embedding_provider} - {embedding_model}")
+        print(f"RAG Orchestrator initialized")
+        print(f"Documents directory: {self.documents_dir}")
+        print(f"Qdrant: {qdrant_host}:{qdrant_port}")
+        print(f"Embedding: {embedding_provider} - {embedding_model}")
     
     def _initialize_components(self, embedding_model: str, embedding_provider: str):
-        """Khởi tạo các components của hệ thống"""
+        """Initialize components of the system"""
         try:
-            # Khởi tạo Qdrant manager
+            # Initialize Qdrant manager
             self.qdrant_manager = QdrantManager(
                 host=self.qdrant_host,
                 port=self.qdrant_port,
                 collection_prefix="lumir_rag"
             )
             
-            # Khởi tạo collection manager với 2 collections tối ưu
+            # Initialize collection manager
             self.collection_manager = RAGCollectionManager(self.qdrant_manager)
             
-            # Khởi tạo embedding manager với auto-fallback theo môi trường
-            # STRICT: Không fallback nếu cấu hình HF bị lỗi
+            # Initialize embedding manager
+            # STRICT: No fallback if HF configuration fails
             self.embedding_manager = EmbeddingManager(
                 model_name=embedding_model,
                 provider=embedding_provider
             )
             
-            # Khởi tạo document processor
+            # Initialize document processor
             self.document_processor = DocumentProcessor(
                 chunk_size=1000,
                 chunk_overlap=200
             )
             
-            print("✅ All components initialized successfully")
+            print("All components initialized successfully")
             
         except Exception as e:
-            print(f"❌ Error initializing components: {e}")
+            print(f"Error initializing components: {e}")
             raise
     
     def setup_rag_system(self) -> bool:
         """
-        Thiết lập hệ thống RAG
-        Tạo 2 collections chính: faq và knowledge_base
+        Setup RAG system
+        Create 2 main collections: faq and knowledge_base
         """
         try:
-            print("🔧 Setting up RAG system...")
+            print("Setting up RAG system...")
             
-            # Thiết lập collections
+            # Setup collections
             if not self.collection_manager.setup_collections():
-                print("❌ Failed to setup collections")
+                print("Failed to setup collections")
                 return False
             
-            print("✅ RAG system setup completed")
+            print("RAG system setup completed")
             return True
             
         except Exception as e:
-            print(f"❌ Error setting up RAG system: {e}")
+            print(f"Error setting up RAG system: {e}")
             return False
     
     def process_documents(self, force_reprocess: bool = False) -> Dict[str, Any]:
         """
-        Xử lý tất cả documents trong thư mục
-        Chunking, embedding và upsert vào Qdrant
+        Process all documents in the directory
+        Chunking, embedding and upsert into Qdrant
         """
         try:
-            print(f"📄 Processing documents from {self.documents_dir}")
+            print(f"Processing documents from {self.documents_dir}")
             
             if not self.documents_dir.exists():
-                print(f"❌ Documents directory not found: {self.documents_dir}")
+                print(f"Documents directory not found: {self.documents_dir}")
                 return {"success": False, "error": "Documents directory not found"}
             
-            # Tìm tất cả documents
+            # Find all documents:
             document_files = self._find_documents()
             if not document_files:
-                print("⚠️ No documents found")
+                print("No documents found")
                 return {"success": False, "error": "No documents found"}
             
-            print(f"📚 Found {len(document_files)} documents")
+            print(f"Found {len(document_files)} documents")
             
             total_chunks = 0
             total_embeddings = 0
@@ -144,41 +139,41 @@ class RAGOrchestrator:
             
             for doc_file in document_files:
                 try:
-                    print(f"\n📄 Processing: {doc_file.name}")
+                    print(f"\nProcessing: {doc_file.name}")
                     
-                    # Xử lý document
+                    # Process document
                     chunks, doc_info = self.document_processor.process_document(str(doc_file))
                     
                     if not chunks:
-                        print(f"⚠️ No chunks generated for {doc_file.name}")
+                        print(f"No chunks generated for {doc_file.name}")
                         continue
                     
-                    # Xác định collection phù hợp
+                    # Determine appropriate collection
                     collection_name = self.collection_manager.get_collection_for_document(doc_file.name)
-                    print(f"🗄️ Using collection: {collection_name}")
+                    print(f"Using collection: {collection_name}")
                     
-                    # Tạo embeddings cho chunks
+                    # Create embeddings for chunks
                     chunk_texts = [chunk.content for chunk in chunks]
                     embeddings = self.embedding_manager.get_embeddings_batch(chunk_texts)
                     
                     if len(embeddings) != len(chunks):
-                        print(f"⚠️ Embedding count mismatch for {doc_file.name}")
+                        print(f"Embedding count mismatch for {doc_file.name}")
                         continue
                     
-                    # Dimension guard: đảm bảo embedding dimension khớp collection (1024)
+                    # Dimension guard: ensure embedding dimension matches collection (1024)
                     expected_dim = 1024
                     filtered = []
                     for ch, emb in zip(chunks, embeddings):
                         if isinstance(emb, list) and len(emb) == expected_dim:
                             filtered.append((ch, emb))
                     if len(filtered) != len(chunks):
-                        print(f"⚠️ Some embeddings dropped due to wrong dim. kept={len(filtered)}/{len(chunks)}")
+                        print(f"Some embeddings dropped due to wrong dim. kept={len(filtered)}/{len(chunks)}")
                     kept_chunks = [c for c,_ in filtered]
                     kept_embeddings = [e for _,e in filtered]
-                    # Chuẩn bị points cho Qdrant
+                    # Prepare points for Qdrant
                     points = self._prepare_qdrant_points(kept_chunks, kept_embeddings, doc_file, collection_name)
                     
-                    # Upsert vào Qdrant
+                    # Upsert into Qdrant
                     if self.qdrant_manager.upsert_points(collection_name, points):
                         total_chunks += len(kept_chunks)
                         total_embeddings += len(kept_embeddings)
@@ -192,15 +187,15 @@ class RAGOrchestrator:
                             "document_type": doc_info.document_type
                         }
                         
-                        print(f"✅ {doc_file.name}: {len(chunks)} chunks processed")
+                        print(f"{doc_file.name}: {len(chunks)} chunks processed")
                     else:
-                        print(f"❌ Failed to upsert {doc_file.name}")
+                        print(f"Failed to upsert {doc_file.name}")
                 
                 except Exception as e:
-                    print(f"❌ Error processing {doc_file.name}: {e}")
+                    print(f"Error processing {doc_file.name}: {e}")
                     continue
             
-            # Tạo kết quả tổng hợp
+            # Create summary result
             result = {
                 "success": True,
                 "total_documents": len(document_files),
@@ -210,19 +205,19 @@ class RAGOrchestrator:
                 "collections_used": list(self.collection_manager.collections_config.keys())
             }
             
-            print(f"\n🎉 Document processing completed:")
-            print(f"📊 Total chunks: {total_chunks}")
-            print(f"🔤 Total embeddings: {total_embeddings}")
-            print(f"🗄️ Collections: {result['collections_used']}")
+            print(f"\nDocument processing completed:")
+            print(f"Total chunks: {total_chunks}")
+            print(f"Total embeddings: {total_embeddings}")
+            print(f"Collections: {result['collections_used']}")
             
             return result
             
         except Exception as e:
-            print(f"❌ Error in document processing: {e}")
+            print(f"Error in document processing: {e}")
             return {"success": False, "error": str(e)}
     
     def _find_documents(self) -> List[Path]:
-        """Tìm tất cả documents trong thư mục"""
+        """Find all documents in the directory"""
         supported_extensions = {'.docx', '.pptx', '.pdf', '.txt'}
         documents = []
         
@@ -234,8 +229,8 @@ class RAGOrchestrator:
     
     def _determine_collection(self, doc_file: Path) -> str:
         """
-        Xác định collection phù hợp cho document
-        Sử dụng collection manager để quyết định
+        Determine appropriate collection for document
+        Use collection manager to decide
         """
         return self.collection_manager.get_collection_for_document(doc_file.name)
     
@@ -244,12 +239,12 @@ class RAGOrchestrator:
                                doc_file: Path,
                                collection_name: str) -> List[Dict[str, Any]]:
         """
-        Chuẩn bị points cho Qdrant với metadata đầy đủ
+        Prepare points for Qdrant with full metadata
         """
         points = []
         
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-            # Tạo payload metadata
+            # Create payload metadata
             payload = {
                 "content": chunk.content,
                 "source_file": chunk.source_file,
@@ -267,7 +262,7 @@ class RAGOrchestrator:
                 "processing_timestamp": time.time()
             }
             
-            # Thêm metadata từ chunk
+            # Add metadata from chunk
             if chunk.metadata:
                 payload.update(chunk.metadata)
             
@@ -282,7 +277,7 @@ class RAGOrchestrator:
         return points
     
     def _get_document_type_from_filename(self, filename: str) -> str:
-        """Xác định loại document từ tên file"""
+        """Determine document type from filename"""
         filename_lower = filename.lower()
         
         if "faq_behavior" in filename_lower:
@@ -298,27 +293,27 @@ class RAGOrchestrator:
     
     def query_rag(self, query: RAGQuery) -> RAGResponse:
         """
-        Query hệ thống RAG
-        Tự động xác định collection phù hợp và thực hiện tìm kiếm
+        Query RAG system
+        Automatically determine appropriate collection and perform search
         """
         start_time = time.time()
         
         try:
-            print(f"🔍 Querying RAG system: {query.text[:100]}...")
+            print(f"Querying RAG system: {query.text[:100]}...")
             
-            # Tạo embedding cho query
+            # Create embedding for query
             query_embedding = self.embedding_manager.get_embedding(query.text)
             
-            # Xác định collections để tìm kiếm
+            # Determine collections for search
             search_collections = self._determine_search_collections(query)
             
-            # Thực hiện tìm kiếm
+            # Perform search
             all_results = []
             collection_used = "mixed"
             search_strategy = "multi_collection"
             
             if len(search_collections) == 1:
-                # Tìm kiếm trong 1 collection
+                # Search in 1 collection
                 collection_used = search_collections[0]
                 search_strategy = "single_collection"
                 
@@ -327,21 +322,21 @@ class RAGOrchestrator:
                 )
                 all_results.extend(results)
             else:
-                # Tìm kiếm trong nhiều collections
+                # Search in multiple collections
                 for collection in search_collections:
                     results = self._search_in_collection(
                         collection, query_embedding, query
                     )
                     all_results.extend(results)
                 
-                # Sắp xếp kết quả theo score
+                # Sort results by score
                 all_results.sort(key=lambda x: x.score, reverse=True)
                 all_results = all_results[:query.limit]
             
-            # Tính toán thời gian xử lý
+            # Calculate processing time
             processing_time = time.time() - start_time
             
-            # Tạo response
+            # Create response
             response = RAGResponse(
                 query=query.text,
                 results=all_results,
@@ -356,11 +351,11 @@ class RAGOrchestrator:
                 search_strategy=search_strategy
             )
             
-            print(f"✅ RAG query completed: {len(all_results)} results in {processing_time:.2f}s")
+            print(f"RAG query completed: {len(all_results)} results in {processing_time:.2f}s")
             return response
             
         except Exception as e:
-            print(f"❌ Error in RAG query: {e}")
+            print(f"Error in RAG query: {e}")
             # Return empty response on error
             return RAGResponse(
                 query=query.text,
@@ -374,21 +369,21 @@ class RAGOrchestrator:
     
     def _determine_search_collections(self, query: RAGQuery) -> List[str]:
         """
-        Xác định collections để tìm kiếm dựa trên query
+        Determine collections for search based on query
         """
-        # Nếu có filter cụ thể
+        # If there is a specific filter
         if query.collection_filter:
             return [query.collection_filter]
-        # Mặc định: tìm cả 2 collections để tối đa recall
+        # Default: search both collections to maximize recall
         return ["faq", "knowledge_base"]
     
     def _search_in_collection(self, collection_name: str, query_embedding: List[float], 
                              query: RAGQuery) -> List[SearchResult]:
         """
-        Tìm kiếm trong collection cụ thể
+        Search in specific collection
         """
         try:
-            # Đơn giản hoá: bỏ filter và ngưỡng để xác nhận dữ liệu/recall
+            # Simplify: remove filter and threshold to confirm data/recall
             results = self.qdrant_manager.search(
                 collection_name=collection_name,
                 query_vector=query_embedding,
@@ -399,12 +394,12 @@ class RAGOrchestrator:
             return results
             
         except Exception as e:
-            print(f"❌ Error searching in collection {collection_name}: {e}")
+            print(f"Error searching in collection {collection_name}: {e}")
             return []
     
     def _create_search_filter(self, query: RAGQuery) -> Dict[str, Any]:
         """
-        Tạo filter conditions cho tìm kiếm
+        Create filter conditions for search
         """
         filter_conditions = {}
         
@@ -420,12 +415,12 @@ class RAGOrchestrator:
         return filter_conditions
     
     def get_system_status(self) -> Dict[str, Any]:
-        """Lấy trạng thái hệ thống RAG"""
+        """Get RAG system status"""
         try:
-            # Trạng thái collections
+            # Collection status
             collection_status = self.collection_manager.get_collection_status()
             
-            # Thống kê documents
+            # Statistics documents
             document_files = self._find_documents()
             document_stats = {
                 "total_files": len(document_files),
@@ -434,15 +429,15 @@ class RAGOrchestrator:
             }
             
             for doc_file in document_files:
-                # File types
+                # File types:
                 ext = doc_file.suffix.lower()
                 document_stats["file_types"][ext] = document_stats["file_types"].get(ext, 0) + 1
                 
-                # Document types
+                # Document types:
                 doc_type = self._get_document_type_from_filename(doc_file.name)
                 document_stats["document_types"][doc_type] = document_stats["document_types"].get(doc_type, 0) + 1
             
-            # Thông tin embedding model
+            # Embedding model info
             embedding_info = self.embedding_manager.get_model_info()
             
             return {
@@ -465,17 +460,17 @@ class RAGOrchestrator:
     
     def optimize_system(self) -> Dict[str, Any]:
         """
-        Tối ưu hệ thống RAG
+        Optimize RAG system
         """
         try:
-            print("🔧 Optimizing RAG system...")
+            print("Optimizing RAG system...")
             
             optimization_results = {}
             
-            # Tối ưu collections
+            # Optimize collections
             for collection_name in self.collection_manager.collections_config.keys():
                 try:
-                    # Tạo payload indexes cho các field quan trọng
+                    # Create payload indexes for important fields
                     index_fields = [
                         ("document_type", "keyword"),
                         ("chunk_type", "keyword"),
@@ -491,21 +486,21 @@ class RAGOrchestrator:
                 except Exception as e:
                     optimization_results[collection_name] = f"error: {e}"
             
-            # Tối ưu embedding batch size
+            # Optimize embedding batch size
             if hasattr(self.embedding_manager, 'optimize_batch_size'):
                 sample_texts = ["Sample text for optimization"] * 10
                 optimal_batch = self.embedding_manager.optimize_batch_size(sample_texts)
                 self.embedding_manager.batch_size = optimal_batch
                 optimization_results["embedding_batch_size"] = optimal_batch
             
-            print("✅ System optimization completed")
+            print("System optimization completed")
             return {
                 "success": True,
                 "optimization_results": optimization_results
             }
             
         except Exception as e:
-            print(f"❌ Error optimizing system: {e}")
+            print(f"Error optimizing system: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -513,25 +508,25 @@ class RAGOrchestrator:
     
     def clear_system(self) -> bool:
         """
-        Xóa toàn bộ dữ liệu trong hệ thống
+        Clear all data in the system
         """
         try:
-            print("🗑️ Clearing RAG system...")
+            print("Clearing RAG system...")
             
-            # Xóa tất cả collections
+            # Delete all collections
             for collection_name in self.collection_manager.collections_config.keys():
                 self.qdrant_manager.delete_collection(collection_name)
             
-            print("✅ System cleared successfully")
+            print("System cleared successfully")
             return True
             
         except Exception as e:
-            print(f"❌ Error clearing system: {e}")
+            print(f"Error clearing system: {e}")
             return False
 
 
 class RAGOrchestratorFactory:
-    """Factory để tạo RAG orchestrator"""
+    """Factory to create RAG orchestrator"""
     
     @staticmethod
     def create_orchestrator(documents_dir: str = "trading_data/general_infor",
@@ -539,7 +534,7 @@ class RAGOrchestratorFactory:
                            qdrant_port: int = 6333,
                            embedding_model: str = "embedding-002",
                            embedding_provider: str = "gemini") -> RAGOrchestrator:
-        """Tạo RAG orchestrator với cấu hình cụ thể"""
+        """Create RAG orchestrator with specific configuration"""
         return RAGOrchestrator(
             documents_dir=documents_dir,
             qdrant_host=qdrant_host,
@@ -550,22 +545,22 @@ class RAGOrchestratorFactory:
     
     @staticmethod
     def create_optimal_orchestrator(documents_dir: str = "trading_data/general_infor") -> RAGOrchestrator:
-        """Tạo RAG orchestrator tối ưu cho trading documents"""
-        # Ưu tiên HF nếu có HF_TOKEN
+        """Create RAG orchestrator optimized for trading documents"""
+        # Prefer HF if HF_TOKEN
         if os.getenv("HF_TOKEN"):
             return RAGOrchestrator(
                 documents_dir=documents_dir,
                 embedding_model="Qwen3-Embedding-0.6B",
                 embedding_provider="hf"
             )
-        # Fallback: Gemini nếu có GOOGLE_API_KEY
+        # Fallback: Gemini if GOOGLE_API_KEY:
         if os.getenv("GOOGLE_API_KEY"):
             return RAGOrchestrator(
                 documents_dir=documents_dir,
                 embedding_model="embedding-002",
                 embedding_provider="gemini"
             )
-        # Cuối cùng: để auto-manager xử lý (sentence-transformers)
+        # Finally: auto-manager to handle (sentence-transformers):
         return RAGOrchestrator(
             documents_dir=documents_dir,
             embedding_model="all-MiniLM-L6-v2",
@@ -574,7 +569,7 @@ class RAGOrchestratorFactory:
     
     @staticmethod
     def create_local_orchestrator(documents_dir: str = "trading_data/general_infor") -> RAGOrchestrator:
-        """Tạo RAG orchestrator cho local development"""
+        """Create RAG orchestrator for local development"""
         if os.getenv("HF_TOKEN"):
             return RAGOrchestrator(
                 documents_dir=documents_dir,

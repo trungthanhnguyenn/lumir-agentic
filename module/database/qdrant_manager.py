@@ -1,8 +1,3 @@
-"""
-Qdrant Manager Module
-Quản lý Qdrant vector database cho hệ thống RAG
-"""
-
 import os
 import json
 import time
@@ -30,7 +25,7 @@ except ImportError:
 
 @dataclass
 class CollectionConfig:
-    """Cấu hình cho collection"""
+    """Configuration for collection"""
     name: str
     vector_size: int
     distance: str = "Cosine"  # Cosine, Euclidean, Dot
@@ -42,7 +37,7 @@ class CollectionConfig:
 
 @dataclass
 class SearchResult:
-    """Kết quả tìm kiếm từ Qdrant"""
+    """Search result from Qdrant"""
     id: str
     score: float
     payload: Dict[str, Any]
@@ -51,7 +46,7 @@ class SearchResult:
 
 class QdrantManager:
     """
-    Quản lý Qdrant vector database
+    Manage Qdrant vector database
     """
     
     def __init__(self, host: str = "localhost", port: int = 6333, 
@@ -65,42 +60,42 @@ class QdrantManager:
         self.client = None
         self.collections = {}
         
-        # Kết nối đến Qdrant
+        # Connect to Qdrant
         self._connect()
     
     def _connect(self):
-        """Kết nối đến Qdrant server"""
+        """Connect to Qdrant server"""
         try:
             self.client = QdrantClient(host=self.host, port=self.port)
             
             # Test connection
             collections = self.client.get_collections()
-            print(f"✅ Connected to Qdrant at {self.host}:{self.port}")
+            print(f"Connected to Qdrant at {self.host}:{self.port}")
             print(f"📊 Available collections: {len(collections.collections)}")
             
         except Exception as e:
-            print(f"❌ Failed to connect to Qdrant: {e}")
+            print(f"Failed to connect to Qdrant: {e}")
             raise
     
     def create_collection(self, config: CollectionConfig) -> bool:
         """
-        Tạo collection mới
+        Create new collection
         
         Args:
-            config: Cấu hình collection
+            config: Configuration for collection
             
         Returns:
-            True nếu thành công
+            True if successful
         """
         try:
             collection_name = f"{self.collection_prefix}_{config.name}"
             
-            # Kiểm tra collection đã tồn tại chưa
+            # Check if collection exists
             if self._collection_exists(collection_name):
-                print(f"⚠️ Collection {collection_name} already exists")
+                print(f"Collection {collection_name} already exists")
                 return True
             
-            # Tạo collection
+            # Create collection
             self.client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(
@@ -115,16 +110,16 @@ class QdrantManager:
                 optimizers_config=config.optimizers_config or {}
             )
             
-            print(f"✅ Collection {collection_name} created successfully")
+            print(f"Collection {collection_name} created successfully")
             self.collections[collection_name] = config
             return True
             
         except Exception as e:
-            print(f"❌ Error creating collection: {e}")
+            print(f"Error creating collection: {e}")
             return False
     
     def _get_distance(self, distance_name: str) -> Distance:
-        """Chuyển đổi tên distance sang Distance enum"""
+        """Convert distance name to Distance enum"""
         distance_map = {
             "Cosine": Distance.COSINE,
             "Euclidean": Distance.EUCLID,
@@ -133,7 +128,7 @@ class QdrantManager:
         return distance_map.get(distance_name, Distance.COSINE)
     
     def _collection_exists(self, collection_name: str) -> bool:
-        """Kiểm tra collection có tồn tại không"""
+        """Check if collection exists"""
         try:
             collections = self.client.get_collections()
             return any(col.name == collection_name for col in collections.collections)
@@ -141,11 +136,11 @@ class QdrantManager:
             return False
     
     def delete_collection(self, collection_name: str) -> bool:
-        """Xóa collection"""
+        """Delete collection"""
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             self.client.delete_collection(full_name)
-            print(f"✅ Collection {full_name} deleted")
+            print(f"Collection {full_name} deleted")
             
             if full_name in self.collections:
                 del self.collections[full_name]
@@ -153,16 +148,16 @@ class QdrantManager:
             return True
             
         except Exception as e:
-            print(f"❌ Error deleting collection: {e}")
+            print(f"Error deleting collection: {e}")
             return False
     
     def upsert_points(self, collection_name: str, points: List[Dict[str, Any]]) -> bool:
         """
-        Thêm hoặc cập nhật points vào collection
+        Add or update points to collection
         
         Args:
-            collection_name: Tên collection
-            points: List các points với format:
+            collection_name: Name of collection
+            points: List of points with format:
                    {
                        'id': str,
                        'vector': List[float],
@@ -170,30 +165,30 @@ class QdrantManager:
                    }
             
         Returns:
-            True nếu thành công
+            True if successful
         """
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
-            # Kiểm tra collection tồn tại
+            # Check if collection exists
             if not self._collection_exists(full_name):
-                print(f"❌ Collection {full_name} does not exist")
+                print(f"Collection {full_name} does not exist")
                 return False
             
-            # Trước khi upsert, bỏ qua các point đã tồn tại (id trùng)
+            # Before upsert, skip existing points (id duplicate)
             try:
                 full_name = f"{self.collection_prefix}_{collection_name}"
                 existing_ids = set()
-                # Lấy batch ids hiện có (nếu collection lớn có thể tối ưu hoá bằng filter by ids chunk)
+                # Get batch ids currently (if collection is large, can optimize by filter by ids chunk)
                 ids_to_check = [p['id'] for p in points if 'id' in p]
                 if ids_to_check:
-                    # Qdrant không có API get-by-ids trực tiếp qua client http models, dùng scroll theo filter id
-                    # Đơn giản hoá: tiếp tục và để upsert ghi đè (idempotent). Nếu muốn strict-skip, uncomment phần dưới khi có API phù hợp.
+                    # Qdrant does not have API get-by-ids directly via client http models, use scroll by id filter
+                    # Simplify: continue and let upsert overwrite (idempotent). If want strict-skip, uncomment below when have suitable API.
                     pass
             except Exception:
                 pass
 
-            # Chuyển đổi points sang PointStruct
+            # Convert points to PointStruct
             qdrant_points = []
             for point in points:
                 # Ensure ID is a UUID string or integer as Qdrant expects
@@ -221,39 +216,39 @@ class QdrantManager:
                 points=qdrant_points
             )
             
-            print(f"✅ Upserted {len(points)} points to {full_name}")
+            print(f"Upserted {len(points)} points to {full_name}")
             return True
             
         except Exception as e:
-            print(f"❌ Error upserting points: {e}")
+            print(f"Error upserting points: {e}")
             return False
     
     def search(self, collection_name: str, query_vector: List[float], 
                limit: int = 10, score_threshold: float = 0.7,
                with_payload: bool = True, with_vectors: bool = False) -> List[SearchResult]:
         """
-        Tìm kiếm trong collection
+        Search in collection
         
         Args:
-            collection_name: Tên collection
+            collection_name: Name of collection
             query_vector: Vector query
-            limit: Số lượng kết quả tối đa
-            score_threshold: Ngưỡng điểm tối thiểu
-            with_payload: Có trả về payload không
-            with_vectors: Có trả về vectors không
+            limit: Maximum number of results
+            score_threshold: Minimum score threshold
+            with_payload: Whether to return payload
+            with_vectors: Whether to return vectors
             
         Returns:
-            List các SearchResult
+            List of SearchResult
         """
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
-            # Kiểm tra collection tồn tại
+            # Check if collection exists
             if not self._collection_exists(full_name):
-                print(f"❌ Collection {full_name} does not exist")
+                print(f"Collection {full_name} does not exist")
                 return []
             
-            # Thực hiện tìm kiếm
+            # Perform search
             search_result = self.client.search(
                 collection_name=full_name,
                 query_vector=query_vector,
@@ -263,7 +258,7 @@ class QdrantManager:
                 with_vectors=with_vectors
             )
             
-            # Chuyển đổi kết quả
+            # Convert result
             results = []
             for point in search_result:
                 result = SearchResult(
@@ -274,41 +269,41 @@ class QdrantManager:
                 )
                 results.append(result)
             
-            print(f"🔍 Found {len(results)} results in {full_name}")
+            print(f"Found {len(results)} results in {full_name}")
             return results
             
         except Exception as e:
-            print(f"❌ Error searching collection: {e}")
+            print(f"Error searching collection: {e}")
             return []
     
     def search_with_filter(self, collection_name: str, query_vector: List[float],
                           filter_conditions: Dict[str, Any], limit: int = 10,
                           score_threshold: float = 0.7) -> List[SearchResult]:
         """
-        Tìm kiếm với filter conditions
+        Search with filter conditions
         
         Args:
-            collection_name: Tên collection
+            collection_name: Name of collection
             query_vector: Vector query
-            filter_conditions: Điều kiện filter
-            limit: Số lượng kết quả tối đa
-            score_threshold: Ngưỡng điểm tối thiểu
+            filter_conditions: Filter conditions
+            limit: Maximum number of results
+            score_threshold: Minimum score threshold
             
         Returns:
-            List các SearchResult
+            List of SearchResult
         """
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
-            # Kiểm tra collection tồn tại
+            # Check if collection exists
             if not self._collection_exists(full_name):
-                print(f"❌ Collection {full_name} does not exist")
+                print(f"Collection {full_name} does not exist")
                 return []
             
-            # Tạo filter
+            # Create filter
             qdrant_filter = self._create_filter(filter_conditions)
             
-            # Thực hiện tìm kiếm với filter
+            # Perform search with filter
             search_result = self.client.search(
                 collection_name=full_name,
                 query_vector=query_vector,
@@ -319,7 +314,7 @@ class QdrantManager:
                 with_vectors=False
             )
             
-            # Chuyển đổi kết quả
+            # Convert result
             results = []
             for point in search_result:
                 result = SearchResult(
@@ -329,15 +324,15 @@ class QdrantManager:
                 )
                 results.append(result)
             
-            print(f"🔍 Found {len(results)} filtered results in {full_name}")
+            print(f"Found {len(results)} filtered results in {full_name}")
             return results
             
         except Exception as e:
-            print(f"❌ Error searching with filter: {e}")
+            print(f"Error searching with filter: {e}")
             return []
     
     def _create_filter(self, conditions: Dict[str, Any]) -> models.Filter:
-        """Tạo Qdrant filter từ conditions"""
+        """Create Qdrant filter from conditions"""
         must_conditions = []
         should_conditions = []
         must_not_conditions = []
@@ -383,7 +378,7 @@ class QdrantManager:
         )
     
     def get_collection_info(self, collection_name: str) -> Optional[Dict[str, Any]]:
-        """Lấy thông tin collection"""
+        """Get collection info"""
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
@@ -401,55 +396,55 @@ class QdrantManager:
             }
             
         except Exception as e:
-            print(f"❌ Error getting collection info: {e}")
+            print(f"Error getting collection info: {e}")
             return None
     
     def list_collections(self) -> List[str]:
-        """Liệt kê tất cả collections"""
+        """List all collections"""
         try:
             collections = self.client.get_collections()
             return [col.name for col in collections.collections 
                    if col.name.startswith(self.collection_prefix)]
         except Exception as e:
-            print(f"❌ Error listing collections: {e}")
+            print(f"Error listing collections: {e}")
             return []
     
     def create_payload_index(self, collection_name: str, field_name: str, 
                             field_type: str = "keyword") -> bool:
         """
-        Tạo index cho payload field để tăng tốc filter
+        Create index for payload field to speed up filter
         
         Args:
-            collection_name: Tên collection
-            field_name: Tên field
-            field_type: Loại field (keyword, integer, float, text)
+            collection_name: Name of collection
+            field_name: Name of field
+            field_type: Type of field (keyword, integer, float, text)
             
         Returns:
-            True nếu thành công
+            True if successful
         """
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
             if not self._collection_exists(full_name):
-                print(f"❌ Collection {full_name} does not exist")
+                print(f"Collection {full_name} does not exist")
                 return False
             
-            # Tạo payload index
+            # Create payload index
             self.client.create_payload_index(
                 collection_name=full_name,
                 field_name=field_name,
                 field_schema=self._get_field_schema(field_type)
             )
             
-            print(f"✅ Created payload index for {field_name} in {full_name}")
+            print(f"Created payload index for {field_name} in {full_name}")
             return True
             
         except Exception as e:
-            print(f"❌ Error creating payload index: {e}")
+            print(f"Error creating payload index: {e}")
             return False
     
     def _get_field_schema(self, field_type: str) -> "models.PayloadSchemaType":
-        """Lấy schema cho field type (Qdrant >= v1.7 uses PayloadSchemaType)."""
+        """Get schema for field type (Qdrant >= v1.7 uses PayloadSchemaType)."""
         try:
             schema_type = models.PayloadSchemaType
         except AttributeError:
@@ -468,15 +463,15 @@ class QdrantManager:
     def batch_upsert(self, collection_name: str, points: List[Dict[str, Any]], 
                      batch_size: int = 100) -> bool:
         """
-        Upsert points theo batch để tối ưu performance
+        Upsert points by batch to optimize performance
         
         Args:
-            collection_name: Tên collection
-            points: List các points
-            batch_size: Kích thước batch
+            collection_name: Name of collection
+            points: List of points
+            batch_size: Batch size
             
         Returns:
-            True nếu thành công
+            True if successful
         """
         try:
             total_points = len(points)
@@ -487,19 +482,19 @@ class QdrantManager:
                 
                 if self.upsert_points(collection_name, batch):
                     success_count += len(batch)
-                    print(f"📦 Processed batch {i//batch_size + 1}: {len(batch)} points")
+                    print(f"Processed batch {i//batch_size + 1}: {len(batch)} points")
                 else:
-                    print(f"❌ Failed to process batch {i//batch_size + 1}")
+                    print(f"Failed to process batch {i//batch_size + 1}")
             
-            print(f"✅ Batch upsert completed: {success_count}/{total_points} points")
+            print(f"Batch upsert completed: {success_count}/{total_points} points")
             return success_count == total_points
             
         except Exception as e:
-            print(f"❌ Error in batch upsert: {e}")
+            print(f"Error in batch upsert: {e}")
             return False
     
     def get_collection_stats(self, collection_name: str) -> Optional[Dict[str, Any]]:
-        """Lấy thống kê collection"""
+        """Get collection stats"""
         try:
             full_name = f"{self.collection_prefix}_{collection_name}"
             
@@ -530,29 +525,29 @@ class QdrantManager:
             }
             
         except Exception as e:
-            print(f"❌ Error getting collection stats: {e}")
+            print(f"Error getting collection stats: {e}")
             return None
 
 
 class QdrantManagerFactory:
-    """Factory để tạo Qdrant manager"""
+    """Factory to create Qdrant manager"""
     
     @staticmethod
     def create_manager(host: str = "localhost", port: int = 6333, 
                       collection_prefix: str = "lumir_rag") -> QdrantManager:
-        """Tạo Qdrant manager với cấu hình cụ thể"""
+        """Create Qdrant manager with specific configuration"""
         return QdrantManager(host, port, collection_prefix)
     
     @staticmethod
     def create_local_manager(collection_prefix: str = "lumir_rag") -> QdrantManager:
-        """Tạo Qdrant manager cho local development"""
+        """Create Qdrant manager for local development"""
         return QdrantManager("localhost", 6333, collection_prefix)
     
     @staticmethod
     def create_cloud_manager(url: str, api_key: str, 
                            collection_prefix: str = "lumir_rag") -> QdrantManager:
-        """Tạo Qdrant manager cho cloud deployment"""
-        # Parse URL để lấy host và port
+        """Create Qdrant manager for cloud deployment"""
+        # Parse URL to get host and port
         if url.startswith("http"):
             url = url.replace("http://", "").replace("https://", "")
         
@@ -572,7 +567,7 @@ class QdrantManagerFactory:
 
 
 class RAGCollectionManager:
-    """Quản lý collections cho hệ thống RAG LUMIR - Tối ưu cho 2 collections chính"""
+    """Manage collections for RAG LUMIR - Optimized for 2 main collections"""
     
     def __init__(self, qdrant_manager: QdrantManager):
         self.qdrant = qdrant_manager
@@ -580,10 +575,10 @@ class RAGCollectionManager:
     
     def _get_optimized_collections(self) -> Dict[str, CollectionConfig]:
         """
-        Tạo cấu hình collections tối ưu dựa trên đặc điểm documents:
+        Create optimized collections configuration based on document characteristics:
         
-        1. FAQ Collection: Gộp FAQ behavior + training (cùng loại Q&A)
-        2. Knowledge Base: Gộp Handbook + Presentation (cùng loại kiến thức)
+        1. FAQ Collection: Merge FAQ behavior + training (same type Q&A)
+        2. Knowledge Base: Merge Handbook + Presentation (same type knowledge)
         """
         return {
             "faq": CollectionConfig(
@@ -613,7 +608,7 @@ class RAGCollectionManager:
         }
     
     def setup_collections(self) -> bool:
-        """Thiết lập tất cả collections cần thiết"""
+        """Setup all necessary collections"""
         try:
             success_count = 0
             
@@ -621,41 +616,41 @@ class RAGCollectionManager:
                 if self.qdrant.create_collection(config):
                     success_count += 1
                     
-                    # Tạo payload indexes cho các field quan trọng
+                    # Create payload indexes for important fields
                     self._create_payload_indexes(name)
                 else:
-                    print(f"❌ Failed to create collection: {name}")
+                    print(f"Failed to create collection: {name}")
             
-            print(f"✅ Setup collections: {success_count}/{len(self.collections_config)} successful")
+            print(f"Setup collections: {success_count}/{len(self.collections_config)} successful")
             return success_count == len(self.collections_config)
             
         except Exception as e:
-            print(f"❌ Error setting up collections: {e}")
+            print(f"Error setting up collections: {e}")
             return False
     
     def _create_payload_indexes(self, collection_name: str):
-        """Tạo payload indexes cho collection"""
+        """Create payload indexes for collection"""
         try:
-            # Index cho các field thường dùng để filter
+            # Index for important fields used for filtering
             index_fields = [
                 ("document_type", "keyword"),      # faq_behavior, faq_training, handbook, presentation
                 ("chunk_type", "keyword"),         # header, content, qa_pair, list_item
                 ("language", "keyword"),           # vi, en
-                ("source_file", "keyword"),        # Tên file gốc
+                ("source_file", "keyword"),        # Original file name
                 ("chunk_strategy", "keyword"),     # header_based, qa_based, size_based, semantic_based
-                ("header_level", "integer"),       # Cấp độ header (0, 1, 2, 3)
-                ("qa_count", "integer"),           # Số lượng Q&A trong chunk
-                ("token_count", "integer")         # Số lượng tokens
+                ("header_level", "integer"),       # Header level (0, 1, 2, 3)
+                ("qa_count", "integer"),           # Number of Q&A in chunk
+                ("token_count", "integer")         # Number of tokens
             ]
             
             for field_name, field_type in index_fields:
                 self.qdrant.create_payload_index(collection_name, field_name, field_type)
                 
         except Exception as e:
-            print(f"⚠️ Error creating payload indexes for {collection_name}: {e}")
+            print(f"Error creating payload indexes for {collection_name}: {e}")
     
     def get_collection_status(self) -> Dict[str, Any]:
-        """Lấy trạng thái tất cả collections"""
+        """Get status of all collections"""
         status = {}
         
         for name in self.collections_config.keys():
@@ -666,30 +661,30 @@ class RAGCollectionManager:
     
     def get_collection_for_document(self, filename: str) -> str:
         """
-        Xác định collection phù hợp cho document dựa trên tên file
+        Determine collection suitable for document based on filename
         
         Args:
-            filename: Tên file document
+            filename: Document filename
             
         Returns:
-            Tên collection: 'faq' hoặc 'knowledge_base'
+            Collection name: 'faq' or 'knowledge_base'
         """
         filename_lower = filename.lower()
         
-        # FAQ collection: Chứa các câu hỏi và trả lời
+        # FAQ collection: Contains questions and answers
         if any(keyword in filename_lower for keyword in ['faq', 'behavior', 'training']):
             return "faq"
         
-        # Knowledge base: Chứa kiến thức tổng hợp, hướng dẫn
+        # Knowledge base: Contains comprehensive knowledge, guides
         elif any(keyword in filename_lower for keyword in ['handbook', 'present', 'guide', 'manual']):
             return "knowledge_base"
         
-        # Default: Đặt vào knowledge_base
+        # Default: Put into knowledge_base
         else:
             return "knowledge_base"
     
     def get_collection_description(self) -> Dict[str, str]:
-        """Lấy mô tả chi tiết về mục đích của từng collection"""
+        """Get detailed description of each collection's purpose"""
         return {
             "faq": "Chứa các câu hỏi thường gặp, ví dụ hỏi đáp, lộ trình huấn luyện. Tối ưu cho semantic search về Q&A.",
             "knowledge_base": "Chứa kiến thức tổng hợp, hướng dẫn sử dụng, tính năng, khái niệm. Tối ưu cho comprehensive search."

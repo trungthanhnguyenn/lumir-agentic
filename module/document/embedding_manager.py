@@ -1,8 +1,3 @@
-"""
-Embedding Manager Module
-Quản lý embedding cho hệ thống RAG - Sử dụng Gemini embedding-002
-"""
-
 import os
 import numpy as np
 from typing import List, Dict, Any, Optional, Union
@@ -58,7 +53,7 @@ except ImportError:
 
 class EmbeddingManager:
     """
-    Quản lý embedding cho hệ thống RAG
+    Manage embedding for RAG system
     Hỗ trợ Gemini embedding-002 và sentence-transformers
     """
     
@@ -75,15 +70,15 @@ class EmbeddingManager:
         # HF client
         self._hf_client = None
         
-        # Khởi tạo model
+        # Initialize model
         self._initialize_model()
     
     def _initialize_model(self):
-        """Khởi tạo embedding model"""
+        """Initialize embedding model"""
         try:
             if self.provider == "hf" and HF_AVAILABLE:
                 # LangChain HuggingFaceEmbeddings for Qwen3-Embedding-0.6B
-                # Chuẩn hóa repo id: cần dạng org/model
+                # Normalize repo id: need org/model
                 model_name = self.model_name or "Qwen/Qwen3-Embedding-0.6B"
                 if "/" not in model_name:
                     model_name = f"Qwen/{model_name}"
@@ -109,11 +104,11 @@ class EmbeddingManager:
                     self.embedding_dimension = len(probe_vec) if isinstance(probe_vec, list) else default_dim
                 except Exception:
                     self.embedding_dimension = int(os.getenv("EMBEDDING_DIM", "1024"))
-                print(f"✅ HF embeddings model loaded: {model_name}")
-                print(f"📏 Embedding dimension: {self.embedding_dimension}")
+                print(f"HF embeddings model loaded: {model_name}")
+                print(f"Embedding dimension: {self.embedding_dimension}")
 
             elif self.provider == "gemini" and GEMINI_AVAILABLE:
-                # Khởi tạo Gemini từ .env
+                # Initialize Gemini from .env
                 api_key = os.getenv("GOOGLE_API_KEY")
                 if not api_key:
                     raise ValueError("GOOGLE_API_KEY not found in environment variables")
@@ -131,18 +126,18 @@ class EmbeddingManager:
 
                 # Dimension of Gemini embeddings
                 self.embedding_dimension = 768
-                print(f"✅ Gemini embedding model loaded: {self.model}")
-                print(f"📏 Embedding dimension: {self.embedding_dimension}")
+                print(f"Gemini embedding model loaded: {self.model}")
+                print(f"Embedding dimension: {self.embedding_dimension}")
                 
             elif self.provider == "sentence_transformers" and SENTENCE_TRANSFORMERS_AVAILABLE:
-                # Không dùng fallback trong chế độ HF bắt buộc
+                # No fallback in HF mode
                 raise RuntimeError("SentenceTransformers fallback is disabled. HF provider required.")
             else:
                 raise ValueError(f"Provider {self.provider} not available or not supported")
                 
         except Exception as e:
-            print(f"❌ Error initializing embedding model: {e}")
-            # Không fallback, fail cứng theo yêu cầu
+            print(f"Error initializing embedding model: {e}")
+            # No fallback, fail hard
             raise
 
     def _throttle(self):
@@ -170,13 +165,13 @@ class EmbeddingManager:
     
     def get_embedding(self, text: str) -> List[float]:
         """
-        Lấy embedding cho một đoạn text
+        Get embedding for a text
         
         Args:
-            text: Text cần embedding
+            text: Text to embed
             
         Returns:
-            List embedding vector
+            List of embedding vector
         """
         try:
             # Throttle per-call
@@ -189,7 +184,7 @@ class EmbeddingManager:
                     self._requests_in_window += 1
                     return vec
                 except Exception as e:
-                    print(f"❌ Error getting embedding (HF): {e}")
+                    print(f"Error getting embedding (HF): {e}")
                     return [0.0] * (self.embedding_dimension or 0)
 
             if self.provider == "gemini":
@@ -251,19 +246,19 @@ class EmbeddingManager:
                 return embedding.tolist() if hasattr(embedding, 'tolist') else embedding
                 
         except Exception as e:
-            print(f"❌ Error getting embedding: {e}")
+            print(f"Error getting embedding: {e}")
             # Return zero vector as fallback
             return [0.0] * self.embedding_dimension
     
     def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """
-        Lấy embedding cho nhiều text cùng lúc (batch processing)
+        Get embedding for multiple texts at once (batch processing)
         
         Args:
-            texts: List các text cần embedding
+            texts: List of texts to embed
             
         Returns:
-            List các embedding vector
+            List of embedding vectors
         """
         try:
             if self.provider == "hf":
@@ -272,7 +267,7 @@ class EmbeddingManager:
                     self._requests_in_window += len(texts)
                     return vecs
                 except Exception as e:
-                    print(f"❌ Error getting batch embeddings (HF): {e}")
+                    print(f"Error getting batch embeddings (HF): {e}")
                     embeddings = []
                     for text in texts:
                         embeddings.append(self.get_embedding(text))
@@ -280,7 +275,7 @@ class EmbeddingManager:
 
             if self.provider == "gemini":
                 embeddings = []
-                # Gemini không hỗ trợ batch native → lặp từng phần tử + throttle
+                # Gemini doesn't support native batch → loop through each element + throttle
                 for text in texts:
                     embedding = self.get_embedding(text)
                     embeddings.append(embedding)
@@ -291,32 +286,32 @@ class EmbeddingManager:
                 return embeddings.tolist() if hasattr(embeddings, 'tolist') else embeddings
                 
         except Exception as e:
-            print(f"❌ Error getting batch embeddings: {e}")
+            print(f"Error getting batch embeddings: {e}")
             # Return zero vectors as fallback
             return [[0.0] * self.embedding_dimension] * len(texts)
     
     def get_embedding_dimension(self) -> int:
-        """Lấy kích thước embedding vector"""
+        """Get embedding vector dimension"""
         return self.embedding_dimension
     
     def compute_similarity(self, embedding1: List[float], embedding2: List[float], method: str = "cosine") -> float:
         """
-        Tính độ tương tự giữa 2 embedding vectors
+        Calculate similarity between two embedding vectors
         
         Args:
             embedding1: Vector 1
             embedding2: Vector 2
-            method: Phương pháp tính ('cosine', 'euclidean', 'dot_product')
+            method: Similarity calculation method ('cosine', 'euclidean', 'dot_product')
             
         Returns:
-            Độ tương tự (0-1 cho cosine, càng nhỏ càng tương tự cho euclidean)
+            Similarity (0-1 for cosine, smaller for euclidean)
         """
         try:
             vec1 = np.array(embedding1)
             vec2 = np.array(embedding2)
             
             if method == "cosine":
-                # Cosine similarity: 1 = giống hệt, 0 = khác biệt hoàn toàn
+                # Cosine similarity: 1 = identical, 0 = completely different
                 dot_product = np.dot(vec1, vec2)
                 norm1 = np.linalg.norm(vec1)
                 norm2 = np.linalg.norm(vec2)
@@ -327,16 +322,16 @@ class EmbeddingManager:
                 return dot_product / (norm1 * norm2)
                 
             elif method == "euclidean":
-                # Euclidean distance: 0 = giống hệt, càng lớn càng khác biệt
+                # Euclidean distance: 0 = identical, larger = more different
                 distance = np.linalg.norm(vec1 - vec2)
-                # Normalize về 0-1 (0 = giống hệt, 1 = khác biệt hoàn toàn)
-                max_distance = np.sqrt(len(vec1))  # Giả sử vector được normalize
+                # Normalize to 0-1 (0 = identical, 1 = completely different)
+                max_distance = np.sqrt(len(vec1))  # Assume vector is normalized
                 return min(distance / max_distance, 1.0)
                 
             elif method == "dot_product":
-                # Dot product: càng lớn càng tương tự
+                # Dot product: larger = more similar
                 dot_product = np.dot(vec1, vec2)
-                # Normalize về 0-1
+                # Normalize to 0-1
                 max_dot = np.linalg.norm(vec1) * np.linalg.norm(vec2)
                 return max(0, dot_product / max_dot) if max_dot > 0 else 0
                 
@@ -344,22 +339,22 @@ class EmbeddingManager:
                 raise ValueError(f"Method {method} not supported")
                 
         except Exception as e:
-            print(f"❌ Error computing similarity: {e}")
+            print(f"Error computing similarity: {e}")
             return 0.0
     
     def find_most_similar(self, query_embedding: List[float], candidate_embeddings: List[List[float]], 
                           top_k: int = 5, method: str = "cosine") -> List[tuple]:
         """
-        Tìm top-k embedding vectors tương tự nhất
+        Find top-k embedding vectors most similar
         
         Args:
-            query_embedding: Embedding của query
-            candidate_embeddings: List các embedding candidates
-            top_k: Số lượng kết quả trả về
-            method: Phương pháp tính similarity
+            query_embedding: Embedding of query
+            candidate_embeddings: List of embedding candidates
+            top_k: Number of results to return
+            method: Similarity calculation method
             
         Returns:
-            List các tuple (index, similarity_score)
+            List of tuples (index, similarity_score)
         """
         try:
             similarities = []
@@ -368,40 +363,40 @@ class EmbeddingManager:
                 similarity = self.compute_similarity(query_embedding, candidate, method)
                 similarities.append((i, similarity))
             
-            # Sắp xếp theo similarity (cao nhất trước)
+            # Sort by similarity (highest first)
             if method == "cosine" or method == "dot_product":
                 similarities.sort(key=lambda x: x[1], reverse=True)
             else:  # euclidean
-                similarities.sort(key=lambda x: x[1])  # Càng nhỏ càng tốt
+                similarities.sort(key=lambda x: x[1])  # Smaller is better
             
             return similarities[:top_k]
             
         except Exception as e:
-            print(f"❌ Error finding most similar: {e}")
+            print(f"Error finding most similar: {e}")
             return []
     
     def optimize_batch_size(self, texts: List[str]) -> int:
         """
-        Tối ưu batch size dựa trên độ dài text và memory available
+        Optimize batch size based on text length and memory available
         
         Args:
-            texts: List các text cần xử lý
+            texts: List of texts to process
             
         Returns:
-            Batch size tối ưu
+            Optimal batch size
         """
         try:
             if not TORCH_AVAILABLE:
                 return 32  # Default
             
-            # Tính tổng độ dài text
+            # Calculate total text length
             total_length = sum(len(text) for text in texts)
             avg_length = total_length / len(texts) if texts else 0
             
-            # Kiểm tra memory available
+            # Check memory available
             if torch.cuda.is_available():
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory
-                # Ước tính memory cần thiết cho batch
+                # Estimate memory required for batch
                 estimated_memory_per_text = avg_length * 4  # bytes per character
                 optimal_batch = min(64, int(gpu_memory / (estimated_memory_per_text * 1000)))
             else:
@@ -411,11 +406,11 @@ class EmbeddingManager:
             return max(1, optimal_batch)
             
         except Exception as e:
-            print(f"⚠️ Error optimizing batch size: {e}")
+            print(f"Error optimizing batch size: {e}")
             return 32
     
     def get_model_info(self) -> Dict[str, Any]:
-        """Lấy thông tin về model hiện tại"""
+        """Get information about current model"""
         return {
             "provider": self.provider,
             "model_name": self.model_name,
@@ -430,70 +425,70 @@ class EmbeddingManager:
     
     def preprocess_text_for_trading(self, text: str) -> str:
         """
-        Tiền xử lý text cho trading documents
+        Preprocess text for trading documents
         
         Args:
-            text: Text gốc
+            text: Original text
             
         Returns:
-            Text đã được tiền xử lý
+            Text preprocessed
         """
         try:
-            # Loại bỏ ký tự đặc biệt không cần thiết
+            # Remove unnecessary special characters
             import re
             
-            # Loại bỏ multiple spaces
+            # Remove multiple spaces
             text = re.sub(r'\s+', ' ', text)
             
-            # Loại bỏ ký tự đặc biệt như bullet points, arrows
+            # Remove special characters like bullet points, arrows
             text = re.sub(r'[•→←↑↓]', ' ', text)
             
-            # Chuẩn hóa dấu câu
+            # Normalize punctuation
             text = re.sub(r'[!]{2,}', '!', text)
             text = re.sub(r'[?]{2,}', '?', text)
             
-            # Loại bỏ dòng trống liên tiếp
+            # Remove consecutive empty lines
             text = re.sub(r'\n\s*\n', '\n', text)
             
             return text.strip()
             
         except Exception as e:
-            print(f"⚠️ Error preprocessing text: {e}")
+            print(f"Error preprocessing text: {e}")
             return text
 
 
 class EmbeddingManagerFactory:
-    """Factory để tạo embedding manager"""
+    """Factory to create embedding manager"""
     
     @staticmethod
     def create_manager(model_name: str = "embedding-002", provider: str = "gemini") -> EmbeddingManager:
-        """Tạo embedding manager với cấu hình cụ thể"""
+        """Create embedding manager with specific configuration"""
         return EmbeddingManager(model_name, provider)
     
     @staticmethod
     def create_optimal_manager() -> EmbeddingManager:
-        """Tạo embedding manager tối ưu dựa trên environment"""
-        # Kiểm tra environment variables
+        """Create embedding manager optimized based on environment"""
+        # Check environment variables
         google_key = os.getenv("GOOGLE_API_KEY")
         hf_token = os.getenv("HF_TOKEN")
         
         if hf_token and HF_AVAILABLE:
-            print("🚀 Using HF embeddings (Qwen3-Embedding-0.6B)")
+            print("Using HF embeddings (Qwen3-Embedding-0.6B)")
             return EmbeddingManager("Qwen3-Embedding-0.6B", "hf")
         elif google_key and GEMINI_AVAILABLE:
-            print("🚀 Using Gemini embeddings (embedding-002)")
+            print("Using Gemini embeddings (embedding-002)")
             return EmbeddingManager("embedding-002", "gemini")
         elif SENTENCE_TRANSFORMERS_AVAILABLE:
-            print("🚀 Using SentenceTransformers (all-MiniLM-L6-v2)")
+            print("Using SentenceTransformers (all-MiniLM-L6-v2)")
             return EmbeddingManager("all-MiniLM-L6-v2", "sentence_transformers")
         else:
             raise RuntimeError("No embedding provider available")
     
     @staticmethod
     def create_multilingual_manager() -> EmbeddingManager:
-        """Tạo embedding manager hỗ trợ đa ngôn ngữ"""
+        """Create embedding manager supporting multiple languages"""
         if GEMINI_AVAILABLE:
-            # Gemini hỗ trợ đa ngôn ngữ tốt
+            # Gemini supports multiple languages well
             return EmbeddingManager("embedding-002", "gemini")
         elif SENTENCE_TRANSFORMERS_AVAILABLE:
             # Fallback to multilingual sentence-transformers
@@ -504,9 +499,9 @@ class EmbeddingManagerFactory:
     
     @staticmethod
     def create_trading_optimized_manager() -> EmbeddingManager:
-        """Tạo embedding manager tối ưu cho trading documents"""
+        """Create embedding manager optimized for trading documents"""
         if GEMINI_AVAILABLE:
-            # Gemini embedding-002 tốt cho domain-specific content
+            # Gemini embedding-002 is good for domain-specific content
             return EmbeddingManager("embedding-002", "gemini")
         else:
             # Fallback to sentence-transformers
@@ -514,7 +509,7 @@ class EmbeddingManagerFactory:
 
 
 class EmbeddingCache:
-    """Cache cho embedding để tăng performance"""
+    """Cache for embedding to improve performance"""
     
     def __init__(self, max_size: int = 10000):
         self.max_size = max_size
@@ -524,7 +519,7 @@ class EmbeddingCache:
         self._cache_hits = 0
     
     def get(self, text: str) -> Optional[List[float]]:
-        """Lấy embedding từ cache"""
+        """Get embedding from cache"""
         self._total_requests += 1
         
         if text in self.cache:
@@ -534,7 +529,7 @@ class EmbeddingCache:
         return None
     
     def put(self, text: str, embedding: List[float]):
-        """Lưu embedding vào cache"""
+        """Save embedding to cache"""
         if len(self.cache) >= self.max_size:
             # Remove least accessed item
             least_accessed = min(self.access_count.items(), key=lambda x: x[1])
@@ -545,14 +540,14 @@ class EmbeddingCache:
         self.access_count[text] = 1
     
     def clear(self):
-        """Xóa cache"""
+        """Clear cache"""
         self.cache.clear()
         self.access_count.clear()
         self._total_requests = 0
         self._cache_hits = 0
     
     def get_stats(self) -> Dict[str, Any]:
-        """Lấy thống kê cache"""
+        """Get cache statistics"""
         return {
             "cache_size": len(self.cache),
             "max_size": self.max_size,
@@ -562,7 +557,7 @@ class EmbeddingCache:
         }
     
     def _calculate_hit_rate(self) -> float:
-        """Tính tỷ lệ hit của cache"""
+        """Calculate cache hit rate"""
         if self._total_requests == 0:
             return 0.0
         return self._cache_hits / self._total_requests
