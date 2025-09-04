@@ -1,261 +1,156 @@
 [
   {
-    "key": "trading_style",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612146",
+    "key": "platform_introduction",
+    "summary": "LUMIR is a trading support platform developed by BEQ-Holdings, designed to help users understand the platform and improve trading efficiency.",
+    "context": "Introduction of LUMIR's purpose and functionality.",
+    "timestamp": "2025-08-27T00:57:54.423710",
     "confidence": 0.95,
-    "tags": [],
+    "tags": [
+      "platform",
+      "trading",
+      "support",
+      "BEQ-Holdings"
+    ],
     "source_turns": [
-      1,
-      5
-    ]
-  },
-  {
-    "key": "personality_trait",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:15:26.907381",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      1,
       2
     ]
   },
   {
-    "key": "trading_risk",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:14:45.285553",
-    "confidence": 0.8,
-    "tags": [],
+    "key": "user_progression",
+    "summary": "Users progress through levels (Starter, Explorer, Advanced, Master, Elite) by completing tasks and accumulating points.",
+    "context": "Description of the user leveling system within LUMIR.",
+    "timestamp": "2025-08-27T00:57:54.423735",
+    "confidence": 0.9,
+    "tags": [
+      "user_progression",
+      "levels",
+      "tasks",
+      "points"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "account_connection_benefit",
+    "summary": "Connecting a trading account (MT4/MT5/TradingView) provides personalized reports with Trader DNA Map and AI Coaching.",
+    "context": "Benefit of connecting trading accounts to LUMIR.",
+    "timestamp": "2025-08-27T00:57:54.423743",
+    "confidence": 0.9,
+    "tags": [
+      "account_connection",
+      "Trader DNA Map",
+      "AI Coaching",
+      "personalized_reports"
+    ],
+    "source_turns": [
+      2
+    ]
+  },
+  {
+    "key": "lumi_focus",
+    "summary": "LUMIR tập trung vào việc giúp người dùng nhận ra và điều chỉnh các hành vi giao dịch lặp lại và 'điểm mù'.",
+    "context": "LUMIR được thiết kế để hỗ trợ người dùng trong việc giao dịch và sử dụng nền tăng LUMIR.",
+    "timestamp": "2025-08-27T00:58:04.815459",
+    "confidence": 0.9,
+    "tags": [
+      "lumi",
+      "behavioral_analysis",
+      "trading_behavior"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "coach_role",
+    "summary": "Các huấn luyện viên (coach) của LUMIR sử dụng Behavioral Report để giúp người dùng nhìn thấy rõ hơn các thói quen thực tế của họ trên biểu đồ.",
+    "context": "Dữ liệu từ Behavioral Report được sử dụng để phân tích hành vi của người dùng.",
+    "timestamp": "2025-08-27T00:58:04.815480",
+    "confidence": 0.9,
+    "tags": [
+      "coach",
+      "behavioral_report",
+      "trading_patterns"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "personalization",
+    "summary": "Hệ thống LUMIR có thể phân tích dữ liệu cá nhân để đưa ra những lời khuyên phù hợp nhất.",
+    "context": "Hệ thống sử dụng dữ liệu cá nhân để cá nhân hóa lời khuyên.",
+    "timestamp": "2025-08-27T00:58:04.815485",
+    "confidence": 0.9,
+    "tags": [
+      "personalization",
+      "data_analysis",
+      "advice"
+    ],
+    "source_turns": [
+      3
+    ]
+  },
+  {
+    "key": "trading_style_recommendation",
+    "summary": "User is recommended Swing Trading or Trend Trading based on personality and analysis.",
+    "context": "Based on personality analysis and provided recommendations.",
+    "timestamp": "2025-08-27T00:58:41.100242",
+    "confidence": 0.95,
+    "tags": [
+      "trading",
+      "recommendation",
+      "swing_trading",
+      "trend_trading"
+    ],
     "source_turns": [
       1
     ]
   },
   {
-    "key": "trading_advice",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175915",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      1,
-      3
-    ]
-  },
-  {
-    "key": "emotional_issue",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175837",
-    "confidence": 0.95,
-    "tags": [],
-    "source_turns": [
-      1,
-      2,
-      3
-    ]
-  },
-  {
-    "key": "trading_strategy",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175918",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      2,
-      3
-    ]
-  },
-  {
-    "key": "advice",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:15:26.907391",
-    "confidence": 0.8,
-    "tags": [],
-    "source_turns": [
-      2
-    ]
-  },
-  {
-    "key": "trading_strategy",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:15:26.907396",
-    "confidence": 0.7,
-    "tags": [],
-    "source_turns": [
-      2
-    ]
-  },
-  {
-    "key": "emotional_regulation",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175907",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      3
-    ]
-  },
-  {
-    "key": "personality_strength",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175912",
-    "confidence": 0.8,
-    "tags": [],
-    "source_turns": [
-      3
-    ]
-  },
-  {
-    "key": "personal_day",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:10.175921",
-    "confidence": 0.8,
-    "tags": [],
-    "source_turns": [
-      3
-    ]
-  },
-  {
-    "key": "personality_traits",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:46.094422",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      4
-    ]
-  },
-  {
-    "key": "trading_improvement_suggestion",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:46.094443",
-    "confidence": 0.8,
-    "tags": [],
-    "source_turns": [
-      4
-    ]
-  },
-  {
-    "key": "information_needed",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:16:46.094448",
-    "confidence": 1.0,
-    "tags": [],
-    "source_turns": [
-      4
-    ]
-  },
-  {
-    "key": "trading_strategy_core",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612175",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      5
-    ]
-  },
-  {
-    "key": "risk_tolerance",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612180",
+    "key": "fomo_warning",
+    "summary": "User is advised to avoid FOMO when trading.",
+    "context": "Trend Trading recommendation includes a warning to avoid FOMO.",
+    "timestamp": "2025-08-27T00:58:41.100271",
     "confidence": 0.85,
-    "tags": [],
+    "tags": [
+      "emotion",
+      "fomo",
+      "trading_psychology"
+    ],
     "source_turns": [
-      5
-    ]
-  },
-  {
-    "key": "exploratory_trading",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612184",
-    "confidence": 0.9,
-    "tags": [],
-    "source_turns": [
-      5
-    ]
-  },
-  {
-    "key": "emotional_control",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612187",
-    "confidence": 0.8,
-    "tags": [],
-    "source_turns": [
-      5
+      1
     ]
   },
   {
     "key": "trading_approach",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:22.612190",
+    "summary": "User should combine trading styles with strict capital management and avoid rigid thinking.",
+    "context": "Overall advice for maximizing trading effectiveness.",
+    "timestamp": "2025-08-27T00:58:41.100281",
     "confidence": 0.9,
-    "tags": [],
+    "tags": [
+      "trading",
+      "capital_management",
+      "trading_strategy"
+    ],
     "source_turns": [
-      5
+      1
     ]
   },
   {
-    "key": "fomo_management",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:57.390153",
-    "confidence": 0.95,
-    "tags": [],
-    "source_turns": [
-      6
-    ]
-  },
-  {
-    "key": "fomo_triggers",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:57.390177",
-    "confidence": 0.85,
-    "tags": [],
-    "source_turns": [
-      6
-    ]
-  },
-  {
-    "key": "emotional_response_fomo",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:57.390182",
-    "confidence": 0.85,
-    "tags": [],
-    "source_turns": [
-      6
-    ]
-  },
-  {
-    "key": "trading_strategy_reminder",
-    "summary": "",
-    "context": "",
-    "timestamp": "2025-08-24T11:17:57.390186",
+    "key": "emotional_issue",
+    "summary": "User experiences stress when trading.",
+    "context": "User mentioned feeling stressed while trading.",
+    "timestamp": "2025-08-27T00:59:12.095038",
     "confidence": 0.9,
-    "tags": [],
+    "tags": [
+      "emotion",
+      "stress",
+      "trading_psychology"
+    ],
     "source_turns": [
-      6
+      2
     ]
   }
 ]
