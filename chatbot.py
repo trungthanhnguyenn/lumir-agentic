@@ -1,16 +1,3 @@
-"""
-Simple RAG Chatbot for LUMIR using existing orchestrator components.
-
-Pipeline:
-1) Embed query with current embedding manager
-2) Retrieve top 10 from Qdrant (both collections)
-3) Rerank top 10 to top 5 with a cross-encoder
-4) Generate answer with LLM (OpenAI-compatible via config.get_openai_llm)
-
-Refusal & safety:
-- If query and contexts are off-topic or too weak -> refuse per policy
-"""
-
 from typing import List, Dict, Any
 
 from module.rag_orchestrator import RAGOrchestrator, RAGQuery
@@ -161,30 +148,30 @@ class LUMIRChatbot:
         if not user_context["is_logged_in"]:
             # User not logged in
             if user_context["question_type"] == "trading_related":
-                suggestions.append("💡 **Để được tư vấn trading chi tiết:** Đăng nhập và cung cấp dữ liệu giao dịch của bạn")
+                suggestions.append("**Để được tư vấn trading chi tiết:** Đăng nhập và cung cấp dữ liệu giao dịch của bạn")
             elif user_context["question_type"] == "personal_analysis":
-                suggestions.append("💡 **Để được phân tích tính cách:** Đăng nhập và cung cấp tên cùng ngày sinh")
+                suggestions.append("**Để được phân tích tính cách:** Đăng nhập và cung cấp tên cùng ngày sinh")
             else:
-                suggestions.append("💡 **Để trải nghiệm đầy đủ:** Đăng nhập vào hệ thống LUMIR")
-                suggestions.append("🔐 **Tài khoản miễn phí:** Tạo tài khoản để sử dụng các tính năng nâng cao")
+                suggestions.append("**Để trải nghiệm đầy đủ:** Đăng nhập vào hệ thống LUMIR")
+                suggestions.append("**Tài khoản miễn phí:** Tạo tài khoản để sử dụng các tính năng nâng cao")
         else:
             # User is logged in but may be missing some info
             if user_context["question_type"] == "trading_related" and not user_context["has_trading_info"]:
-                suggestions.append("📊 **Cần dữ liệu giao dịch:** Upload file Excel hoặc kết nối tài khoản MT4/MT5 để được phân tích chi tiết")
+                suggestions.append("**Cần dữ liệu giao dịch:** Upload file Excel hoặc kết nối tài khoản MT4/MT5 để được phân tích chi tiết")
             elif user_context["question_type"] == "personal_analysis" and not user_context["has_personal_info"]:
-                suggestions.append("👤 **Cần thông tin cá nhân:** Cập nhật tên và ngày sinh trong hồ sơ để được phân tích tính cách")
+                suggestions.append("**Cần thông tin cá nhân:** Cập nhật tên và ngày sinh trong hồ sơ để được phân tích tính cách")
             
             if user_context["info_sufficient"]:
-                suggestions.append("✅ **Thông tin đầy đủ:** Bạn có thể sử dụng đầy đủ các tính năng của LUMIR")
+                suggestions.append("**Thông tin đầy đủ:** Bạn có thể sử dụng đầy đủ các tính năng của LUMIR")
         
         # Add general helpful suggestions
         if user_context["question_type"] == "system_info":
-            suggestions.append("📚 **Tài liệu hướng dẫn:** Xem thêm tài liệu chi tiết trong phần Help")
+            suggestions.append("**Tài liệu hướng dẫn:** Xem thêm tài liệu chi tiết trong phần Help")
         
         if not suggestions:
             suggestions = [
-                "💡 **Khám phá thêm:** Hệ thống LUMIR có nhiều tính năng thú vị để bạn khám phá",
-                "🤝 **Hỗ trợ:** Nếu cần hỗ trợ thêm, hãy liên hệ đội ngũ chăm sóc khách hàng"
+                "**Khám phá thêm:** Hệ thống LUMIR có nhiều tính năng thú vị để bạn khám phá",
+                "**Hỗ trợ:** Nếu cần hỗ trợ thêm, hãy liên hệ đội ngũ chăm sóc khách hàng"
             ]
         
         return "\n".join(suggestions)
@@ -198,11 +185,11 @@ class LUMIRChatbot:
         # Build user status context
         user_status = f"""
 **Trạng thái người dùng:**
-- Đã đăng nhập: {'✅ Có' if user_context['is_logged_in'] else 'Chưa'}
-- Có thông tin cá nhân: {'✅ Có' if user_context['has_personal_info'] else 'Chưa'}
-- Có dữ liệu giao dịch: {'✅ Có' if user_context['has_trading_info'] else 'Chưa'}
+- Đã đăng nhập: {'Có' if user_context['is_logged_in'] else 'Chưa'}
+- Có thông tin cá nhân: {'Có' if user_context['has_personal_info'] else 'Chưa'}
+- Có dữ liệu giao dịch: {'Có' if user_context['has_trading_info'] else 'Chưa'}
 - Loại câu hỏi: {user_context['question_type']}
-- Thông tin đủ: {'✅ Đủ' if user_context['info_sufficient'] else 'Thiếu: ' + ', '.join(user_context['missing_info'])}
+- Thông tin đủ: {'Đủ' if user_context['info_sufficient'] else 'Thiếu: ' + ', '.join(user_context['missing_info'])}
 """
         
         system = (
