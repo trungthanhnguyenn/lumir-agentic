@@ -61,11 +61,11 @@ def analyze_user_question_with_llm(question: str) -> Dict[str, Any]:
         chain = prompt | llm | parser
         
         result = chain.invoke({"question": question})
-        print(f"🔍 LLM Analysis Result: {result}")
+        print(f"LLM Analysis Result: {result}")
         return result
         
     except Exception as e:
-        print(f"❌ LLM analysis failed: {e}")
+        print(f"LLM analysis failed: {e}")
         # Fallback to basic analysis
         return {
             "analysis_type": "overview",
@@ -86,7 +86,7 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         Cleaned DataFrame with standardized column names
     """
     try:
-        print(f"📁 Attempting to read Excel file: {file_path}")
+        print(f"Attempting to read Excel file: {file_path}")
         
         # Check if file exists
         if not os.path.exists(file_path):
@@ -94,7 +94,7 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         
         # Check file size
         file_size = os.path.getsize(file_path)
-        print(f"📊 File size: {file_size} bytes")
+        print(f"File size: {file_size} bytes")
         
         if file_size == 0:
             raise ValueError("File is empty")
@@ -108,7 +108,7 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
             else:
                 raise ValueError("File must be .xlsx or .xls format")
         except UnicodeDecodeError as e:
-            print(f"❌ Unicode decode error: {e}")
+            print(f"Unicode decode error: {e}")
             # Try with different encoding
             try:
                 if file_path.endswith('.xlsx'):
@@ -116,11 +116,11 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
                 else:
                     df = pd.read_excel(file_path, engine='xlrd', encoding='latin-1')
             except Exception as e2:
-                print(f"❌ Failed with latin-1 encoding: {e2}")
+                print(f"Failed with latin-1 encoding: {e2}")
                 raise ValueError(f"Cannot read Excel file due to encoding issues: {e}")
         
-        print(f"✅ Successfully read Excel file. Shape: {df.shape}")
-        print(f"📋 Columns found: {list(df.columns)}")
+        print(f"Successfully read Excel file. Shape: {df.shape}")
+        print(f"Columns found: {list(df.columns)}")
         
         # Clean column names
         df.columns = [str(col).strip() for col in df.columns]
@@ -155,16 +155,16 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         missing_columns = [col for col in required_columns if col not in df.columns]
         
         if missing_columns:
-            print(f"⚠️ Missing required columns: {missing_columns}")
-            print(f"📋 Available columns: {list(df.columns)}")
+            print(f"Missing required columns: {missing_columns}")
+            print(f"Available columns: {list(df.columns)}")
             raise ValueError(f"Missing required columns: {missing_columns}")
         
-        print(f"✅ Excel file processed successfully. Final shape: {df.shape}")
+        print(f"Excel file processed successfully. Final shape: {df.shape}")
         return df
         
     except Exception as e:
-        print(f"❌ Error reading Excel file: {e}")
-        print(f"📁 File path: {file_path}")
+        print(f"Error reading Excel file: {e}")
+        print(f"File path: {file_path}")
         raise
 
 def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None) -> pd.DataFrame:
@@ -183,7 +183,7 @@ def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None
     
     # Case 1: Trading data from API endpoint
     if trading_data is not None:
-        print("🔄 Processing trading data from API endpoint")
+        print("Processing trading data from API endpoint")
         try:
             # Convert trading data to DataFrame
             if isinstance(trading_data, dict) and 'trades' in trading_data:
@@ -194,44 +194,44 @@ def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None
                 # Try to convert dict to DataFrame
                 df = pd.DataFrame([trading_data])
             else:
-                print(f"⚠️ Unsupported trading data format: {type(trading_data)}")
+                print(f"Unsupported trading data format: {type(trading_data)}")
                 return pd.DataFrame()
             
             if df.empty:
-                print("⚠️ Trading data is empty")
+                print("Trading data is empty")
                 return df
             
-            print(f"✅ Successfully loaded trading data from API. Records: {len(df)}")
+            print(f"Successfully loaded trading data from API. Records: {len(df)}")
             return df
             
         except Exception as e:
-            print(f"❌ Error processing trading data from API: {e}")
+            print(f"Error processing trading data from API: {e}")
             return pd.DataFrame()
     
     # Case 2: Excel file path
     if file_path:
         if not os.path.exists(file_path):
-            print(f"❌ Trading data file not found: {file_path}")
+            print(f"Trading data file not found: {file_path}")
             return pd.DataFrame()
         
         try:
-            print(f"🔄 Reading trading data from file: {file_path}")
+            print(f"Reading trading data from file: {file_path}")
             df = read_trading_excel(file_path)
             
             if df.empty:
-                print("⚠️ Excel file is empty or contains no data")
+                print("Excel file is empty or contains no data")
                 return df
             
-            print(f"✅ Successfully loaded trading data from file. Records: {len(df)}")
+            print(f"Successfully loaded trading data from file. Records: {len(df)}")
             return df
             
         except Exception as e:
-            print(f"❌ Error reading trading data file: {e}")
-            print(f"📁 File path: {file_path}")
+            print(f"Error reading trading data file: {e}")
+            print(f"File path: {file_path}")
             return pd.DataFrame()
     
     # Case 3: No data provided
-    print("⚠️ No trading data provided (neither file path nor API data)")
+    print("No trading data provided (neither file path nor API data)")
     return pd.DataFrame()
 
 
@@ -425,33 +425,33 @@ def calculate_trade_index(df: pd.DataFrame):
 
 def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any]) -> pd.DataFrame:
     """
-    Lọc giao dịch theo điều kiện từ kết quả phân tích LLM
+    Filter trades by conditions from LLM analysis result
     
     Args:
-        df: DataFrame gốc
-        analysis_result: Kết quả phân tích từ LLM
+        df: Original DataFrame
+        analysis_result: Analysis result from LLM
         
     Returns:
-        DataFrame đã lọc
+        Filtered DataFrame
     """
     filtered_df = df.copy()
     
     # Filter by recent trades
     if analysis_result.get('recent_n_trades'):
         n_trades = analysis_result['recent_n_trades']
-        print(f"🔍 Lọc {n_trades} giao dịch gần đây")
+        print(f"Lọc {n_trades} giao dịch gần đây")
         if 'close_time' in filtered_df.columns:
             filtered_df = filtered_df.sort_values('close_time', ascending=False).head(n_trades)
-            print(f"✅ Đã lọc thành công: {len(filtered_df)} giao dịch")
+            print(f"Đã lọc thành công: {len(filtered_df)} giao dịch") 
         else:
             # If no time column, take last n rows
             filtered_df = filtered_df.tail(n_trades)
-            print(f"⚠️ Không có cột thời gian, lấy {len(filtered_df)} dòng cuối")
+            print(f"Không có cột thời gian, lấy {len(filtered_df)} dòng cuối")
     
     # Filter by time period
     if analysis_result.get('time_period'):
         time_period = analysis_result['time_period']
-        print(f"🔍 Lọc theo thời gian: {time_period}")
+        print(f"Lọc theo thời gian: {time_period}")
         
         if 'close_time' in filtered_df.columns:
             current_time = datetime.now()
@@ -460,7 +460,7 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
                 # Last 30 days
                 start_date = current_time - timedelta(days=30)
                 filtered_df = filtered_df[filtered_df['close_time'] >= start_date]
-                print(f"✅ Đã lọc 30 ngày gần đây: {len(filtered_df)} giao dịch")
+                print(f"Đã lọc 30 ngày gần đây: {len(filtered_df)} giao dịch")
                 
             elif time_period.get('period') == 'month':
                 if time_period.get('value') == 'current':
@@ -478,7 +478,7 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
                     (filtered_df['close_time'] >= start_date) & 
                     (filtered_df['close_time'] <= end_date)
                 ]
-                print(f"✅ Filtered by month: {len(filtered_df)} trades")
+                print(f"Filtered by month: {len(filtered_df)} trades")
             
             elif time_period.get('period') == 'week':
                 if time_period.get('value') == 'current':
@@ -496,22 +496,22 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
                     (filtered_df['close_time'] >= start_date) & 
                     (filtered_df['close_time'] < end_date)
                 ]
-                print(f"✅ Filtered by week: {len(filtered_df)} trades")
+                print(f"Filtered by week: {len(filtered_df)} trades")
         else:
-            print("⚠️ No time column to filter")
+            print("No time column to filter")
     
     return filtered_df
 
 def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, Any] = None) -> str:
     """
-    Generate comprehensive report based on trading data
+    Generate comprehensive report based on trading data summary
     
     Args:
         df: Trading DataFrame
         analysis_result: LLM analysis result (optional)
         
     Returns:
-        Comprehensive report
+        Comprehensive report summary
     """
     # Filter data based on conditions if available
     if analysis_result:
@@ -525,26 +525,26 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     # Header
     if analysis_result and analysis_result.get('analysis_type') != 'overview':
-        report_parts.append(f"📊 BÁO CÁO PHÂN TÍCH: {analysis_result['analysis_type'].upper()}")
+        report_parts.append(f" BÁO CÁO PHÂN TÍCH: {analysis_result['analysis_type'].upper()}")
         if analysis_result.get('recent_n_trades'):
-            report_parts.append(f"🔍 Dựa trên {analysis_result['recent_n_trades']} giao dịch gần đây")
+            report_parts.append(f" Dựa trên {analysis_result['recent_n_trades']} giao dịch gần đây")
         if analysis_result.get('time_period'):
             time_info = analysis_result['time_period']
-            report_parts.append(f"⏰ Khoảng thời gian: {time_info.get('period', 'N/A')} - {time_info.get('value', 'N/A')}")
+            report_parts.append(f" Khoảng thời gian: {time_info.get('period', 'N/A')} - {time_info.get('value', 'N/A')}")
     else:
-        report_parts.append("📊 BÁO CÁO TỔNG QUAN GIAO DỊCH")
+        report_parts.append(" BÁO CÁO TỔNG QUAN GIAO DỊCH")
     
     report_parts.append("=" * 50)
     
     # Overview
-    report_parts.append("📈 TỔNG QUAN")
+    report_parts.append(" TỔNG QUAN")
     report_parts.append(f"• Tổng số lệnh: {result['trades']}")
     report_parts.append(f"• Tổng lợi nhuận: {result['net_profit']:,.2f}")
     report_parts.append(f"• Tỷ lệ thắng: {result['win_rate_pct']:.1f}%")
     report_parts.append(f"• Lợi nhuận trung bình/lệnh: {result['avg_profit_per_trade']:,.2f}")
     
     # Performance
-    report_parts.append("\n🎯 HIỆU SUẤT")
+    report_parts.append("\n HIỆU SUẤT")
     report_parts.append(f"• Lệnh thắng trung bình: {result['avg_profit_win']:,.2f}")
     report_parts.append(f"• Lệnh thua trung bình: {result['avg_loss_loss']:,.2f}")
     report_parts.append(f"• Hệ số lợi nhuận: {result['profit_factor']:.2f}")
@@ -552,7 +552,7 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     report_parts.append(f"• Lệnh thua nhất: {result['worst_trade']:,.2f}")
     
     # Risk
-    report_parts.append("\n⚠️ RỦI RO")
+    report_parts.append("\n RỦI RO")
     report_parts.append(f"• Sụt giảm tối đa: {result['max_drawdown_pct']:.1f}%")
     report_parts.append(f"• Số lệnh thua liên tiếp tối đa: {result['max_consecutive_losses']}")
     report_parts.append(f"• Giới hạn rủi ro/lệnh: {result['risk_kpi']['max_risk_per_trade']:,.2f}")
@@ -560,7 +560,7 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     # Time analysis
     if result['time_analysis']:
-        report_parts.append("\n⏰ PHÂN TÍCH THỜI GIAN")
+        report_parts.append("\n PHÂN TÍCH THỜI GIAN")
         best_hour = max(result['time_analysis'].items(), key=lambda x: x[1]['profit'])
         worst_hour = min(result['time_analysis'].items(), key=lambda x: x[1]['profit'])
         report_parts.append(f"• Giờ tốt nhất: {best_hour[0]}:00 (lợi nhuận: {best_hour[1]['profit']:,.2f})")
@@ -568,23 +568,23 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     # Symbol analysis
     if result['symbol_analysis']:
-        report_parts.append("\n💱 PHÂN TÍCH CẶP TIỀN")
+        report_parts.append("\n PHÂN TÍCH CẶP TIỀN")
         for symbol, data in result['symbol_analysis'].items():
             report_parts.append(f"• {symbol}: {data['trades']} lệnh, lợi nhuận: {data['profit']:,.2f}, win rate: {data['win_rate']:.1f}%")
     
     # Side analysis
     if result['side_analysis']:
-        report_parts.append("\n🔄 PHÂN TÍCH HƯỚNG GIAO DỊCH")
+        report_parts.append("\n PHÂN TÍCH HƯỚNG GIAO DỊCH")
         for side, data in result['side_analysis'].items():
             report_parts.append(f"• {side}: {data['trades']} lệnh, lợi nhuận: {data['profit']:,.2f}, win rate: {data['win_rate']:.1f}%")
     
     # Behavioral analysis
     if result['behavioral']:
-        report_parts.append("\n🧠 PHÂN TÍCH HÀNH VI")
+        report_parts.append("\n PHÂN TÍCH HÀNH VI")
         report_parts.append(f"• Tỷ lệ giao dịch nhanh: {result['behavioral']['rapid_fire_ratio']:.1%}")
     
     # Other metrics
-    report_parts.append("\n📊 CHỈ SỐ KHÁC")
+    report_parts.append("\n CHỈ SỐ KHÁC")
     report_parts.append(f"• Tổng phí giao dịch: {result['total_fees']:,.2f}")
     report_parts.append(f"• Tổng pips: {result['total_pips']:,.0f}")
     if result['total_volume'] > 0:
@@ -592,32 +592,32 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     # Add overall evaluation based on focus areas
     if analysis_result and analysis_result.get('focus_areas'):
-        report_parts.append("\n🎯 ĐÁNH GIÁ TỔNG QUAN")
+        report_parts.append("\n ĐÁNH GIÁ TỔNG QUAN")
         focus_areas = analysis_result['focus_areas']
         
         if 'performance' in focus_areas:
             if result['win_rate_pct'] >= 60:
-                report_parts.append("• Hiệu suất: 🟢 Tuyệt vời (>60% win rate)")
+                report_parts.append("• Hiệu suất:  Tuyệt vời (>60% win rate)")
             elif result['win_rate_pct'] >= 50:
-                report_parts.append("• Hiệu suất: 🟡 Tốt (50-60% win rate)")
+                report_parts.append("• Hiệu suất:  Tốt (50-60% win rate)")
             else:
-                report_parts.append("• Hiệu suất: 🔴 Cần cải thiện (<50% win rate)")
+                report_parts.append("• Hiệu suất:  Cần cải thiện (<50% win rate)")
         
         if 'risk' in focus_areas:
             if result['max_drawdown_pct'] <= 10:
-                report_parts.append("• Quản lý rủi ro: 🟢 Tuyệt vời (≤10% drawdown)")
+                report_parts.append("• Quản lý rủi ro:  Tuyệt vời (≤10% drawdown)")
             elif result['max_drawdown_pct'] <= 20:
-                report_parts.append("• Quản lý rủi ro: 🟡 Tốt (10-20% drawdown)")
+                report_parts.append("• Quản lý rủi ro:  Tốt (10-20% drawdown)")
             else:
-                report_parts.append("• Quản lý rủi ro: 🔴 Cần cải thiện (>20% drawdown)")
+                report_parts.append("• Quản lý rủi ro:  Cần cải thiện (>20% drawdown)")
         
         if 'behavior' in focus_areas:
             if result['behavioral'].get('rapid_fire_ratio', 0) <= 0.1:
-                report_parts.append("• Hành vi giao dịch: 🟢 Kiểm soát tốt (ít giao dịch nhanh)")
+                report_parts.append("• Hành vi giao dịch:  Kiểm soát tốt (ít giao dịch nhanh)")
             elif result['behavioral'].get('rapid_fire_ratio', 0) <= 0.3:
-                report_parts.append("• Hành vi giao dịch: 🟡 Trung bình (một số giao dịch nhanh)")
+                report_parts.append("• Hành vi giao dịch:  Trung bình (một số giao dịch nhanh)")
             else:
-                report_parts.append("• Hành vi giao dịch: 🔴 Cần cải thiện (nhiều giao dịch nhanh)")
+                report_parts.append("• Hành vi giao dịch:  Cần cải thiện (nhiều giao dịch nhanh)")
     
     return "\n".join(report_parts)
 
@@ -636,30 +636,30 @@ def analyze_trading_data(file_path: str = None, question: str = None, trading_da
         Dictionary containing analysis results and report
     """
     try:
-        print(f"🔍 Starting trading data analysis...")
-        print(f"📁 File: {file_path}")
-        print(f"❓ Question: {question or 'No question'}")
+        print(f"Starting trading data analysis...")
+        print(f"File: {file_path}")
+        print(f"Question: {question or 'No question'}")
         
         # Read data from multiple sources
         df = get_trading_data(file_path=file_path, trading_data=trading_data, excel_path=excel_path)
-        print(f"✅ Successfully read {len(df)} rows of data")
+        print(f"Successfully read {len(df)} rows of data")
         
         # Analyze question if available
         analysis_result = None
         if question:
-            print(f"🧠 Analyzing question with LLM...")
+            print(f"Analyzing question with LLM...")
             analysis_result = analyze_user_question_with_llm(question)
-            print(f"✅ LLM analysis completed")
+            print(f"LLM analysis completed")
         
         # Generate report
-        print(f"📊 Generating report...")
+        print(f"Generating report...")
         report = generate_comprehensive_report(df, analysis_result)
-        print(f"✅ Report generated")
+        print(f"Report generated")
         
         # Calculate overall index
-        print(f"📈 Calculating overall index...")
+        print(f"Calculating overall index...")
         full_result = calculate_trade_index(df)
-        print(f"✅ Overall index calculation completed")
+        print(f"Overall index calculation completed")
         
         result = {
             "success": True,
@@ -676,12 +676,12 @@ def analyze_trading_data(file_path: str = None, question: str = None, trading_da
             }
         }
         
-        print(f"🎉 Analysis completed successfully!")
+        print(f"Analysis completed successfully!")
         return result
         
     except Exception as e:
         error_msg = f"Analysis error: {str(e)}"
-        print(f"❌ {error_msg}")
+        print(f"{error_msg}")
         return {
             "success": False,
             "error": error_msg,

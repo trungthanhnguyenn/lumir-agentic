@@ -1,11 +1,3 @@
-# tools/numerology_tool.py
-"""
-Personal Numerology Calculator
-
-This module implements comprehensive numerology calculations based on
-Vietnamese numerology principles including master numbers (11, 22, 33).
-"""
-
 from datetime import datetime
 from typing import Dict, List, Set, Tuple, Union
 import pytz
@@ -14,7 +6,7 @@ import os
 import boto3
 from botocore.client import Config
 from docx import Document
-from io import BytesIO
+from io import BytesIO  
 
 
 load_dotenv()
@@ -105,64 +97,64 @@ class S3Client:
             # Check if bucket exists and is accessible
             try:
                 self.s3.head_bucket(Bucket=self.bucket_name)
-                print(f"✅ Bucket {self.bucket_name} is accessible")
+                # print(f"✅ Bucket {self.bucket_name} is accessible")
             except Exception as bucket_error:
-                print(f"⚠️ Bucket access issue: {bucket_error}")
+                print(f"Bucket access issue: {bucket_error}")
                 return f"Cannot access bucket {self.bucket_name}: {bucket_error}"
             
             # Try to get the object
             try:
                 obj = self.s3.get_object(Bucket=self.bucket_name, Key=file_key)
-                # print(f"✅ Object retrieved successfully")
+                # print(f"Object retrieved successfully")
                 
                 # Check if Body exists and is readable
                 if "Body" not in obj:
-                    print(f"⚠️ No Body in S3 response: {obj.keys()}")
+                    print(f"No Body in S3 response: {obj.keys()}")
                     return f"Response does not have Body: {list(obj.keys())}"
                 
                 body = obj["Body"]
                 if body is None:
-                    print(f"⚠️ Body is None")
+                    print(f"Body is None")
                     return f"Body of the response is None"
                 
                 # Read the content
                 try:
                     file_content = body.read()
-                    # print(f"✅ File content read: {len(file_content)} bytes")
+                    # print(f"File content read: {len(file_content)} bytes")
                 except Exception as read_error:
-                    print(f"⚠️ Error reading body: {read_error}")
+                    print(f"Error reading body: {read_error}")
                     return f"Error reading body: {read_error}"
                 
                 # Check if content is valid
                 if not file_content:
-                    print(f"⚠️ File content is empty")
+                    print(f"File content is empty")
                     return f"File content is empty"
                 
                 # Try to parse as document
                 try:
                     doc = Document(BytesIO(file_content))
-                    # print(f"✅ Document parsed successfully")
+                    # print(f"Document parsed successfully")
                     
                     # Extract text
                     paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
                     if not paragraphs:
-                        print(f"⚠️ No text content in document")
+                        print(f"No text content in document")
                         return f"Document does not have text content"
                     
                     text = "\n".join(paragraphs)
-                    # print(f"✅ Text extracted: {len(text)} characters")
+                    # print(f"Text extracted: {len(text)} characters")
                     return text
                     
                 except Exception as doc_error:
-                    print(f"⚠️ Error parsing document: {doc_error}")
+                    print(f"Error parsing document: {doc_error}")
                     return f"Error parsing document: {doc_error}"
                     
             except Exception as obj_error:
-                print(f"⚠️ Error getting object: {obj_error}")
+                print(f"Error getting object: {obj_error}")
                 return f"Error getting object: {obj_error}"
                 
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+            print(f"Unexpected error: {e}")
             import traceback
             traceback.print_exc()
             return f"Unexpected error: {str(e)}"
@@ -170,7 +162,7 @@ class S3Client:
 
 class CalNum:
     """
-    Personal Numerology Calculator implementing Vietnamese numerology principles.
+    Personal Numerology Calculator implementing Vietnamese numerology principles. - numerology calculator
 
     Supports calculation of life path, soul number, personality number,
     and other key numerological indicators.
