@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-FastAPI Application for LUMIR-AI System
-Convert API endpoints to HTTP endpoints with user-specific cache memory
-"""
-
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,78 +41,78 @@ lumir_api = build_lumir_api_endpoints()
 # ============================================================================
 
 class MemoryCheckRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi của user")
-    user_name: str = Field(..., description="Tên user")
-    birthday: str = Field(..., description="Ngày sinh")
+    question: str = Field(..., description="Question of user")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
     username: str = Field(..., description="Username")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class QuestionDecompositionRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi của user")
-    user_name: Optional[str] = Field(None, description="Tên user (optional)")
-    birthday: Optional[str] = Field(None, description="Ngày sinh (optional)")
+    question: str = Field(..., description="Question of user")
+    user_name: Optional[str] = Field(None, description="Name of user (optional)")
+    birthday: Optional[str] = Field(None, description="Birthday (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class NumerologyRequest(BaseModel):
-    question: Optional[str] = Field(None, description="Câu hỏi về numerology (có thể None)")
-    user_name: str = Field(..., description="Tên user")
-    birthday: str = Field(..., description="Ngày sinh")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+    question: Optional[str] = Field(None, description="Question about numerology (can be None)")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class TradingRequest(BaseModel):
-    question: Optional[str] = Field(None, description="Câu hỏi về trading (có thể None)")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+    question: Optional[str] = Field(None, description="Question about trading (can be None)")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class LumirSynthesisRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi gốc")
-    question_type: str = Field(default="general_chat", description="Loại câu hỏi")
-    numerology_context: Optional[str] = Field(default="", description="Context từ numerology agent (có thể None)")
-    trading_context: Optional[str] = Field(default="", description="Context từ trading agent (có thể None)")
-    user_name: str = Field(default="", description="Tên user")
+    question: str = Field(..., description="Original question")
+    question_type: str = Field(default="general_chat", description="Question type")
+    numerology_context: Optional[str] = Field(default="", description="Context from numerology agent (can be None)")
+    trading_context: Optional[str] = Field(default="", description="Context from trading agent (can be None)")
+    user_name: str = Field(default="", description="Name of user")
     username: str = Field(default="", description="Username")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
-    has_trading_data: bool = Field(default=False, description="Có dữ liệu trading không")
-    focus_areas: List[str] = Field(default=[], description="Các lĩnh vực tập trung")
-    needs_user_info: bool = Field(default=False, description="Có cần thêm thông tin không")
-    suggested_questions: List[str] = Field(default=[], description="Câu hỏi gợi ý")
-    conversation_history: List[Dict[str, Any]] = Field(default=[], description="Lịch sử hội thoại")
+    language: str = Field(default="vi", description="Language (default: vi)")
+    has_trading_data: bool = Field(default=False, description="Has trading data")
+    focus_areas: List[str] = Field(default=[], description="Focus areas")
+    needs_user_info: bool = Field(default=False, description="Needs user info")
+    suggested_questions: List[str] = Field(default=[], description="Suggested questions")
+    conversation_history: List[Dict[str, Any]] = Field(default=[], description="Conversation history")
 
 class CompletePipelineRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi của user")
-    user_name: Optional[str] = Field(None, description="Tên user (optional)")
-    birthday: Optional[str] = Field(None, description="Ngày sinh (optional)")
+    question: str = Field(..., description="Question of user")
+    user_name: Optional[str] = Field(None, description="Name of user (optional)")
+    birthday: Optional[str] = Field(None, description="Birthday (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
-    language: str = Field(default="vi", description="Ngôn ngữ (mặc định: vi)")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class ChatbotRequest(BaseModel):
-    question: str = Field(..., description="Câu hỏi người dùng")
-    user_name: Optional[str] = Field(None, description="Tên user (optional)")
-    user_birthday: Optional[str] = Field(None, description="Ngày sinh (optional)")
+    question: str = Field(..., description="Question of user")
+    user_name: Optional[str] = Field(None, description="Name of user (optional)")
+    user_birthday: Optional[str] = Field(None, description="Birthday (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
-    trading_data: Optional[bool] = Field(False, description="User có dữ liệu trading không (optional)")
+    trading_data: Optional[bool] = Field(False, description="User has trading data (optional)")
 
 class MemoryManagementRequest(BaseModel):
-    action: str = Field(..., description="Hành động ('get_status', 'clear', 'get_summary')")
-    user_name: str = Field(..., description="Tên user")
-    birthday: str = Field(..., description="Ngày sinh")
+    action: str = Field(..., description="Action ('get_status', 'clear', 'get_summary')")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
     username: str = Field(..., description="Username")
 
 class MemoryUpdateRequest(BaseModel):
-    action: str = Field(..., description="Hành động ('add_entry', 'update_entry', 'bulk_update', 'remove_entry')")
-    user_name: str = Field(..., description="Tên user")
-    birthday: str = Field(..., description="Ngày sinh")
+    action: str = Field(..., description="Action ('add_entry', 'update_entry', 'bulk_update', 'remove_entry')")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
     username: str = Field(..., description="Username")
-    entry_key: Optional[str] = Field(None, description="Key của entry (cho update_entry, remove_entry)")
-    entry_data: Optional[Dict[str, Any]] = Field(None, description="Dữ liệu entry để thêm/cập nhật")
-    entries: Optional[List[Dict[str, Any]]] = Field(None, description="Danh sách entries (cho bulk_update)")
-    language: str = Field(default="vi", description="Ngôn ngữ")
+    entry_key: Optional[str] = Field(None, description="Key of entry (for update_entry, remove_entry)")
+    entry_data: Optional[Dict[str, Any]] = Field(None, description="Data of entry to add/update")
+    entries: Optional[List[Dict[str, Any]]] = Field(None, description="List of entries (for bulk_update)")
+    language: str = Field(default="vi", description="Language")
 
 class MemoryHistoryRequest(BaseModel):
-    user_name: str = Field(..., description="Tên user")
-    birthday: str = Field(..., description="Ngày sinh")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
     username: str = Field(..., description="Username")
-    limit: Optional[int] = Field(None, description="Số lượng turn gần nhất")
+    limit: Optional[int] = Field(None, description="Number of recent turns")
 
 # ============================================================================
 # ENDPOINT 1: MEMORY CHECK
@@ -155,7 +149,7 @@ async def memory_check_endpoint(request: MemoryCheckRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # =========================================================================
-# ENDPOINT 9: MEMORY HISTORY (NEW)
+# ENDPOINT 2: MEMORY HISTORY
 # =========================================================================
 
 @app.post("/api/memory/history", response_model=Dict[str, Any])
@@ -184,7 +178,7 @@ async def memory_history_endpoint(request: MemoryHistoryRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 2: QUESTION DECOMPOSITION
+# ENDPOINT 3: QUESTION DECOMPOSITION
 # ============================================================================
 
 @app.post("/api/question/decompose", response_model=Dict[str, Any])
@@ -220,7 +214,7 @@ async def question_decomposition_endpoint(
             os.unlink(excel_path)
 
 # ============================================================================
-# ENDPOINT 3: NUMEROLOGY ANALYSIS
+# ENDPOINT 4: NUMEROLOGY ANALYSIS
 # ============================================================================
 
 @app.post("/api/numerology/analyze", response_model=Dict[str, Any])
@@ -253,7 +247,7 @@ async def numerology_endpoint(request: NumerologyRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 4: TRADING ANALYSIS (WITH FILE UPLOAD)
+# ENDPOINT 5: TRADING ANALYSIS (WITH FILE UPLOAD)
 # ============================================================================
 
 @app.post("/api/trading/analyze", response_model=Dict[str, Any])
@@ -263,9 +257,9 @@ async def trading_endpoint(
     excel_file: Optional[UploadFile] = File(None)
 ):
     """
-    Phân tích trading data
+    Analyze trading data
     
-    Hỗ trợ cả hai trường hợp:
+    Support both cases:
     - JSON without file: only analyze question (no trading data)
     - multipart/form-data with file: read Excel and pass temporary file path to agent
     """
@@ -318,7 +312,7 @@ async def trading_endpoint(
                 pass
 
 # ============================================================================
-# ENDPOINT 5: LUMIR-AI SYNTHESIS
+# ENDPOINT 6: LUMIR-AI SYNTHESIS
 # ============================================================================
 
 @app.post("/api/lumir/synthesize", response_model=Dict[str, Any])
@@ -366,7 +360,7 @@ async def lumir_synthesis_endpoint(request: LumirSynthesisRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 6: COMPLETE PIPELINE (Mô phỏng test_infer)
+# ENDPOINT 7: COMPLETE PIPELINE (Mô phỏng test_infer)
 # ============================================================================
 
 @app.post("/api/pipeline/complete", response_model=Dict[str, Any])
@@ -405,7 +399,7 @@ async def complete_pipeline_endpoint(request: CompletePipelineRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 8: CHATBOT RAG (retrieve → rerank → LLM)
+# ENDPOINT 9: CHATBOT RAG (retrieve → rerank → LLM)
 # ============================================================================
 
 @app.post("/api/chat", response_model=Dict[str, Any])
@@ -431,7 +425,7 @@ async def chatbot_endpoint(request: ChatbotRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 7: MEMORY MANAGEMENT
+# ENDPOINT 8: MEMORY MANAGEMENT
 # ============================================================================
 
 @app.post("/api/memory/manage", response_model=Dict[str, Any])
@@ -464,7 +458,7 @@ async def memory_management_endpoint(request: MemoryManagementRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# ENDPOINT 8: MEMORY UPDATE (NEW)
+# ENDPOINT 9: MEMORY UPDATE (NEW)
 # ============================================================================
 
 @app.post("/api/memory/update", response_model=Dict[str, Any])
@@ -647,14 +641,14 @@ async def general_exception_handler(request, exc):
 
 if __name__ == "__main__":
     print("🚀 Starting LUMIR-AI FastAPI Server...")
-    print("📖 API Documentation available at: http://localhost:8000/docs")
-    print("🔍 API Info available at: http://localhost:8000/api/info")
-    print("💡 Health check available at: http://localhost:8000/health")
+    print("📖 API Documentation available at: http://localhost:8866/docs")
+    print("🔍 API Info available at: http://localhost:8866/api/info")
+    print("💡 Health check available at: http://localhost:8866/health")
     
     uvicorn.run(
         "fastapi_app:app",
         host="0.0.0.0",
-        port=8000,
+        port=8866,
         reload=True,
         log_level="info"
     )

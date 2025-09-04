@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-API Endpoints for LUMIR-AI System
-Each agent is a separate endpoint, which can be used independently or combined
-"""
-
 import json
 import os
 from pathlib import Path
@@ -47,7 +41,7 @@ class LUMIRAPIEndpoints:
         self._history_dir = Path(__file__).parent / ".memory_cache"
         self._history_dir.mkdir(exist_ok=True, parents=True)
         
-        print("✅ LUMIR-AI API Endpoints initialized successfully!")
+        print("LUMIR-AI API Endpoints initialized successfully!")
     
     def _generate_user_uuid(self, user_name: str, birthday: str, username: str) -> str:
         """Generate a unique UUID for user"""
@@ -59,7 +53,7 @@ class LUMIRAPIEndpoints:
             user_string = f"{user_name}_{birthday}_{username}"
             return hashlib.md5(user_string.encode('utf-8')).hexdigest()
         except Exception as e:
-            print(f"❌ Error generating UUID: {e}")
+            print(f"Error generating UUID: {e}")
             return hashlib.md5("unknown_user".encode('utf-8')).hexdigest()
     
     def _get_history_file_path(self, user_uuid: str) -> Path:
@@ -88,7 +82,7 @@ class LUMIRAPIEndpoints:
                             })
                     return normalized
         except Exception as e:
-            print(f"⚠️ Failed to load history from disk for {user_uuid}: {e}")
+            print(f"Failed to load history from disk for {user_uuid}: {e}")
         return []
     
     def _save_history_to_disk(self, user_uuid: str, history: List[Dict[str, Any]]):
@@ -98,7 +92,7 @@ class LUMIRAPIEndpoints:
             with open(history_file, "w", encoding="utf-8") as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"⚠️ Failed to save history to disk for {user_uuid}: {e}")
+            print(f"Failed to save history to disk for {user_uuid}: {e}")
     
     def _get_user_conversation_history(self, user_uuid: str) -> List[Dict[str, Any]]:
         """Get conversation history of user (RAM); if not exists, load from disk."""
@@ -128,7 +122,7 @@ class LUMIRAPIEndpoints:
         try:
             self._save_history_to_disk(user_uuid, self.conversation_history[user_uuid])
         except Exception as e:
-            print(f"⚠️ Persist conversation history failed for {user_uuid}: {e}")
+            print(f"Persist conversation history failed for {user_uuid}: {e}")
 
 
 # ============================================================================
@@ -188,7 +182,7 @@ class LUMIRAPIEndpoints:
                             pass
                         history = pseudo_history
                 except Exception as e:
-                    print(f"⚠️ Fallback read from .memory_cache failed: {e}")
+                    print(f"Fallback read from .memory_cache failed: {e}")
                     # Keep history empty if error
                     history = []
 
@@ -235,7 +229,7 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"🧠 Memory Check Endpoint - Question: {question}")
+            print(f"Memory Check Endpoint - Question: {question}")
             
             # Create user UUID
             user_uuid = self._generate_user_uuid(user_name, birthday, username)
@@ -268,12 +262,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
             
-            print(f"✅ Memory Check completed - Cache hit: {memory_query.can_answer}")
+            print(f"Memory Check completed - Cache hit: {memory_query.can_answer}")
             return result
             
         except Exception as e:
             error_msg = f"Memory check failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "memory_check",
                 "success": False,
@@ -311,7 +305,7 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"🔍 Question Decomposition Endpoint - Question: {question}")
+            print(f"Question Decomposition Endpoint - Question: {question}")
             
             # Validate trading data if exists
             has_valid_trading_data = False
@@ -348,12 +342,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
             
-            print(f"✅ Question Decomposition completed - Type: {decomposition_result.get('question_type')}")
+            print(f"Question Decomposition completed - Type: {decomposition_result.get('question_type')}")
             return result
             
         except Exception as e:
             error_msg = f"Question decomposition failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "question_decomposition",
                 "success": False,
@@ -387,11 +381,11 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"🔮 Numerology Endpoint - Question: {question}")
+            print(f"Numerology Endpoint - Question: {question}")
             
             # Handle None or empty question - return empty response instead of error
             if question is None or question.strip() == "":
-                print("⚠️ Numerology question is None or empty - returning empty response")
+                print("Numerology question is None or empty - returning empty response")
                 return {
                     "endpoint": "numerology",
                     "success": True,
@@ -426,12 +420,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
             
-            print(f"✅ Numerology analysis completed - Response length: {len(numerology_response)}")
+            print(f"Numerology analysis completed - Response length: {len(numerology_response)}")
             return api_result
             
         except Exception as e:
             error_msg = f"Numerology analysis failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "numerology",
                 "success": False,
@@ -507,12 +501,12 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"📈 Trading Endpoint - Question: {question}")
-            print(f"📊 Has Trading Data: {has_trading_data}")
+            print(f"Trading Endpoint - Question: {question}")
+            print(f"Has Trading Data: {has_trading_data}")
             
             # Handle None or empty question - return empty response instead of error
             if question is None or question.strip() == "":
-                print("⚠️ Trading question is None or empty - returning empty response")
+                print("Trading question is None or empty - returning empty response")
                 return {
                     "endpoint": "trading",
                     "success": True,
@@ -544,12 +538,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
             
-            print(f"✅ Trading analysis completed - Response length: {len(trading_response)}")
+            print(f"Trading analysis completed - Response length: {len(trading_response)}")
             return api_result
             
         except Exception as e:
             error_msg = f"Trading analysis failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "trading",
                 "success": False,
@@ -599,7 +593,7 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"🤖 LUMIR-AI Synthesis Endpoint - Question: {question}")
+            print(f"LUMIR-AI Synthesis Endpoint - Question: {question}")
             
             # Prepare input dictionary for the chain
             inputs = {
@@ -631,12 +625,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
             
-            print(f"✅ LUMIR-AI synthesis completed - Response length: {len(lumir_response)}")
+            print(f"LUMIR-AI synthesis completed - Response length: {len(lumir_response)}")
             return api_result
             
         except Exception as e:
             error_msg = f"LUMIR-AI synthesis failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "lumir_synthesis",
                 "success": False,
@@ -676,16 +670,16 @@ class LUMIRAPIEndpoints:
         start_time = datetime.now()
         
         try:
-            print(f"🚀 Complete Pipeline Endpoint - Question: {question}")
+            print(f"Complete Pipeline Endpoint - Question: {question}")
             
             # Step 1: Memory Check
-            print("🔍 Step 1: Memory Check...")
+            print("Step 1: Memory Check...")
             memory_result = self.memory_check_endpoint(
                 question, user_name or "Unknown", birthday or "Unknown", username or "Unknown", language
             )
             
             if memory_result["success"] and memory_result["can_answer_from_cache"] and memory_result["cache_confidence"] > 0.7:
-                print(f"✅ Cache hit - Confidence: {memory_result['cache_confidence']:.2f}")
+                print(f"Cache hit - Confidence: {memory_result['cache_confidence']:.2f}")
                 
                 # Update conversation history
                 user_uuid = memory_result["user_uuid"]
@@ -704,7 +698,7 @@ class LUMIRAPIEndpoints:
                 }
             
             # Step 2: Question Decomposition
-            print("🔍 Step 2: Question Decomposition...")
+            print("Step 2: Question Decomposition...")
             decomposition_result = self.question_decomposition_endpoint(
                 question, user_name, birthday, excel_path, language, username
             )
@@ -721,11 +715,11 @@ class LUMIRAPIEndpoints:
             trading_context = ""
             
             if should_call_agents:
-                print("🔄 Step 3: Executing Specialized Agents...")
+                print("Step 3: Executing Specialized Agents...")
                 
                 # Numerology Agent
                 if decomposition_data.get("numerology_question") and user_name and birthday:
-                    print("🔮 Calling Numerology Agent...")
+                    print("Calling Numerology Agent...")
                     numerology_result = self.numerology_endpoint(
                         decomposition_data["numerology_question"], user_name, birthday, language
                     )
@@ -735,7 +729,7 @@ class LUMIRAPIEndpoints:
                 # Trading Agent
                 if (decomposition_data.get("trading_question") and 
                     decomposition_data.get("has_valid_trading_data") and excel_path):
-                    print("📈 Calling Trading Agent...")
+                    print("Calling Trading Agent...")
                     trading_result = self.trading_endpoint(
                         decomposition_data["trading_question"], excel_path, language, decomposition_data.get("has_valid_trading_data", False)
                     )
@@ -743,7 +737,7 @@ class LUMIRAPIEndpoints:
                         trading_context = trading_result["trading_response"]
             
             # Step 4: LUMIR-AI Synthesis
-            print("🤖 Step 4: LUMIR-AI Synthesis...")
+            print("Step 4: LUMIR-AI Synthesis...")
             
             # Lấy conversation history nếu có user info
             conversation_history = []
@@ -771,7 +765,7 @@ class LUMIRAPIEndpoints:
             
             # Step 5: Update Memory Cache
             if user_name and birthday and username:
-                print("🧠 Step 5: Updating Memory Cache...")
+                print("Step 5: Updating Memory Cache...")
                 user_uuid = self._generate_user_uuid(user_name, birthday, username)
                 turn_number = len(conversation_history) + 1
                 
@@ -780,7 +774,7 @@ class LUMIRAPIEndpoints:
                         user_uuid, question, lumir_result["lumir_response"], turn_number, language
                     )
                 except Exception as e:
-                    print(f"⚠️ Memory update failed: {e}")
+                    print(f"Memory update failed: {e}")
                 
                 # Update conversation history
                 self._update_user_conversation_history(user_uuid, question, lumir_result["lumir_response"])
@@ -807,12 +801,12 @@ class LUMIRAPIEndpoints:
                 "timestamp": end_time.isoformat()
             }
             
-            print(f"✅ Complete Pipeline completed in {processing_time:.2f}s")
+            print(f"Complete Pipeline completed in {processing_time:.2f}s")
             return result
 
         except Exception as e:
             error_msg = f"Complete pipeline failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             
             return {
                 "endpoint": "complete_pipeline",
@@ -924,7 +918,7 @@ class LUMIRAPIEndpoints:
         """
         
         try:
-            print(f"🧠 Memory Management Endpoint - Action: {action}")
+            print(f"Memory Management Endpoint - Action: {action}")
             
             user_uuid = self._generate_user_uuid(user_name, birthday, username)
             
@@ -971,7 +965,7 @@ class LUMIRAPIEndpoints:
                 
         except Exception as e:
             error_msg = f"Memory management failed: {str(e)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return {
                 "endpoint": "memory_management",
                 "success": False,
@@ -1189,14 +1183,14 @@ def build_lumir_api_endpoints() -> LUMIRAPIEndpoints:
 # ============================================================================
 
 if __name__ == "__main__":
-    print("🚀 LUMIR-AI API Endpoints Demo")
+    print("LUMIR-AI API Endpoints Demo")
     print("=" * 80)
     
     # Initialize API endpoints
     api = build_lumir_api_endpoints()
     
     # Demo endpoints
-    print("\n📋 Available Endpoints:")
+    print("\nAvailable Endpoints:")
     print("1. memory_check_endpoint() - Check memory cache")
     print("2. question_decomposition_endpoint() - Analyze question")
     print("3. numerology_endpoint() - Analyze numerology")
@@ -1205,8 +1199,8 @@ if __name__ == "__main__":
     print("6. complete_pipeline_endpoint() - Complete pipeline")
     print("7. memory_management_endpoint() - Manage memory")
     
-    print("\n💡 Usage Examples:")
+    print("\nUsage Examples:")
     print("api.memory_check_endpoint(question, user_name, birthday, username, language)")
     print("api.complete_pipeline_endpoint(question, user_name, birthday, excel_path, language, username)")
     
-    print("\n✅ API Endpoints ready for use!")
+    print("\nAPI Endpoints ready for use!")
