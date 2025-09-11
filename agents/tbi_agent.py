@@ -706,6 +706,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         "insights": insights,
         "analysis_context": analysis_context,
         "language": language,  # Include language in return value
+        "docs": docs,  # Include fetched documents
     }
 
 
@@ -729,18 +730,30 @@ def build_tbi_agent():
         selected_keys = data.get("selected_keys", [])
         meanings = data.get("meanings", {})
         insights = data.get("insights", {})
+        docs = data.get("docs", {})  # Get fetched documents
         
-        # Prepare TBI context - combining meanings and insights for selected keys
+        # Prepare TBI context - combining meanings, insights, and documents for selected keys
         tbi_context_parts = []
         for key in selected_keys:
+            context_part = f"**{key.upper()}**"
+            
+            # Add definition if available
             if key in meanings:
-                context_part = f"**{key.upper()}**: {meanings[key]}"
-                # Add insights if available
-                if key in insights:
-                    context_part += f"\n- Phân tích sâu: {insights[key]}"
-                tbi_context_parts.append(context_part)
+                context_part += f": {meanings[key]}"
+            
+            # Add document content if available
+            if key in docs and not key.endswith("_error"):
+                doc_content = docs[key]
+                if doc_content and len(doc_content.strip()) > 0:
+                    context_part += f"\n\nNội dung chi tiết:\n{doc_content}"
+            
+            # Add insights if available
+            if key in insights:
+                context_part += f"\n\nPhân tích sâu: {insights[key]}"
+            
+            tbi_context_parts.append(context_part)
         
-        tbi_context = "\n\n".join(tbi_context_parts)
+        tbi_context = "\n\n" + ("\n\n" + "="*50 + "\n\n").join(tbi_context_parts)
         
         # Render template with data
         rendered_content = template.render(
