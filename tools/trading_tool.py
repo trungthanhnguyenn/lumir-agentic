@@ -1,4 +1,3 @@
-# tools/trading_tool.py
 import math
 import pandas as pd
 import os
@@ -167,10 +166,10 @@ def read_trading_excel(file_path: str) -> pd.DataFrame:
         print(f"File path: {file_path}")
         raise
 
-def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None) -> pd.DataFrame:
+def get_trading_data_from_excel(file_path: Optional[str] = None, trading_data: Optional[dict] = None) -> pd.DataFrame:
     """
     Get trading data from multiple sources:
-    1. Excel file path (local file)
+    1. Excel file path (local file) - PRIORITY
     2. Trading data dictionary (from API endpoint)
     
     Args:
@@ -181,8 +180,29 @@ def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None
         DataFrame with trading data or empty DataFrame if no data provided
     """
     
-    # Case 1: Trading data from API endpoint
-    if trading_data is not None:
+    # Case 1: Excel file path - HIGHER PRIORITY
+    if file_path:
+        if not os.path.exists(file_path):
+            print(f"Trading data file not found: {file_path}")
+        else:
+            try:
+                print(f"Reading trading data from file: {file_path}")
+                df = read_trading_excel(file_path)
+                
+                if df.empty:
+                    print("Excel file is empty or contains no data")
+                    return df
+                
+                print(f"Successfully loaded trading data from file. Records: {len(df)}")
+                return df
+                
+            except Exception as e:
+                print(f"Error reading trading data file: {e}")
+                print(f"File path: {file_path}")
+                # Don't return here, try API data as fallback
+    
+    # Case 2: Trading data from API endpoint (fallback or when no file_path)
+    if trading_data is not None and trading_data:  # Check not empty
         print("Processing trading data from API endpoint")
         try:
             # Convert trading data to DataFrame
@@ -208,34 +228,12 @@ def get_trading_data_from_excel(file_path: str = None, trading_data: dict = None
             print(f"Error processing trading data from API: {e}")
             return pd.DataFrame()
     
-    # Case 2: Excel file path
-    if file_path:
-        if not os.path.exists(file_path):
-            print(f"Trading data file not found: {file_path}")
-            return pd.DataFrame()
-        
-        try:
-            print(f"Reading trading data from file: {file_path}")
-            df = read_trading_excel(file_path)
-            
-            if df.empty:
-                print("Excel file is empty or contains no data")
-                return df
-            
-            print(f"Successfully loaded trading data from file. Records: {len(df)}")
-            return df
-            
-        except Exception as e:
-            print(f"Error reading trading data file: {e}")
-            print(f"File path: {file_path}")
-            return pd.DataFrame()
-    
     # Case 3: No data provided
-    print("No trading data provided (neither file path nor API data)")
+    print("No trading data provided (neither file path nor valid API data)")
     return pd.DataFrame()
 
 
-def get_trading_data(file_path: str = None, trading_data: dict = None, excel_path: str = None) -> pd.DataFrame:
+def get_trading_data(file_path: Optional[str] = None, trading_data: Optional[dict] = None, excel_path: Optional[str] = None) -> pd.DataFrame:
     """
     Unified function to get trading data from any source.
     This is the main function that should be used by trading agent.
@@ -502,7 +500,7 @@ def filter_trades_by_conditions(df: pd.DataFrame, analysis_result: Dict[str, Any
     
     return filtered_df
 
-def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, Any] = None) -> str:
+def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Optional[Dict[str, Any]] = None) -> str:
     """
     Generate comprehensive report based on trading data summary
     
@@ -621,7 +619,7 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Dict[str, A
     
     return "\n".join(report_parts)
 
-def analyze_trading_data(file_path: str = None, question: str = None, trading_data: dict = None, excel_path: str = None) -> Dict[str, Any]:
+def analyze_trading_data(file_path: Optional[str] = None, question: Optional[str] = None, trading_data: Optional[dict] = None, excel_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Analyze trading data with a specific question
     
@@ -647,19 +645,13 @@ def analyze_trading_data(file_path: str = None, question: str = None, trading_da
         # Analyze question if available
         analysis_result = None
         if question:
-            print(f"Analyzing question with LLM...")
             analysis_result = analyze_user_question_with_llm(question)
-            print(f"LLM analysis completed")
         
         # Generate report
-        print(f"Generating report...")
         report = generate_comprehensive_report(df, analysis_result)
-        print(f"Report generated")
         
         # Calculate overall index
-        print(f"Calculating overall index...")
         full_result = calculate_trade_index(df)
-        print(f"Overall index calculation completed")
         
         result = {
             "success": True,

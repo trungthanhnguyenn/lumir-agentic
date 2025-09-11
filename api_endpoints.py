@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from agents.question_decomposition_agent import build_question_decomposition_agent
-from agents.numerology_agent import build_numerology_agent
+from agents.tbi_agent import build_tbi_agent
 from agents.trading_agent import build_trading_agent
 from agents.lumir_synthesis_agent import build_lumir_synthesis_agent
 from agents.memory_agent import build_memory_agent
@@ -27,7 +27,7 @@ class LUMIRAPIEndpoints:
     def __init__(self):
         """Initialize agents"""
         self.question_decomposer = build_question_decomposition_agent()
-        self.numerology_agent = build_numerology_agent()
+        self.tbi_agent = build_tbi_agent()
         self.trading_agent = build_trading_agent()
         self.lumir_agent = build_lumir_synthesis_agent()
         self.memory_agent = build_memory_agent()
@@ -357,7 +357,85 @@ class LUMIRAPIEndpoints:
 
 
 # ============================================================================
-# ENDPOINT 3: NUMEROLOGY AGENT
+# ENDPOINT 3: TBI AGENT
+# ============================================================================
+
+    def tbi_endpoint(
+        self,
+        question: str,
+        user_name: str,
+        birthday: str,
+        language: str = "vi"
+    ) -> Dict[str, Any]:
+        """
+        Endpoint 3: Analyze TBI (Trading Behavior Intelligence)
+        
+        Args:
+            question: Question about TBI
+            user_name: User name
+            birthday: Birthday
+            language: Language
+            
+        Returns:
+            Dict containing TBI analysis result
+        """
+        
+        try:
+            print(f"TBI Endpoint - Question: {question}")
+            
+            # Handle None or empty question - return empty response instead of error
+            if question is None or question.strip() == "":
+                print("TBI question is None or empty - returning empty response")
+                return {
+                    "endpoint": "tbi",
+                    "success": True,
+                    "question": question,
+                    "user_name": user_name,
+                    "birthday": birthday,
+                    "tbi_response": "",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Convert birthday format to dd/mm/yyyy if needed
+            converted_birthday = self._convert_birthday_format(birthday)
+            
+            # Call TBI agent
+            inputs = {
+                "question": question,
+                "user_name": user_name,
+                "birthday": converted_birthday,
+                "language": language
+            }
+            
+            tbi_response = self.tbi_agent.invoke(inputs)
+            
+            return {
+                "endpoint": "tbi",
+                "success": True,
+                "question": question,
+                "user_name": user_name,
+                "birthday": birthday,
+                "tbi_response": str(tbi_response),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            print(f"TBI Endpoint Error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return {
+                "endpoint": "tbi",
+                "success": False,
+                "error": str(e),
+                "question": question,
+                "user_name": user_name,
+                "birthday": birthday,
+                "tbi_response": "",
+                "timestamp": datetime.now().isoformat()
+            }
+
+# ENDPOINT 4: NUMEROLOGY AGENT (DEPRECATED)
 # ============================================================================
 
     def numerology_endpoint(
@@ -407,7 +485,7 @@ class LUMIRAPIEndpoints:
                 "language": language
             }
             
-            result = self.numerology_agent.invoke(inputs)
+            result = self.tbi_agent.invoke(inputs)
             numerology_response = str(result) if result else ""
             
             api_result = {
@@ -517,6 +595,14 @@ class LUMIRAPIEndpoints:
                     "timestamp": datetime.now().isoformat()
                 }
             
+            # Handle trading data path logic
+            if has_trading_data and not excel_path:
+                # If has_trading_data is True but no excel_path provided, use sample data
+                excel_path = "trading_data/test_sample.xlsx"
+            elif not has_trading_data:
+                # If has_trading_data is False, clear excel_path
+                excel_path = ""
+            
             # Call trading agent with has_trading_data flag
             inputs = {
                 "question": question,
@@ -525,7 +611,7 @@ class LUMIRAPIEndpoints:
                 "has_trading_data": has_trading_data
             }
             
-            result = self.trading_agent(inputs)  # Call the wrapper function directly
+            result = self.trading_agent.invoke(inputs)  # Use .invoke() method for Langchain
             trading_response = str(result) if result else ""
             
             api_result = {
@@ -560,16 +646,16 @@ class LUMIRAPIEndpoints:
         self,
         question: str,
         question_type: str = "general_chat",
-        numerology_context: str = "",
+        tbi_context: str = "",
         trading_context: str = "",
         user_name: str = "",
         username: str = "",
         language: str = "vi",
         has_trading_data: bool = False,
-        focus_areas: List[str] = None,
+        focus_areas: Optional[List[str]] = None,
         needs_user_info: bool = False,
-        suggested_questions: List[str] = None,
-        conversation_history: List[Dict[str, Any]] = None
+        suggested_questions: Optional[List[str]] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Endpoint 5: Synthesize and create final response
@@ -577,7 +663,7 @@ class LUMIRAPIEndpoints:
         Args:
             question: Original question
             question_type: Question type
-            numerology_context: Context from numerology agent
+            tbi_context: Context from TBI agent
             trading_context: Context from trading agent
             user_name: User name
             username: Username
@@ -599,7 +685,7 @@ class LUMIRAPIEndpoints:
             inputs = {
                 "question": question,
                 "question_type": question_type,
-                "numerology_context": numerology_context,
+                "tbi_context": tbi_context,
                 "trading_context": trading_context,
                 "user_name": user_name,
                 "username": username,
@@ -619,7 +705,7 @@ class LUMIRAPIEndpoints:
                 "success": True,
                 "question": question,
                 "question_type": question_type,
-                "numerology_available": bool(numerology_context),
+                "tbi_available": bool(tbi_context),
                 "trading_available": bool(trading_context),
                 "lumir_response": lumir_response,
                 "timestamp": datetime.now().isoformat()
@@ -711,20 +797,20 @@ class LUMIRAPIEndpoints:
             should_call_agents = decomposition_data.get("should_call_agents", False)
             
             # Step 3: Execute Specialized Agents (if needed)
-            numerology_context = ""
+            tbi_context = ""
             trading_context = ""
             
             if should_call_agents:
                 print("Step 3: Executing Specialized Agents...")
                 
-                # Numerology Agent
-                if decomposition_data.get("numerology_question") and user_name and birthday:
-                    print("Calling Numerology Agent...")
-                    numerology_result = self.numerology_endpoint(
-                        decomposition_data["numerology_question"], user_name, birthday, language
+                # TBI Agent
+                if decomposition_data.get("tbi_question") and user_name and birthday:
+                    print("Calling TBI Agent...")
+                    tbi_result = self.tbi_endpoint(
+                        decomposition_data["tbi_question"], user_name, birthday, language
                     )
-                    if numerology_result["success"]:
-                        numerology_context = numerology_result["numerology_response"]
+                    if tbi_result["success"]:
+                        tbi_context = tbi_result["tbi_response"]
                 
                 # Trading Agent
                 if (decomposition_data.get("trading_question") and 
@@ -748,7 +834,7 @@ class LUMIRAPIEndpoints:
             lumir_result = self.lumir_synthesis_endpoint(
                 question=question,
                 question_type=question_type,
-                numerology_context=numerology_context,
+                tbi_context=tbi_context,
                 trading_context=trading_context,
                 user_name=user_name or "",
                 username=username or "",
@@ -792,9 +878,9 @@ class LUMIRAPIEndpoints:
                 "question_type": question_type,
                 "decomposition_result": decomposition_data,
                 "context_summary": {
-                    "numerology_available": bool(numerology_context),
+                    "tbi_available": bool(tbi_context),
                     "trading_available": bool(trading_context),
-                    "response_type": "comprehensive" if (numerology_context and trading_context) else "partial",
+                    "response_type": "comprehensive" if (tbi_context and trading_context) else "partial",
                     "needs_user_info": decomposition_data.get("needs_user_info", False),
                     "suggested_questions": decomposition_data.get("suggested_questions", [])
                 },
@@ -819,7 +905,7 @@ class LUMIRAPIEndpoints:
     # =========================================================================
     # ENDPOINT 8: CHATBOT RAG (retrieve → rerank → LLM)
     # =========================================================================
-    def chatbot_endpoint(self, question: str, user_name: str = "", user_birthday: str = "", username: str = "", trading_data: bool = False) -> Dict[str, Any]:
+    def chatbot_endpoint(self, question: str, user_name: str = "", user_birthday: str = "", username: str = "", trading_data: bool = False, language: str = "vi") -> Dict[str, Any]:
         """
         Endpoint: RAG chatbot using chatbot.py pipeline with intelligent user context analysis.
         
@@ -829,6 +915,7 @@ class LUMIRAPIEndpoints:
             user_birthday: User's birthday in DD/MM/YYYY format (optional)
             username: Username in app (optional)
             trading_data: Whether user has trading data (boolean)
+            language: Language (default "vi")
             
         Returns:
             Dict containing chatbot response with user context analysis
@@ -847,7 +934,8 @@ class LUMIRAPIEndpoints:
                 user_name=user_name,
                 user_birthday=user_birthday,
                 username=username,
-                trading_data=trading_data
+                trading_data=trading_data,
+                language=language
             )
             
             # Extract user context for response

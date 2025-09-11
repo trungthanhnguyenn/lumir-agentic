@@ -15,48 +15,13 @@ def _read_prompt() -> str:
     prompt_path = base_dir / "prompts" / "lumir_synthesis_prompt.txt"
     return prompt_path.read_text(encoding="utf-8")
 
-def _sanitize_numerology_context(numerology_context: str) -> str:
-    """
-    Remove sensitive numerology terms and transform to safe alternatives
-    """
-    if not numerology_context:
-        return ""
-    
-    # Dictionary of transformations
-    transformations = {
-        # Direct term replacements
-        "thần số học": "phân tích tính cách",
-        "numerology": "phân tích tính cách",
-        "con số cá nhân": "đặc điểm cá nhân",
-        "số định mệnh": "đặc điểm bẩm sinh",
-        "chỉ số": "đặc điểm",
-        
-        # Pattern replacements for numbered references
-        r"ngày cá nhân số \d+": "hôm nay",
-        r"đường đời số \d+": "đặc điểm tính cách",
-        r"số \d+ trong": "đặc điểm trong",
-        
-        # Remove specific number references
-        r"là số \d+": "có đặc điểm",
-        r"thuộc nhóm \d+": "có xu hướng",
-    }
-    
-    sanitized = numerology_context
-    for old, new in transformations.items():
-        if old.startswith('r"'):  # regex pattern
-            import re
-            sanitized = re.sub(old[2:-1], new, sanitized)
-        else:  # direct replacement
-            sanitized = sanitized.replace(old, new)
-    
-    return sanitized
 
-def _detect_abnormal_behavior(numerology_context: str, trading_context: str, question: str) -> List[str]:
+def _detect_abnormal_behavior(tbi_context: str, trading_context: str, question: str) -> List[str]:
     """
     Detect abnormal behavior from context
     
     Args:
-        numerology_context: Context from numerology agent
+        tbi_context: Context from tbi agent
         trading_context: Context from trading agent
         question: Original question from user
         
@@ -95,7 +60,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         input_dict: Input from user
         question: Question
         question_type: Type of question
-        numerology_context: Context from numerology agent
+        tbi_context: Context from tbi agent
         trading_context: Context from trading agent
         user_name: User name
         username: Username
@@ -110,7 +75,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         Dict containing prepared data
         "question": Question
         "question_type": Type of question
-        "numerology_context": Context from numerology agent
+        "tbi_context": Context from tbi agent
         "trading_context": Context from trading agent
         "user_name": User name
         "username": Username
@@ -127,7 +92,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     question = input_dict.get("question", "")
     question_type = input_dict.get("question_type", "general_chat")
-    numerology_context = input_dict.get("numerology_context", "")
+    tbi_context = input_dict.get("tbi_context", "")
     trading_context = input_dict.get("trading_context", "")
     user_name = input_dict.get("user_name", "")
     username = input_dict.get("username", "")
@@ -139,7 +104,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     conversation_history = input_dict.get("conversation_history", [])
     
     # Detect abnormal behavior
-    abnormal_behaviors = _detect_abnormal_behavior(numerology_context, trading_context, question)
+    abnormal_behaviors = _detect_abnormal_behavior(tbi_context, trading_context, question)
     
     # Determine response type
     response_type = "comprehensive"
@@ -147,22 +112,46 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         response_type = "general_chat"
     elif question_type == "needs_more_info":
         response_type = "needs_more_info"
-    elif not numerology_context and not trading_context:
+    elif not tbi_context and not trading_context:
         response_type = "general"
     elif not trading_context and has_trading_data:
         response_type = "missing_trading_data"
-    elif not numerology_context:
-        response_type = "missing_numerology_data"
+    elif not tbi_context:
+        response_type = "missing_tbi_data"
     
-    # Prepare context summary
+    # Prepare intelligent context summary based on language
     context_summary = []
-    if numerology_context:
-        numerology_context = _sanitize_numerology_context(numerology_context)
-        context_summary.append(" Có phân tích tính cách và tâm lý")
-    if trading_context:
-        context_summary.append(" Có phân tích dữ liệu giao dịch")
+    if tbi_context and tbi_context.strip():
+        if language == "en":
+            context_summary.append("✓ TBI Personality & Psychology Analysis Available")
+        else:  # Vietnamese default
+            context_summary.append("✓ Có phân tích tính cách và tâm lý TBI")
+            
+    if trading_context and trading_context.strip():
+        if language == "en":
+            context_summary.append("✓ Trading Performance Data Available")
+        else:  # Vietnamese default
+            context_summary.append("✓ Có phân tích dữ liệu giao dịch")
+            
     if not context_summary:
-        context_summary.append(" Chưa có dữ liệu phân tích chuyên sâu")
+        if language == "en":
+            context_summary.append("⚠ Limited data - General guidance available")
+        else:  # Vietnamese default
+            context_summary.append("⚠ Chưa có dữ liệu phân tích chuyên sâu")
+    
+    # Smart response type detection
+    if tbi_context and trading_context:
+        response_type = "comprehensive"
+    elif question_type == "general_chat":
+        response_type = "general_chat"
+    elif question_type == "needs_more_info":
+        response_type = "needs_more_info"
+    elif tbi_context and not trading_context:
+        response_type = "psychology_focused"
+    elif trading_context and not tbi_context:
+        response_type = "trading_focused"
+    else:
+        response_type = "general"
     
     # Format conversation history for display
     conversation_context = ""
@@ -172,7 +161,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "question": question,
         "question_type": question_type,
-        "numerology_context": numerology_context,
+        "tbi_context": tbi_context,
         "trading_context": trading_context,
         "user_name": user_name,
         "username": username,
@@ -200,29 +189,38 @@ def build_lumir_synthesis_agent():
     prompt = ChatPromptTemplate.from_messages([
         ("system", _read_prompt()),
         ("human", """
-Câu hỏi của {username}: {question}
+USER: {username}
+QUESTION: {question}
+LANGUAGE REQUIRED: {language}
 
-LOẠI CÂU HỎI: {question_type}
-TÓM TẮT NGỮ CẢNH:
-{context_summary}
+=== CONTEXT ANALYSIS ===
+QUESTION TYPE: {question_type}
+CONTEXT SUMMARY: {context_summary}
+RESPONSE TYPE: {response_type}
 
-THÔNG TIN TÍNH CÁCH VÀ TÂM LÝ CỦA NGƯỜI DÙNG:
-- Nếu trong nội dung có nhắc đến các **con số cá nhân** hoặc các **cụm từ liên quan đến thần số học** thì bạn cần tránh nhắc trực tiếp mà sử dụng các thuật ngữ chung thay thế.
-{numerology_context}
+=== AVAILABLE DATA SOURCES ===
 
-PHÂN TÍCH DỮ LIỆU GIAO DỊCH:
+TBI ANALYSIS (Trading Behavioral Index - Personality & Psychology):
+{tbi_context}
+
+TRADING DATA ANALYSIS:
 {trading_context}
 
-HÀNH VI LỆCH CHUẨN PHÁT HIỆN:
+ABNORMAL BEHAVIORS DETECTED:
 {abnormal_behaviors}
 
-LỊCH SỬ HỘI THOẠI:
+CONVERSATION HISTORY:
 {conversation_history}
 
-Từ những thông tin trên hãy đưa ra tư vấn hữu ích và thân thiện với vai trò LUMIR-AI:
-- Nếu ngữ cảnh có nhắc đến các **con số cá nhân** hoặc các **cụm từ liên quan đến thần số học** thì bạn cần tránh nhắc trực tiếp mà sử dụng các thuật ngữ chung thay thế.
-- Nếu không có thông về hành vi lệch chuẩn, hoặc lịch sử hội thoại thì không cần trả về.
-""")
+=== SYNTHESIS INSTRUCTION ===
+Based on the question and available context above:
+1. Analyze what the user is really asking for
+2. Determine which context sources are relevant to answer
+3. Synthesize a natural, helpful response that addresses their specific need
+4. Use the specified language: {language}
+5. Be intelligent and adaptive - not rigid or mechanical
+
+Remember: You are LUMIR-AI, a smart trading psychology advisor. Use the context intelligently to provide personalized, helpful responses.""")
     ])
     
     llm = get_openai_llm()
@@ -280,16 +278,17 @@ def build_lumir_with_memory():
     def lumir_with_memory(
         question: str,
         question_type: str = "general_chat",
-        numerology_context: str = "",
+        # numerology_context: str = "",
+        tbi_context: str = "",
         trading_context: str = "",
         user_name: str = "",
         username: str = "",
         language: str = "vi",
         has_trading_data: bool = False,
-        focus_areas: List[str] = None,
+        focus_areas: Optional[List[str]] = None,
         needs_user_info: bool = False,
-        suggested_questions: List[str] = None,
-        conversation_history: List[Dict[str, Any]] = None
+        suggested_questions: Optional[List[str]] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> str:
         """
         LUMIR-AI with memory for multi-turn chat
@@ -297,7 +296,7 @@ def build_lumir_with_memory():
         Args:
             question: Current question
             question_type: Question type
-            numerology_context: Context from numerology agent
+            tbi_context: Context from TBI agent
             trading_context: Context from trading agent
             user_name: Tên user
             username: Username
@@ -319,7 +318,8 @@ def build_lumir_with_memory():
         input_data = {
             "question": question,
             "question_type": question_type,
-            "numerology_context": numerology_context,
+            # "numerology_context": numerology_context,
+            "tbi_context": tbi_context,
             "trading_context": trading_context,
             "user_name": user_name,
             "username": username,

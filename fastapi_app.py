@@ -60,6 +60,12 @@ class NumerologyRequest(BaseModel):
     birthday: str = Field(..., description="Birthday")
     language: str = Field(default="vi", description="Language (default: vi)")
 
+class TbiRequest(BaseModel):
+    question: str = Field(..., description="Question about TBI")
+    user_name: str = Field(..., description="Name of user")
+    birthday: str = Field(..., description="Birthday")
+    language: str = Field(default="vi", description="Language (default: vi)")
+
 class TradingRequest(BaseModel):
     question: Optional[str] = Field(None, description="Question about trading (can be None)")
     language: str = Field(default="vi", description="Language (default: vi)")
@@ -67,7 +73,7 @@ class TradingRequest(BaseModel):
 class LumirSynthesisRequest(BaseModel):
     question: str = Field(..., description="Original question")
     question_type: str = Field(default="general_chat", description="Question type")
-    numerology_context: Optional[str] = Field(default="", description="Context from numerology agent (can be None)")
+    tbi_context: Optional[str] = Field(default="", description="Context from TBI agent (can be None)")
     trading_context: Optional[str] = Field(default="", description="Context from trading agent (can be None)")
     user_name: str = Field(default="", description="Name of user")
     username: str = Field(default="", description="Username")
@@ -91,6 +97,7 @@ class ChatbotRequest(BaseModel):
     user_birthday: Optional[str] = Field(None, description="Birthday (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
     trading_data: Optional[bool] = Field(False, description="User has trading data (optional)")
+    language: str = Field(default="vi", description="Language (default: vi)")
 
 class MemoryManagementRequest(BaseModel):
     action: str = Field(..., description="Action ('get_status', 'clear', 'get_summary')")
@@ -217,10 +224,39 @@ async def question_decomposition_endpoint(
 # ENDPOINT 4: NUMEROLOGY ANALYSIS
 # ============================================================================
 
+@app.post("/api/tbi/analyze", response_model=Dict[str, Any])
+async def tbi_endpoint(request: TbiRequest):
+    """
+    Analyze TBI (Trading Behavior Intelligence) for specific user
+    
+    Each user has a separate memory cache
+    """
+    try:
+        result = lumir_api.tbi_endpoint(
+            question=request.question,
+            user_name=request.user_name,
+            birthday=request.birthday,
+            language=request.language
+        )
+        
+        if result["success"]:
+            return JSONResponse(content=result, status_code=200)
+        else:
+            return JSONResponse(content=result, status_code=400)
+            
+    except Exception as e:
+        error_response = {
+            "endpoint": "tbi",
+            "success": False,
+            "error": f"Internal server error: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+        return JSONResponse(content=error_response, status_code=500)
+
 @app.post("/api/numerology/analyze", response_model=Dict[str, Any])
 async def numerology_endpoint(request: NumerologyRequest):
     """
-    Analyze numerology for specific user
+    Analyze numerology for specific user (DEPRECATED - Use TBI instead)
     
     Each user has a separate memory cache
     """
@@ -323,17 +359,18 @@ async def lumir_synthesis_endpoint(request: LumirSynthesisRequest):
     Combine information from other agents to create complete response
     """
     try:
-        # Handle empty context from agents - convert to empty string if None
-        numerology_context = request.numerology_context if request.numerology_context is not None else ""
+        # Handle backward compatibility - use numerology_context as tbi_context if provided
+        tbi_context = request.tbi_context if request.tbi_context is not None else ""
         trading_context = request.trading_context if request.trading_context is not None else ""
         
-        print(f"🔮 Numerology context: {repr(numerology_context)}")
+        print(f"🧠 TBI/Numerology context: {repr(tbi_context)}")
         print(f"📈 Trading context: {repr(trading_context)}")
+        print(f"🌐 Language: {request.language}")
         
         result = lumir_api.lumir_synthesis_endpoint(
             question=request.question,
             question_type=request.question_type,
-            numerology_context=numerology_context,
+            tbi_context=tbi_context,
             trading_context=trading_context,
             user_name=request.user_name,
             username=request.username,
@@ -405,12 +442,17 @@ async def complete_pipeline_endpoint(request: CompletePipelineRequest):
 @app.post("/api/chat", response_model=Dict[str, Any])
 async def chatbot_endpoint(request: ChatbotRequest):
     try:
+        # Debug logging
+        print(f"🔍 DEBUG - Raw request.language: {repr(request.language)}")
+        print(f"🔍 DEBUG - Final language value: {repr(request.language or 'vi')}")
+        
         result = lumir_api.chatbot_endpoint(
             question=request.question,
             user_name=request.user_name or "",
             user_birthday=request.user_birthday or "",
             username=request.username or "",
-            trading_data=request.trading_data or False
+            trading_data=request.trading_data or False,
+            language=request.language  # Remove the 'or "vi"' to test
         )
         if result.get("success", False):
             return JSONResponse(content=result, status_code=200)

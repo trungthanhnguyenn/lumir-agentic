@@ -139,7 +139,7 @@ class LUMIRChatbot:
         else:
             return "general"
     
-    def _generate_smart_suggestions(self, user_context: Dict[str, Any], question: str) -> str:
+    def _generate_smart_suggestions(self, user_context: Dict[str, Any], question: str, language: str = "vi") -> str:
         """
         Generate intelligent suggestions based on user context and question
         """
@@ -148,43 +148,90 @@ class LUMIRChatbot:
         if not user_context["is_logged_in"]:
             # User not logged in
             if user_context["question_type"] == "trading_related":
-                suggestions.append("**Để được tư vấn trading chi tiết:** Đăng nhập và cung cấp dữ liệu giao dịch của bạn")
+                if language == "en":
+                    suggestions.append("**For detailed trading consultation:** Log in and provide your trading data")
+                else:  # Vietnamese
+                    suggestions.append("**Để được tư vấn trading chi tiết:** Đăng nhập và cung cấp dữ liệu giao dịch của bạn")
             elif user_context["question_type"] == "personal_analysis":
-                suggestions.append("**Để được phân tích tính cách:** Đăng nhập và cung cấp tên cùng ngày sinh")
+                if language == "en":
+                    suggestions.append("**For personality analysis:** Log in and provide your name and birth date")
+                else:  # Vietnamese
+                    suggestions.append("**Để được phân tích tính cách:** Đăng nhập và cung cấp tên cùng ngày sinh")
             else:
-                suggestions.append("**Để trải nghiệm đầy đủ:** Đăng nhập vào hệ thống LUMIR")
-                suggestions.append("**Tài khoản miễn phí:** Tạo tài khoản để sử dụng các tính năng nâng cao")
+                if language == "en":
+                    suggestions.append("**For full experience:** Log in to the LUMIR system")
+                    suggestions.append("**Free account:** Create an account to use advanced features")
+                else:  # Vietnamese
+                    suggestions.append("**Để trải nghiệm đầy đủ:** Đăng nhập vào hệ thống LUMIR")
+                    suggestions.append("**Tài khoản miễn phí:** Tạo tài khoản để sử dụng các tính năng nâng cao")
         else:
             # User is logged in but may be missing some info
             if user_context["question_type"] == "trading_related" and not user_context["has_trading_info"]:
-                suggestions.append("**Cần dữ liệu giao dịch:** Upload file Excel hoặc kết nối tài khoản MT4/MT5 để được phân tích chi tiết")
+                if language == "en":
+                    suggestions.append("**Trading data needed:** Upload Excel file or connect MT4/MT5 account for detailed analysis")
+                else:  # Vietnamese
+                    suggestions.append("**Cần dữ liệu giao dịch:** Upload file Excel hoặc kết nối tài khoản MT4/MT5 để được phân tích chi tiết")
             elif user_context["question_type"] == "personal_analysis" and not user_context["has_personal_info"]:
-                suggestions.append("**Cần thông tin cá nhân:** Cập nhật tên và ngày sinh trong hồ sơ để được phân tích tính cách")
+                if language == "en":
+                    suggestions.append("**Personal info needed:** Update name and birth date in profile for personality analysis")
+                else:  # Vietnamese
+                    suggestions.append("**Cần thông tin cá nhân:** Cập nhật tên và ngày sinh trong hồ sơ để được phân tích tính cách")
             
             if user_context["info_sufficient"]:
-                suggestions.append("**Thông tin đầy đủ:** Bạn có thể sử dụng đầy đủ các tính năng của LUMIR")
+                if language == "en":
+                    suggestions.append("**Complete information:** You can use all LUMIR features")
+                else:  # Vietnamese
+                    suggestions.append("**Thông tin đầy đủ:** Bạn có thể sử dụng đầy đủ các tính năng của LUMIR")
         
         # Add general helpful suggestions
         if user_context["question_type"] == "system_info":
-            suggestions.append("**Tài liệu hướng dẫn:** Xem thêm tài liệu chi tiết trong phần Help")
+            if language == "en":
+                suggestions.append("**Documentation:** See detailed documentation in Help section")
+            else:  # Vietnamese
+                suggestions.append("**Tài liệu hướng dẫn:** Xem thêm tài liệu chi tiết trong phần Help")
         
         if not suggestions:
-            suggestions = [
-                "**Khám phá thêm:** Hệ thống LUMIR có nhiều tính năng thú vị để bạn khám phá",
-                "**Hỗ trợ:** Nếu cần hỗ trợ thêm, hãy liên hệ đội ngũ chăm sóc khách hàng"
-            ]
+            if language == "en":
+                suggestions = [
+                    "**Explore more:** The LUMIR system has many interesting features for you to explore",
+                    "**Support:** If you need additional support, please contact our customer care team"
+                ]
+            else:  # Vietnamese
+                suggestions = [
+                    "**Khám phá thêm:** Hệ thống LUMIR có nhiều tính năng thú vị để bạn khám phá",
+                    "**Hỗ trợ:** Nếu cần hỗ trợ thêm, hãy liên hệ đội ngũ chăm sóc khách hàng"
+                ]
         
         return "\n".join(suggestions)
 
-    def _build_prompt(self, question: str, contexts: List[SearchResult], user_context: Dict[str, Any]) -> str:
+    def _build_prompt(self, question: str, contexts: List[SearchResult], user_context: Dict[str, Any], user_name: str, language: str) -> str:
+        """
+        Build prompt for LLM to generate response
+        """
+        # Extract relevant context
+        context_summary = self._extract_relevant_context(question, contexts, language)
         ctx_text = "\n\n".join((c.payload.get("content", "") or "") for c in contexts)
         
         # Analyze context to create smart suggestions
-        context_analysis = self._analyze_context_for_suggestions(contexts)
+        context_analysis = self._analyze_context_for_suggestions(contexts, language)
         
-        # Build user status context
-        user_status = f"""
-**Trạng thái người dùng:**
+        # Multilingual user status
+        user_display_name = user_name.strip() if user_name and user_name.strip() else "Unknown User"
+        
+        if language == "en":
+            user_status = f"""
+**User Status:**
+- Name: {user_display_name}
+- Logged in: {'Yes' if user_context['is_logged_in'] else 'No'}
+- Has personal info: {'Yes' if user_context['has_personal_info'] else 'No'}
+- Has trading data: {'Yes' if user_context['has_trading_info'] else 'No'}
+- Question type: {user_context['question_type']}
+- Info sufficient: {'Sufficient' if user_context['info_sufficient'] else 'Missing: ' + ', '.join(user_context['missing_info'])}
+"""
+        else:  # Default Vietnamese
+            user_status = f"""
+**Thông tin người dùng:**
+- Tên: {user_display_name}
 - Đã đăng nhập: {'Có' if user_context['is_logged_in'] else 'Chưa'}
 - Có thông tin cá nhân: {'Có' if user_context['has_personal_info'] else 'Chưa'}
 - Có dữ liệu giao dịch: {'Có' if user_context['has_trading_info'] else 'Chưa'}
@@ -192,41 +239,76 @@ class LUMIRChatbot:
 - Thông tin đủ: {'Đủ' if user_context['info_sufficient'] else 'Thiếu: ' + ', '.join(user_context['missing_info'])}
 """
         
-        system = (
-            "Bạn là trợ lý của hệ thống LUMIR - Nền tảng hỗ trợ trader giao dịch hiệu quả, sản phẩm của BEQ-Holdings. "
-            "Mục tiêu của bạn là giải đáp thắc mắc của khách hàng, đồng thời giới thiệu các tính năng nổi bật của LUMIR một cách chuyên nghiệp, gần gũi. "
-            "Hãy luôn trả lời đúng trọng tâm, dựa trên ngữ cảnh cung cấp.\n\n"
-            "Quy tắc:\n"
-            "- Sử dụng cách xưng hô bằng tên **LUMIR**\n"
-            "- Nếu câu hỏi nằm ngoài kiến thức LUMIR/LUMIR-AI: từ chối lịch sự và giải thích về những gì bạn có thể làm được. Sau đó gợi ý đăng nhập để trò chuyện với LUMIR-AI\n"
-            "- Nếu ngữ cảnh chưa đủ để trả lời chính xác: yêu cầu bổ sung thông tin và nêu rõ còn thiếu gì. Hãy sử dụng những câu hỏi gợi mở để khách hàng cung cấp thêm dữ liệu.\n"
-            "- Tránh bịa đặt.\n"
-            "- Sau khi trả lời, **nếu nội dung câu hỏi** liên quan đến một tính năng của LUMIR, hãy khéo léo giới thiệu tính năng đó và khuyến khích khách hàng trải nghiệm.\n"
-            "- Sử dụng tiếng Việt.\n"
-            f"- Dựa trên context, gợi ý thêm: {context_analysis}\n"
-            f"- Thông tin người dùng: {user_status}\n"
-            "- **QUAN TRỌNG**: Dựa vào trạng thái người dùng để đưa ra gợi ý phù hợp. Không gợi ý đăng nhập nếu đã đăng nhập rồi.\n\n"
-            "**Xử lý trường hợp thiếu thông tin:**\n"
-            "- Nếu user chưa cung cấp đủ thông tin để trả lời câu hỏi, hãy:\n"
-            "  1. Sử dụng context có sẵn để giải thích LUMIR có thể giúp gì\n"
-            "  2. Giải thích tại sao cần thêm thông tin\n"
-            "  3. Hướng dẫn cụ thể user cần làm gì tiếp theo\n"
-            "  4. Khuyến khích đăng nhập và cung cấp thông tin cần thiết\n"
-            "- Hãy tự nhiên, không hiển thị raw context data, mà tạo response dễ hiểu dựa trên context đó"
-        )
-        user = (
-            f"Câu hỏi: {question}\n\n"
-            f"Ngữ cảnh liên quan:\n{ctx_text}\n\n"
-            "Hãy trả lời theo các quy tắc trên."
-        )
+        # Multilingual system prompt
+        if language == "en":
+            system = (
+                "You are LUMIR assistant of the LUMIR system - An effective trading support platform, a product of BEQ-Holdings. "
+                "Your goal is to answer customer questions and introduce LUMIR's outstanding features in a professional and friendly manner. "
+                "Always answer to the point, based on the provided context.\n\n"
+                "Rules:\n"
+                "- Use the name **LUMIR** when referring to yourself\n"
+                "- **PERSONALIZATION**: If user name is provided in the user information, address them naturally by name. If not provided, use friendly general greeting.\n"
+                "- If the question is outside LUMIR/LUMIR-AI knowledge: politely decline and explain what you can do. Then suggest logging in to chat with LUMIR-AI\n"
+                "- If the context is not enough to answer accurately: ask for additional information and specify what is missing. Use open-ended questions to encourage customers to provide more data.\n"
+                "- Avoid making things up.\n"
+                "- After answering, **if the question content** relates to a LUMIR feature, skillfully introduce that feature and encourage customers to experience it.\n"
+                f"- Response language: {language}\n"
+                f"- Based on context, additional suggestions: {context_analysis}\n"
+                f"- User information: {user_status}\n"
+                "- **IMPORTANT**: Based on user status to provide appropriate suggestions. Don't suggest logging in if already logged in.\n\n"
+                "**Handle missing information cases:**\n"
+                "- If user hasn't provided enough information to answer the question:\n"
+                "  1. Use available context to explain what LUMIR can help with\n"
+                "  2. Explain why more information is needed\n"
+                "  3. Give specific guidance on what user needs to do next\n"
+                "  4. Encourage logging in and providing necessary information\n"
+                "- Be natural, don't show raw context data, create understandable responses based on that context"
+            )
+        else:  # Default Vietnamese
+            system = (
+                "Bạn là trợ lý của hệ thống LUMIR - Nền tảng hỗ trợ trader giao dịch hiệu quả, sản phẩm của BEQ-Holdings. "
+                "Mục tiêu của bạn là giải đáp thắc mắc của khách hàng, đồng thời giới thiệu các tính năng nổi bật của LUMIR một cách chuyên nghiệp, gần gũi. "
+                "Hãy luôn trả lời đúng trọng tâm, dựa trên ngữ cảnh cung cấp.\n\n"
+                "Quy tắc:\n"
+                "- Sử dụng cách xưng hô bằng tên **LUMIR**\n"
+                "- **CÁ NHÂN HÓA**: Nếu có tên người dùng trong thông tin, hãy xưng hô tự nhiên bằng tên. Nếu chưa có thì dùng cách chào thân thiện chung.\n"
+                "- Nếu câu hỏi nằm ngoài kiến thức LUMIR/LUMIR-AI: từ chối lịch sự và giải thích về những gì bạn có thể làm được. Sau đó gợi ý đăng nhập để trò chuyện với LUMIR-AI\n"
+                "- Nếu ngữ cảnh chưa đủ để trả lời chính xác: yêu cầu bổ sung thông tin và nêu rõ còn thiếu gì. Hãy sử dụng những câu hỏi gợi mở để khách hàng cung cấp thêm dữ liệu.\n"
+                "- Tránh bịa đặt.\n"
+                "- Sau khi trả lời, **nếu nội dung câu hỏi** liên quan đến một tính năng của LUMIR, hãy khéo léo giới thiệu tính năng đó và khuyến khích khách hàng trải nghiệm.\n"
+                f"- Ngôn ngữ yêu cầu: {language}\n"
+                f"- Dựa trên context, gợi ý thêm: {context_analysis}\n"
+                f"- Thông tin người dùng: {user_status}\n"
+                "- **QUAN TRỌNG**: Dựa vào trạng thái người dùng để đưa ra gợi ý phù hợp. Không gợi ý đăng nhập nếu đã đăng nhập rồi.\n\n"
+                "**Xử lý trường hợp thiếu thông tin:**\n"
+                "- Nếu user chưa cung cấp đủ thông tin để trả lời câu hỏi, hãy:\n"
+                "  1. Sử dụng context có sẵn để giải thích LUMIR có thể giúp gì\n"
+                "  2. Giải thích tại sao cần thêm thông tin\n"
+                "  3. Hướng dẫn cụ thể user cần làm gì tiếp theo\n"
+                "  4. Khuyến khích đăng nhập và cung cấp thông tin cần thiết\n"
+                "- Hãy tự nhiên, không hiển thị raw context data, mà tạo response dễ hiểu dựa trên context đó"
+            )
+        # Multilingual user section
+        if language == "en":
+            user = (
+                f"Question: {question}\n\n"
+                f"Related context:\n{ctx_text}\n\n"
+                "Please answer according to the rules above and based on the requested language."
+            )
+        else:  # Vietnamese
+            user = (
+                f"Câu hỏi: {question}\n\n"
+                f"Ngữ cảnh liên quan:\n{ctx_text}\n\n"
+                "Hãy trả lời theo các quy tắc trên và dựa vào ngôn ngữ yêu cầu."
+            )
         return f"<system>\n{system}\n</system>\n<user>\n{user}\n</user>"
     
-    def _analyze_context_for_suggestions(self, contexts: List[SearchResult]) -> str:
+    def _analyze_context_for_suggestions(self, contexts: List[SearchResult], language: str = "vi") -> str:
         """
         Analyze context to create smart suggestions for user
         """
         if not contexts:
-            return "Không có context để phân tích"
+            return "Không có context để phân tích" if language == "vi" else "No context to analyze"
         
         # Collect information from context
         topics = set()
@@ -256,40 +338,74 @@ class LUMIRChatbot:
         suggestions = []
         
         if trading_related:
-            suggestions.append("• Bạn có thể chia sẻ dữ liệu giao dịch để được phân tích chi tiết")
-            suggestions.append("• Hệ thống có thể phân tích hiệu suất và đưa ra khuyến nghị cụ thể")
+            if language == "en":
+                suggestions.append("• You can share trading data for detailed analysis")
+                suggestions.append("• The system can analyze performance and provide specific recommendations")
+            else:  # Vietnamese
+                suggestions.append("• Bạn có thể chia sẻ dữ liệu giao dịch để được phân tích chi tiết")
+                suggestions.append("• Hệ thống có thể phân tích hiệu suất và đưa ra khuyến nghị cụ thể")
         
         if numerology_related:
-            suggestions.append("• Bạn có thể cung cấp tên và ngày sinh để được phân tích tính cách")
-            suggestions.append("• Hệ thống sẽ đưa ra lời khuyên phù hợp với tính cách của bạn")
+            if language == "en":
+                suggestions.append("• You can provide name and birth date for personality analysis")
+                suggestions.append("• The system will provide advice suitable for your personality")
+            else:  # Vietnamese
+                suggestions.append("• Bạn có thể cung cấp tên và ngày sinh để được phân tích tính cách")
+                suggestions.append("• Hệ thống sẽ đưa ra lời khuyên phù hợp với tính cách của bạn")
         
         if "hướng dẫn" in topics:
-            suggestions.append("• Hệ thống có hướng dẫn chi tiết cho người mới bắt đầu")
-            suggestions.append("• Bạn có thể tham khảo các tài liệu và video hướng dẫn")
+            if language == "en":
+                suggestions.append("• The system has detailed guides for beginners")
+                suggestions.append("• You can refer to documentation and tutorial videos")
+            else:  # Vietnamese
+                suggestions.append("• Hệ thống có hướng dẫn chi tiết cho người mới bắt đầu")
+                suggestions.append("• Bạn có thể tham khảo các tài liệu và video hướng dẫn")
         
         if "tính năng" in topics:
-            suggestions.append("• Hệ thống có nhiều tính năng nâng cao để khám phá")
-            suggestions.append("• Bạn có thể trải nghiệm các tính năng demo")
+            if language == "en":
+                suggestions.append("• The system has many advanced features to explore")
+                suggestions.append("• You can try demo features")
+            else:  # Vietnamese
+                suggestions.append("• Hệ thống có nhiều tính năng nâng cao để khám phá")
+                suggestions.append("• Bạn có thể trải nghiệm các tính năng demo")
         
         # General suggestions
         if not suggestions:
-            suggestions = [
-                "• Hệ thống có thể phân tích dữ liệu cá nhân để đưa ra lời khuyên",
-                "• Bạn có thể tham gia cộng đồng trader để học hỏi kinh nghiệm"
-            ]
+            if language == "en":
+                suggestions = [
+                    "• The system can analyze personal data to provide advice",
+                    "• You can join the trading community to learn from experience"
+                ]
+            else:  # Vietnamese
+                suggestions = [
+                    "• Hệ thống có thể phân tích dữ liệu cá nhân để đưa ra lời khuyên",
+                    "• Bạn có thể tham gia cộng đồng trader để học hỏi kinh nghiệm"
+                ]
         
         return "\n".join(suggestions)
 
-    def answer(self, question: str, user_name: str, user_birthday: str, username: str, trading_data: bool) -> Dict[str, Any]:
+    def answer(self, question: str, user_name: str, user_birthday: str, username: str, trading_data: bool, language: str = "vi") -> Dict[str, Any]:
         # 1) retrieve
         retrieved = self._retrieve(question, k=10)
 
         # 2) guard: on-topic
         if not self._is_on_topic(question, retrieved):
-            return {
-                "success": False,
-                "reason": "off_topic",
-                "message": (
+            if language == "en":
+                message = (
+                    "Sorry, this question is outside my knowledge. I am only designed to answer "
+                    "information about LUMIR and LUMIR-AI systems.\n\n"
+                    "**I can help you with:**\n"
+                    "• Information about LUMIR system and features\n"
+                    "• Usage guides and getting started\n"
+                    "• Trading and numerology questions (when personal data is available)\n"
+                    "• Trading psychology consultation\n\n"
+                    "**For personalized consultation:**\n"
+                    "• Provide name and birth date for personality analysis\n"
+                    "• Upload trading data for performance analysis\n"
+                    "• Log in to experience full features"
+                )
+            else:  # Vietnamese
+                message = (
                     "Xin lỗi, câu hỏi nằm ngoài kiến thức của tôi. Tôi chỉ được thiết kế để trả lời "
                     "các thông tin về hệ thống LUMIR và LUMIR-AI.\n\n"
                     "**Tôi có thể giúp bạn với:**\n"
@@ -301,7 +417,12 @@ class LUMIRChatbot:
                     "• Cung cấp tên và ngày sinh để phân tích tính cách\n"
                     "• Upload dữ liệu giao dịch để phân tích hiệu suất\n"
                     "• Đăng nhập để trải nghiệm đầy đủ tính năng"
-                ),
+                )
+            
+            return {
+                "success": False,
+                "reason": "off_topic",
+                "message": message,
                 "retrieved": len(retrieved)
             }
 
@@ -319,10 +440,21 @@ class LUMIRChatbot:
         
         # 6) Check context sufficiency for other cases
         if not self._has_enough_context(top5):
-            return {
-                "success": False,
-                "reason": "insufficient_context",
-                "message": (
+            if language == "en":
+                message = (
+                    "The current context is not sufficient to answer accurately. Please provide more specific information "
+                    "(e.g., feature, documentation page, or chapter in the Handbook).\n\n"
+                    "**I can help you with:**\n"
+                    "• General information about LUMIR system\n"
+                    "• Basic guides\n"
+                    "• Explanation of trading and numerology concepts\n\n"
+                    "**For more detailed consultation:**\n"
+                    "• Provide personal information (name, birth date)\n"
+                    "• Upload trading data\n"
+                    "• Ask more specific questions about features you're interested in"
+                )
+            else:  # Vietnamese
+                message = (
                     "Ngữ cảnh hiện tại chưa đủ để trả lời chính xác. Vui lòng bổ sung thông tin cụ thể hơn "
                     "(ví dụ: tính năng, trang tài liệu, hoặc chương mục trong Handbook).\n\n"
                     "**Tôi có thể giúp bạn với:**\n"
@@ -333,16 +465,21 @@ class LUMIRChatbot:
                     "• Cung cấp thông tin cá nhân (tên, ngày sinh)\n"
                     "• Upload dữ liệu giao dịch\n"
                     "• Đặt câu hỏi cụ thể hơn về tính năng bạn quan tâm"
-                ),
+                )
+            
+            return {
+                "success": False,
+                "reason": "insufficient_context",
+                "message": message,
                 "retrieved": len(retrieved),
                 "reranked": len(top5)
             }
 
         # 7) Generate smart suggestions
-        smart_suggestions = self._generate_smart_suggestions(user_context, question)
+        smart_suggestions = self._generate_smart_suggestions(user_context, question, language)
 
         # 8) LLM generate with user context
-        prompt = self._build_prompt(question, top5, user_context)
+        prompt = self._build_prompt(question, top5, user_context, user_name, language)
         llm = self.llm
         output = llm.invoke(prompt)
         text = getattr(output, "content", None) or str(output)
@@ -362,13 +499,16 @@ class LUMIRChatbot:
             "response_type": "full_response"
         }
 
-    def _extract_relevant_context(self, question: str, contexts: List[SearchResult]) -> str:
+    def _extract_relevant_context(self, question: str, contexts: List[SearchResult], language: str = "vi") -> str:
         """
         Extract relevant context information to provide a meaningful response
         even when user needs to provide more information
         """
         if not contexts:
-            return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
+            if language == "en":
+                return "I understand you're interested in improving trading skills and emotion management."
+            else:  # Vietnamese
+                return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
         
         # Find most relevant context
         relevant_contexts = []
@@ -381,21 +521,27 @@ class LUMIRChatbot:
             context_summary = " ".join(relevant_contexts)
             # Clean up and make it more natural
             context_summary = context_summary.replace("\n", " ").replace("  ", " ")
-            return f"Dựa trên kiến thức về LUMIR, {context_summary.lower()}"
+            if language == "en":
+                return f"Based on LUMIR knowledge, {context_summary.lower()}"
+            else:  # Vietnamese
+                return f"Dựa trên kiến thức về LUMIR, {context_summary.lower()}"
         else:
-            return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
+            if language == "en":
+                return "I understand you're interested in improving trading skills and emotion management."
+            else:  # Vietnamese
+                return "Tôi hiểu bạn đang quan tâm đến việc cải thiện kỹ năng giao dịch và quản lý cảm xúc."
 
 
 def build_chatbot(orchestrator: RAGOrchestrator) -> LUMIRChatbot:
     return LUMIRChatbot(orchestrator)
 
 
-def run_chat(question: str) -> Dict[str, Any]:
+def run_chat(question: str, user_name: str = "", user_birthday: str = "", username: str = "", trading_data: bool = False, language: str = "vi") -> Dict[str, Any]:
     """Convenience function to run a one-shot chat with default orchestrator."""
     from module.rag_orchestrator import RAGOrchestratorFactory
     orchestrator = RAGOrchestratorFactory.create_optimal_orchestrator()
     bot = build_chatbot(orchestrator)
-    return bot.answer(question)
+    return bot.answer(question, user_name, user_birthday, username, trading_data, language)
 
 
 # if __name__ == "__main__":

@@ -5,7 +5,8 @@ from datetime import datetime
 import json
 
 from agents.question_decomposition_agent import build_question_decomposition_agent
-from agents.numerology_agent import build_numerology_agent
+# from agents.numerology_agent import build_numerology_agent
+from agents.tbi_agent import build_tbi_agent
 from agents.trading_agent import build_trading_agent
 from agents.lumir_synthesis_agent import build_lumir_with_memory
 from agents.memory_agent import build_memory_agent
@@ -28,7 +29,8 @@ class MultiAgentOrchestrator:
     
     def __init__(self):
         self.question_decomposer = build_question_decomposition_agent()
-        self.numerology_agent = build_numerology_agent()
+        # self.numerology_agent = build_numerology_agent()
+        self.tbi_agent = build_tbi_agent()
         self.trading_agent = build_trading_agent()
         self.lumir_agent = build_lumir_with_memory()
         self.memory_agent = build_memory_agent()
@@ -94,7 +96,7 @@ class MultiAgentOrchestrator:
                     "question_type": "cached_response",
                     "decomposition_result": {"source": "memory_cache"},
                     "context_summary": {
-                        "numerology_available": False,
+                        "tbi_available": False,
                         "trading_available": False,
                         "response_type": "cached",
                         "needs_user_info": False,
@@ -132,13 +134,14 @@ class MultiAgentOrchestrator:
             if should_call_agents:
                 # Call specialized agents
                 print("Step 3: Call specialized agents...")
-                numerology_context, trading_context = self._execute_specialized_agents(
+                tbi_context, trading_context = self._execute_specialized_agents(
                     decomposition_result, user_name, birthday, excel_path, language
                 )
             else:
                 # No agent - process directly
                 print("Step 3: Process directly (no agent)...")
-                numerology_context = ""
+                # numerology_context = ""
+                tbi_context = ""
                 trading_context = ""
                 
                 # Process general_chat with LUMIRChatbot if available
@@ -165,7 +168,7 @@ class MultiAgentOrchestrator:
                                 "question_type": question_type,
                                 "decomposition_result": decomposition_result,
                                 "context_summary": {
-                                    "numerology_available": False,
+                                    "tbi_available": False,
                                     "trading_available": False,
                                     "response_type": "general_chat_direct",
                                     "needs_user_info": False,
@@ -191,7 +194,8 @@ class MultiAgentOrchestrator:
             lumir_response = self.lumir_agent(
                 question=question,
                 question_type=question_type,
-                numerology_context=numerology_context,
+                # numerology_context=numerology_context,
+                tbi_context=tbi_context,
                 trading_context=trading_context,
                 user_name=user_name,
                 username=username,
@@ -218,9 +222,10 @@ class MultiAgentOrchestrator:
                 "question_type": question_type,
                 "decomposition_result": decomposition_result,
                 "context_summary": {
-                    "numerology_available": bool(numerology_context),
+                    # "numerology_available": bool(numerology_context),
+                    "tbi_available": bool(tbi_context),
                     "trading_available": bool(trading_context),
-                    "response_type": self._determine_response_type(question_type, numerology_context, trading_context),
+                    "response_type": self._determine_response_type(question_type, tbi_context, trading_context),
                     "needs_user_info": decomposition_result.get("needs_user_info", False),
                     "suggested_questions": decomposition_result.get("suggested_questions", [])
                 },
@@ -258,18 +263,27 @@ class MultiAgentOrchestrator:
     ) -> tuple[str, str]:
         """Execute specialized agents in parallel"""
         
-        numerology_context = ""
+        # numerology_context = ""
+        tbi_context = ""
         trading_context = ""
         
         # Create tasks for parallel execution
         tasks_to_run = []
         
         # Numerology task
-        numerology_question = decomposition_result.get("numerology_question")
-        if numerology_question and numerology_question.strip() and user_name and birthday:
+        # numerology_question = decomposition_result.get("numerology_question")
+        # if numerology_question and numerology_question.strip() and user_name and birthday:
+        #     tasks_to_run.append(
+        #         ("numerology", self._execute_numerology_agent, 
+        #          numerology_question, user_name, birthday, language)
+        #     )
+        
+        # TBI task
+        tbi_question = decomposition_result.get("tbi_question")
+        if tbi_question and tbi_question.strip() and user_name and birthday:
             tasks_to_run.append(
-                ("numerology", self._execute_numerology_agent, 
-                 numerology_question, user_name, birthday, language)
+                ("tbi", self._execute_tbi_agent, 
+                 tbi_question, user_name, birthday, language)
             )
         
         # Trading task
@@ -293,17 +307,35 @@ class MultiAgentOrchestrator:
                     task_name = future_to_task_name[future]
                     try:
                         result = future.result()
-                        if task_name == "numerology":
-                            numerology_context = result
+                        # if task_name == "numerology":
+                        #     numerology_context = result
+                        # elif task_name == "tbi":
+                        if task_name == "tbi":
+                            tbi_context = result
                         elif task_name == "trading":
                             trading_context = result
                     except Exception as e:
                         print(f"{task_name} agent failed: {e}")
         
-        return numerology_context, trading_context
+        return tbi_context, trading_context
     
-    def _execute_numerology_agent(self, question: str, user_name: str, birthday: str, language: str = "vi") -> str:
-        """Execute numerology agent"""
+    # def _execute_numerology_agent(self, question: str, user_name: str, birthday: str, language: str = "vi") -> str:
+    #     """Execute numerology agent"""
+    #     try:
+    #         inputs = {
+    #             "question": question,
+    #             "user_name": user_name,
+    #             "birthday": birthday,
+    #             "language": language
+    #         }
+    #         result = self.numerology_agent.invoke(inputs)
+    #         return str(result) if result else ""
+    #     except Exception as e:
+    #         print(f"Numerology agent error: {e}")
+    #         return ""
+    
+    def _execute_tbi_agent(self, question: str, user_name: str, birthday: str, language: str = "vi") -> str:
+        """Execute TBI agent"""
         try:
             inputs = {
                 "question": question,
@@ -311,10 +343,10 @@ class MultiAgentOrchestrator:
                 "birthday": birthday,
                 "language": language
             }
-            result = self.numerology_agent.invoke(inputs)
+            result = self.tbi_agent.invoke(inputs)
             return str(result) if result else ""
         except Exception as e:
-            print(f"Numerology agent error: {e}")
+            print(f"TBI agent error: {e}")
             return ""
     
     def _execute_trading_agent(self, question: str, excel_path: str, language: str = "vi") -> str:
@@ -360,16 +392,16 @@ class MultiAgentOrchestrator:
             except Exception as e:
                 print(f"Error updating memory cache: {e}")
     
-    def _determine_response_type(self, question_type: str, numerology_context: str, trading_context: str) -> str:
+    def _determine_response_type(self, question_type: str, tbi_context: str, trading_context: str) -> str:
         """Determine response type based on question_type"""
         if question_type == "general_chat":
             return "general_chat"
         elif question_type == "needs_more_info":
             return "needs_more_info"
-        elif numerology_context and trading_context:
+        elif tbi_context and trading_context:
             return "comprehensive"
-        elif numerology_context:
-            return "numerology_only"
+        elif tbi_context:
+            return "tbi_only"
         elif trading_context:
             return "trading_only"
         else:
@@ -413,7 +445,7 @@ Vui lòng thử lại sau hoặc liên hệ hỗ trợ để được trợ giú
             "status": "operational",
             "agents": {
                 "question_decomposer": "ready",
-                "numerology_agent": "ready", 
+                "tbi_agent": "ready", 
                 "trading_agent": "ready",
                 "lumir_agent": "ready",
                 "memory_agent": "ready"

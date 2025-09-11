@@ -396,9 +396,16 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
 
     normalized_current = _normalize_current_day(current_day)
 
-    # Handle None case for TBICalculator 
-    current_date_param = normalized_current if normalized_current is not None else ""
-    cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=current_date_param)
+    # Handle None case for TBICalculator - create TBICalculator based on whether current_date is available
+    if normalized_current is not None:
+        cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=normalized_current)
+    else:
+        # Let TBICalculator handle default current time by passing empty string or using a dummy date
+        from datetime import datetime
+        import pytz
+        vntz = pytz.timezone("Asia/Ho_Chi_Minh")
+        current_vn = datetime.now(vntz).strftime("%d/%m/%Y")
+        cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=current_vn)
     numbers = cal.get_all_tbi_indicators()
 
     # Use LLM to select indicators
@@ -479,28 +486,32 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             current_tci_ord = int(current_tci_val)
             tci_key = milestone_info.get("tci_name")
             if tci_key:
-                tci_val = safe_nested_get(numbers, "tci_phase", tci_key)
-                if isinstance(tci_val, int):
-                    try:
-                        doc_content = s3.get_document_text_for_numerology(
-                            "tci", tci_val, tci_number=current_tci_ord
-                        )
-                        if doc_content and not doc_content.startswith("Lỗi"):
-                            docs[tci_key] = doc_content
-                    except Exception:
-                        pass
+                tci_phase_data = numbers.get("tci_phase", {})
+                if isinstance(tci_phase_data, dict):
+                    tci_val = tci_phase_data.get(tci_key)
+                    if isinstance(tci_val, int):
+                        try:
+                            doc_content = s3.get_document_text_for_numerology(
+                                "tci", tci_val, tci_number=current_tci_ord
+                            )
+                            if doc_content and not doc_content.startswith("Lỗi"):
+                                docs[tci_key] = doc_content
+                        except Exception:
+                            pass
             bci_key = milestone_info.get("bci_name")
             if bci_key:
-                bci_val = safe_nested_get(numbers, "bci", bci_key)
-                if isinstance(bci_val, int):
-                    try:
-                        doc_content = s3.get_document_text_for_numerology(
-                            "bci", bci_val, bci_number=current_tci_ord
-                        )
-                        if doc_content and not doc_content.startswith("Lỗi"):
-                            docs[bci_key] = doc_content
-                    except Exception:
-                    pass
+                bci_data = numbers.get("bci", {})
+                if isinstance(bci_data, dict):
+                    bci_val = bci_data.get(bci_key)
+                    if isinstance(bci_val, int):
+                        try:
+                            doc_content = s3.get_document_text_for_numerology(
+                                "bci", bci_val, bci_number=current_tci_ord
+                            )
+                            if doc_content and not doc_content.startswith("Lỗi"):
+                                docs[bci_key] = doc_content
+                        except Exception:
+                            pass
     except Exception:
         pass
 
@@ -516,27 +527,33 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 tci_ord = int(key.split("_")[1])
                 # File name expects milestone value (calculated), folder expects ordinal 1..4
-                tci_value = numbers.get("tci_phase", {}).get(f"tci_{tci_ord}")
-                if not isinstance(tci_value, int):
-                    docs[f"{key}_error"] = f"Invalid tci value: {tci_value}"
-                    print(f"Invalid tci value: {tci_value}")
+                tci_phase_data = numbers.get("tci_phase", {})
+                if isinstance(tci_phase_data, dict):
+                    tci_value = tci_phase_data.get(f"tci_{tci_ord}")
+                    if not isinstance(tci_value, int):
+                        docs[f"{key}_error"] = f"Invalid tci value: {tci_value}"
+                        print(f"Invalid tci value: {tci_value}")
+                        continue
+                    try:
+                        doc_content = s3.get_document_text_for_numerology(
+                            "tci",
+                            tci_value,
+                            tci_number=tci_ord,
+                        )
+                        if doc_content:
+                            docs[key] = doc_content
+                            print(f"Tci doc fetched: {len(str(doc_content))} chars")
+                        else:
+                            docs[f"{key}_error"] = "Empty content"
+                            print(f"Tci doc fetch returned empty content")
+                    except Exception as e:
+                        docs[f"{key}_error"] = str(e)
+                        print(f"Tci doc exception: {e}")
                     continue
-                try:
-                    doc_content = s3.get_document_text_for_numerology(
-                        "tci",
-                        tci_value,
-                        tci_number=tci_ord,
-                    )
-                    if doc_content:
-                        docs[key] = doc_content
-                        print(f"Tci doc fetched: {len(str(doc_content))} chars")
-                    else:
-                        docs[f"{key}_error"] = "Empty content"
-                        print(f"Tci doc fetch returned empty content")
-                except Exception as e:
-                    docs[f"{key}_error"] = str(e)
-                    print(f"Tci doc exception: {e}")
-                continue
+                else:
+                    docs[f"{key}_error"] = f"Invalid tci_phase data type: {type(tci_phase_data)}"
+                    print(f"Invalid tci_phase data type: {type(tci_phase_data)}")
+                    continue
             except Exception as e:
                 print(f"Invalid tci key '{key}': {e}")
 
@@ -544,27 +561,33 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 bci_ord = int(key.split("_")[1])
                 # File name expects challenge value (calculated), folder expects ordinal 1..4
-                bci_value = numbers.get("bci", {}).get(f"bci_{bci_ord}")
-                if not isinstance(bci_value, int):
-                    docs[f"{key}_error"] = f"Invalid bci value: {bci_value}"
-                    print(f"Invalid bci value: {bci_value}")
+                bci_data = numbers.get("bci", {})
+                if isinstance(bci_data, dict):
+                    bci_value = bci_data.get(f"bci_{bci_ord}")
+                    if not isinstance(bci_value, int):
+                        docs[f"{key}_error"] = f"Invalid bci value: {bci_value}"
+                        print(f"Invalid bci value: {bci_value}")
+                        continue
+                    try:
+                        doc_content = s3.get_document_text_for_numerology(
+                            "bci",
+                            bci_value,
+                            bci_number=bci_ord,
+                        )
+                        if doc_content:
+                            docs[key] = doc_content
+                            print(f"Bci doc fetched: {len(str(doc_content))} chars")
+                        else:
+                            docs[f"{key}_error"] = "Empty content"
+                            print(f"Bci doc fetch returned empty content")
+                    except Exception as e:
+                        docs[f"{key}_error"] = str(e)
+                        print(f"Bci doc exception: {e}")
                     continue
-                try:
-                    doc_content = s3.get_document_text_for_numerology(
-                        "bci",
-                        bci_value,
-                        bci_number=bci_ord,
-                    )
-                    if doc_content:
-                        docs[key] = doc_content
-                        print(f"Bci doc fetched: {len(str(doc_content))} chars")
-                    else:
-                        docs[f"{key}_error"] = "Empty content"
-                        print(f"Bci doc fetch returned empty content")
-                except Exception as e:
-                    docs[f"{key}_error"] = str(e)
-                    print(f"Bci doc exception: {e}")
-                continue
+                else:
+                    docs[f"{key}_error"] = f"Invalid bci data type: {type(bci_data)}"
+                    print(f"Invalid bci data type: {type(bci_data)}")
+                    continue
             except Exception as e:
                 print(f"Invalid bci key '{key}': {e}")
 
@@ -621,23 +644,31 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             elif key == milestone_info["tci_name"]:
                 # Current milestone with age context
                 if key not in docs:
-                    tci_value = numbers.get("tci_phase", {}).get(f"tci_{milestone_info['current_tci']}")
-                    docs[key] = f"{milestone_info['tci_description']} - Value: {tci_value}"
+                    tci_phase_data = numbers.get("tci_phase", {})
+                    if isinstance(tci_phase_data, dict):
+                        tci_value = tci_phase_data.get(f"tci_{milestone_info['current_tci']}")
+                        docs[key] = f"{milestone_info.get('tci_description', 'N/A')} - Value: {tci_value}"
             elif key == milestone_info["bci_name"]:
                 # Current challenge with age context
                 if key not in docs:
-                    bci_value = numbers.get("bci", {}).get(f"bci_{milestone_info['current_bci']}")
-                    docs[key] = f"{milestone_info['bci_description']} - Value: {bci_value}"
+                    bci_data = numbers.get("bci", {})
+                    if isinstance(bci_data, dict):
+                        bci_value = bci_data.get(f"bci_{milestone_info.get('current_bci', 1)}")
+                        docs[key] = f"{milestone_info.get('bci_description', 'N/A')} - Value: {bci_value}"
             elif key.startswith("bci_"):
                 bci_num = key.split("_")[1]
-                bci_value = numbers.get("bci", {}).get(f"bci_{bci_num}")
-                if bci_value is not None and key not in docs:
-                    docs[key] = f"Thách thức {bci_num}: {bci_value}"
+                bci_data = numbers.get("bci", {})
+                if isinstance(bci_data, dict):
+                    bci_value = bci_data.get(f"bci_{bci_num}")
+                    if bci_value is not None and key not in docs:
+                        docs[key] = f"Thách thức {bci_num}: {bci_value}"
             elif key.startswith("tci_"):
                 tci_num = key.split("_")[1]
-                tci_value = numbers.get("tci_phase", {}).get(f"tci_{tci_num}")
-                if tci_value is not None and key not in docs:
-                    docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
+                tci_phase_data = numbers.get("tci_phase", {})
+                if isinstance(tci_phase_data, dict):
+                    tci_value = tci_phase_data.get(f"tci_{tci_num}")
+                    if tci_value is not None and key not in docs:
+                        docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
             else:
                 if key not in docs:
                     docs[key] = f"Value: {numbers.get(key, 'N/A')}"

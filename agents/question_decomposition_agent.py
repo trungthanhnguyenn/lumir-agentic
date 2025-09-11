@@ -12,9 +12,10 @@ from tools.data_validator_tool import DataValidator
 
 class QuestionDecomposition(BaseModel):
     """Result of analysis and create sub-question"""
-    question_type: str = Field(description="Question type: 'trading_related', 'numerology_related', 'general_chat', 'needs_more_info'")
+    question_type: str = Field(description="Question type: 'trading_related', 'tbi_related', 'general_chat', 'needs_more_info'")
     should_call_agents: bool = Field(description="Should call specialized agents")
-    numerology_question: Optional[str] = Field(description="Question for numerology agent (null if not needed)")
+    # numerology_question: Optional[str] = Field(description="Question for numerology agent (null if not needed)")
+    tbi_question: Optional[str] = Field(description="Question for TBI agent (null if not needed)")
     trading_question: Optional[str] = Field(description="Question for trading agent (null if not needed)")
     reasoning: str = Field(description="Reasoning for analysis and routing")
     focus_areas: List[str] = Field(description="Focus areas if any")
@@ -53,7 +54,7 @@ def analyze_and_decompose_question(
         Dict containing smart analysis result
         "question_type": Type of question
         "should_call_agents": Whether to call specialized agents
-        "numerology_question": Question for numerology agent
+        "tbi_question": Question for tbi agent
         "trading_question": Question for trading agent
         "reasoning": Reasoning for analysis and routing
         "focus_areas": Focus areas if any
@@ -134,7 +135,8 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
 2. Câu hỏi liên quan đến:
     - Thông tin chung về hệ thống LUMIR/LUMIR-AI hay quỹ BEQ-Holdings hoặc BEQ
     - Hướng dẫn sử dụng LUMIR
-    - Câu hỏi về trading hoặc thần số học nhưng không cần dữ liệu cá nhân hoặc thông tin cá nhân
+    - Câu hỏi về trading hoặc bộ chỉ số Trader Behavior Index (TBI) nhưng không cần dữ liệu cá nhân hoặc thông tin cá nhân
+    - Hỏi về các khả năng của bạn hoặc cách hoạt động của bạn
 
 """)
         ])
@@ -166,7 +168,8 @@ Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
         return {
             "question_type": fallback_type,
             "should_call_agents": False,
-            "numerology_question": None,
+            # "numerology_question": None,
+            "tbi_question": None,
             "trading_question": None,
             "reasoning": f"Fallback analysis due to error: {str(e)}",
             "focus_areas": [],
