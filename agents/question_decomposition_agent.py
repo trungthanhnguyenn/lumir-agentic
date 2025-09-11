@@ -110,34 +110,39 @@ def analyze_and_decompose_question(
         prompt = ChatPromptTemplate.from_messages([
             ("system", _read_prompt()),
             ("human", """
-Câu hỏi hiện tại: {question}
+THÔNG TIN PHÂN TÍCH:
 
-Thông tin người dùng:
+Câu hỏi gốc: "{question}"
+
+Thông tin user hiện có:
 - Tên: {user_name}
-- Ngày sinh: {birthday}
-- File Excel: {excel_path}
-- Có dữ liệu trading hợp lệ: {has_valid_trading_data}
+- Ngày sinh: {birthday}  
+- File Excel trading: {excel_path}
+- Dữ liệu trading hợp lệ: {has_valid_trading_data}
+- Đã login: {user_logged_in}
 - Ngôn ngữ: {language}
-- Username: {username}
-- User đã login: {user_logged_in}
 
 Lịch sử hội thoại gần đây:
 {context_from_history}
 
-Hãy phân tích một cách THÔNG MINH và TỰ NHIÊN như ChatGPT/Claude:
-1. Hiểu ý định thực sự của user
-2. Quyết định có cần gọi agent chuyên biệt không
-3. Nếu cần thêm thông tin, gợi ý câu hỏi phù hợp
-4. Không cứng nhắc, hãy tự nhiên như con người
+---
 
-**LƯU Ý QUAN TRỌNG**: Nên phân loại là `general_chat` để sử dụng LUMIRChatbot cho các trường hợp:
-1. User chưa login (không có user_name, birthday, username) 
-2. Câu hỏi liên quan đến:
-    - Thông tin chung về hệ thống LUMIR/LUMIR-AI hay quỹ BEQ-Holdings hoặc BEQ
-    - Hướng dẫn sử dụng LUMIR
-    - Câu hỏi về trading hoặc bộ chỉ số Trader Behavior Index (TBI) nhưng không cần dữ liệu cá nhân hoặc thông tin cá nhân
-    - Hỏi về các khả năng của bạn hoặc cách hoạt động của bạn
+HÃY PHÂN TÍCH THÔNG MINH:
 
+1. **Kiểm tra điều kiện kỹ thuật:**
+   - Trading Agent: Có file Excel hợp lệ? ({has_valid_trading_data})
+   - TBI Agent: Có tên VÀ ngày sinh? ({user_name} + {birthday})
+
+2. **Hiểu ý định câu hỏi:**
+   - Câu hỏi có liên quan trading/cảm xúc/hành vi/tâm lý không?
+   - Hay là câu hỏi chung/chào hỏi/thông tin hệ thống?
+
+3. **Quyết định thông minh:**
+   - Nếu không liên quan → general_chat
+   - Nếu liên quan + có điều kiện → tạo câu hỏi cho agent tương ứng
+   - Nếu liên quan + thiếu điều kiện → needs_more_info
+
+Hãy tạo câu hỏi hữu ích và phù hợp từ câu hỏi gốc!
 """)
         ])
         
