@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import re
 from typing import Dict, Any, List, Optional
@@ -643,42 +644,43 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
                     print(f"Invalid number value: {number_value}")
             else:
                 # For indicators not in S3 mapping, use the calculated values and meanings
-                print(f"    Using calculated value for: {key}")
+                # print(f"    Using calculated value for: {key}")
                 
-                if key in numbers:
-                    if key not in docs:
-                        docs[key] = f"Value: {numbers[key]}"
-                elif key == milestone_info["tci_name"]:
-                    # Current milestone with age context
-                    if key not in docs:
-                        tci_phase_data = numbers.get("tci_phase", {})
-                        if isinstance(tci_phase_data, dict):
-                            tci_value = tci_phase_data.get(f"tci_{milestone_info['current_tci']}")
-                            docs[key] = f"{milestone_info.get('tci_description', 'N/A')} - Value: {tci_value}"
-                elif key == milestone_info["bci_name"]:
-                    # Current challenge with age context
-                    if key not in docs:
-                        bci_data = numbers.get("bci", {})
-                        if isinstance(bci_data, dict):
-                            bci_value = bci_data.get(f"bci_{milestone_info.get('current_bci', 1)}")
-                            docs[key] = f"{milestone_info.get('bci_description', 'N/A')} - Value: {bci_value}"
-                elif key.startswith("bci_"):
-                    bci_num = key.split("_")[1]
-                    bci_data = numbers.get("bci", {})
-                    if isinstance(bci_data, dict):
-                        bci_value = bci_data.get(f"bci_{bci_num}")
-                        if bci_value is not None and key not in docs:
-                            docs[key] = f"Thách thức {bci_num}: {bci_value}"
-                elif key.startswith("tci_"):
-                    tci_num = key.split("_")[1]
-                    tci_phase_data = numbers.get("tci_phase", {})
-                    if isinstance(tci_phase_data, dict):
-                        tci_value = tci_phase_data.get(f"tci_{tci_num}")
-                        if tci_value is not None and key not in docs:
-                            docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
-                else:
-                    if key not in docs:
-                        docs[key] = f"Value: {numbers.get(key, 'N/A')}"
+                # if key in numbers:
+                #     if key not in docs:
+                #         docs[key] = f"Value: {numbers[key]}"
+                # elif key == milestone_info["tci_name"]:
+                #     # Current milestone with age context
+                #     if key not in docs:
+                #         tci_phase_data = numbers.get("tci_phase", {})
+                #         if isinstance(tci_phase_data, dict):
+                #             tci_value = tci_phase_data.get(f"tci_{milestone_info['current_tci']}")
+                #             docs[key] = f"{milestone_info.get('tci_description', 'N/A')} - Value: {tci_value}"
+                # elif key == milestone_info["bci_name"]:
+                #     # Current challenge with age context
+                #     if key not in docs:
+                #         bci_data = numbers.get("bci", {})
+                #         if isinstance(bci_data, dict):
+                #             bci_value = bci_data.get(f"bci_{milestone_info.get('current_bci', 1)}")
+                #             docs[key] = f"{milestone_info.get('bci_description', 'N/A')} - Value: {bci_value}"
+                # elif key.startswith("bci_"):
+                #     bci_num = key.split("_")[1]
+                #     bci_data = numbers.get("bci", {})
+                #     if isinstance(bci_data, dict):
+                #         bci_value = bci_data.get(f"bci_{bci_num}")
+                #         if bci_value is not None and key not in docs:
+                #             docs[key] = f"Thách thức {bci_num}: {bci_value}"
+                # elif key.startswith("tci_"):
+                #     tci_num = key.split("_")[1]
+                #     tci_phase_data = numbers.get("tci_phase", {})
+                #     if isinstance(tci_phase_data, dict):
+                #         tci_value = tci_phase_data.get(f"tci_{tci_num}")
+                #         if tci_value is not None and key not in docs:
+                #             docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
+                # else:
+                #     if key not in docs:
+                #         docs[key] = f"Value: {numbers.get(key, 'N/A')}"
+                pass
 
         # Provide mapping meanings for selected keys
         meanings: Dict[str, str] = {}
@@ -714,6 +716,7 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             "insights": insights,
             "analysis_context": analysis_context,
             "language": language,  # Include language in return value
+            "user_info_complete": is_user_info_complete,
         }
     
     else:
@@ -725,8 +728,8 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             "selected_keys": selected_keys,
             "tbi_indicators": {},          # Không có chỉ số
             "meanings": meanings,          # Chỉ có định nghĩa các chỉ số đã chọn
-            "documents": {},               # Không có tài liệu trích xuất
-            "insights": {},                # Không có insight
+            "documents": {}, 
+            "insights": {},
             "analysis_context": "Thiếu thông tin cá nhân cần thiết để phân tích chi tiết.",
             "language": language,
             "user_info_complete": is_user_info_complete
@@ -774,7 +777,9 @@ def build_tbi_agent():
             language=data.get("language", "vi"),
             user_info_complete=data.get("user_info_complete", False),
         )
-        
+        # For debugging: log the rendered content
+        print("[DEBUG] content:", rendered_content)
+
         return rendered_content
 
     def _create_prompt_with_data(data: Dict[str, Any]) -> Dict[str, Any]:
