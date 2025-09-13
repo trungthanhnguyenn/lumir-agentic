@@ -288,7 +288,7 @@ async def numerology_endpoint(request: NumerologyRequest):
 
 @app.post("/api/trading/analyze", response_model=Dict[str, Any])
 async def trading_endpoint(
-    question: Optional[str] = Form(None),
+    question: str = Form(None),
     language: str = Form(default="vi"),
     excel_file: Optional[UploadFile] = File(None)
 ):

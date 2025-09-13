@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from fastapi import UploadFile, File
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import uuid
@@ -285,7 +286,7 @@ class LUMIRAPIEndpoints:
         question: str,
         user_name: Optional[str] = None,
         birthday: Optional[str] = None,
-        excel_path: Optional[str] = None,
+        excel_path: Optional[UploadFile] = File(None),
         language: str = "vi",
         username: Optional[str] = None
     ) -> Dict[str, Any]:
