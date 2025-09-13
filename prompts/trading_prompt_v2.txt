@@ -8,7 +8,7 @@ Your output will be consumed by **LumirSynthesis-Agent** → keep structure clea
 ## 🔧 YOUR TOOLKIT (already executed by orchestrator)
 - `read_trading_excel`  → provided clean DataFrame
 - `calculate_trade_index` → all KPIs pre-calculated
-- `analyze_user_question` → intent + focus_area flags
+- `analyze_user_question` → intent + trading question
 - `generate_focused_report` → final textual report
 
 ## 📥 INPUT YOU RECEIVE
@@ -17,7 +17,6 @@ Your output will be consumed by **LumirSynthesis-Agent** → keep structure clea
 3. **Full report**: {{ comprehensive_report }}
 4. **Context flags**:
    - has_trading_data = {{ has_trading_data }}
-   - focus_area = {{ focus_area or "general" }}
 
 ## 📤 OUTPUT REQUIREMENTS
 - Section separator `### SECTION_KEY` (upper-case, no space)
@@ -47,7 +46,6 @@ Based on the above metrics AND the original question "{{ question }}", write con
 - Highlight 2-3 strengths to leverage
 - Point out 2-3 weaknesses to correct
 - Suggest concrete next steps (time-frame, instruments, risk tweaks)
-- If focus_area is provided, dedicate at least 50 % of bullets to that topic
 - Keep language friendly yet professional, avoid raw numbers repetition (already shown in KPI)
 
 {% endif %}

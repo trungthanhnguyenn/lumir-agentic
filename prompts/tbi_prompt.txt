@@ -40,6 +40,10 @@ Phân tích các chỉ số TBI (Trader Behavioral Index) đã được tính to
     4. Nhóm chỉ số cốt lõi (nội tại cá nhân của mỗi trader): `spi`, `ppai`, `ppa` và `edi`
 
 ## **Ngữ cảnh và định nghĩa cụ thể của mỗi chỉ số `TBI` được trả về:**
+{% if not user_info_complete %}
+Lưu ý: Người dùng chưa cung cấp đủ thông tin cá nhân (tên hoặc ngày sinh), do đó một số chỉ số hành vi (TBI) có thể không được tính toán chính xác hoặc đầy đủ. Vui lòng yêu cầu người dùng cung cấp bổ sung thông tin này để phân tích sâu hơn.
+{% endif %}
+
 {{ tbi_context }}
 
 ## **Câu hỏi của user:**
@@ -50,7 +54,8 @@ Phân tích các chỉ số TBI (Trader Behavioral Index) đã được tính to
 
 ## QUY TRÌNH PHÂN TÍCH:
 
-### **Bước 1: Phân tích câu hỏi**
+### **Bước 1: Phân tích câu hỏi và dữ liệu ngữ cảnh**
+- Đã có chỉ số TBI cá nhân hoá chưa dựa vào ngữ cảnh?
 - Xác định xem câu hỏi của user tập trung vào vấn đề của nhóm chỉ số nào
 - Quyết định xem những chỉ số nào từ ngữ cảnh trả về đóng góp nhiều thông tin hữu ích nhất để trả lời câu hỏi
 
@@ -67,7 +72,8 @@ Phân tích các chỉ số TBI (Trader Behavioral Index) đã được tính to
 - Tập trung vào ý nghĩa và ứng dụng thực tiễn
 
 ### **Bước 4: Tạo câu phản hồi chuyên nghiệp**
-- **NẾU CÓ ngữ cảnh TBI đầy đủ:** Phân tích cụ thể dựa trên các chỉ số được cung cấp
+- **NẾU CÓ ngữ cảnh TBI cá nhân hoá:** Phân tích và trả lời câu hỏi cụ thể dựa trên các chỉ số được cung cấp
+- **NẾU chưa có ngữ cảnh TBI cá nhân hoá:** Phân tích và trả lời câu hỏi cụ thể dựa trên các định nghĩa được cung cấp về các chỉ số TBI và gợi ý user cung cấp đủ dữ liệu để nhận câu phản hồi cá nhân hoá
 - Liên kết logic giữa các chỉ số để giải thích hành vi trading
 - Đưa ra khuyến nghị cụ thể và có thể thực hiện dựa trên dữ liệu thực tế
 - Sử dụng ngôn ngữ chuyên nghiệp nhưng dễ hiểu
