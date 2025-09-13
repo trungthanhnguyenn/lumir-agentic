@@ -318,7 +318,6 @@ def build_lumir_with_memory():
         input_data = {
             "question": question,
             "question_type": question_type,
-            # "numerology_context": numerology_context,
             "tbi_context": tbi_context,
             "trading_context": trading_context,
             "user_name": user_name,

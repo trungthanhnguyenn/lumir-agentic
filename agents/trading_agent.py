@@ -388,13 +388,12 @@ def _prepare_trading_data(inputs: dict) -> dict:
     question   = inputs.get("question", "")
     excel_path = inputs.get("excel_path") or inputs.get("file_path")
     language   = inputs.get("language", "vi")
-    focus_area = inputs.get("focus_area", "general")
 
     # Default
     empty = {
         "question": question,
         "language": language,
-        "focus_area": focus_area,
+        # "focus_area": focus_area,
         "has_trading_data": False,
         "error_type": "missing_data",
         "error_msg": "Không có file Excel được cung cấp",
@@ -426,6 +425,7 @@ def _prepare_trading_data(inputs: dict) -> dict:
 
         res = analysis["full_result"]
         
+        
         # Format data_summary as object for template v2
         data_summary = {
             "total_trades": res["trades"],
@@ -440,7 +440,7 @@ def _prepare_trading_data(inputs: dict) -> dict:
         return {
             "question": question,
             "language": language,
-            "focus_area": focus_area,
+            # "focus_area": focus_area,
             "has_trading_data": True,
             "error_type": None,
             "error_msg": None,

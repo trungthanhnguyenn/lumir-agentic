@@ -372,15 +372,19 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     user_name: Optional[str] = input_dict.get("user_name")
     birthday: Optional[str] = input_dict.get("birthday")
     current_day: Optional[str] = input_dict.get("current_day")
-    language: str = input_dict.get("language", "vi")  # Extract language parameter
+    language: str = input_dict.get("language", "vi")
+    is_user_info_complete = bool(user_name and birthday)
     
-    # Use manual input if provided, otherwise fallback to default
-    if user_name and birthday:
-        profile = {"dob": birthday, "name": user_name}
+    if is_user_info_complete:
+        profile = {
+            "name": user_name,
+            "dob": birthday
+        }
     else:
-        # Default fallback profile - you should implement actual parsing logic here
-        # For now, using placeholder values
-        profile = {"dob": "01/01/1990", "name": "Default User"}
+        profile = {
+            "name": "",
+            "dob": ""
+        }
 
     # Validate current_day: accept dd/mm/yyyy; if invalid/empty/None, let CalNum default to VN time
     def _normalize_current_day(day_str: Optional[str]) -> Optional[str]:
@@ -397,317 +401,336 @@ def _prepare_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     normalized_current = _normalize_current_day(current_day)
 
     # Handle None case for TBICalculator - create TBICalculator based on whether current_date is available
-    if normalized_current is not None:
-        cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=normalized_current)
-    else:
-        # Let TBICalculator handle default current time by passing empty string or using a dummy date
-        from datetime import datetime
-        import pytz
-        vntz = pytz.timezone("Asia/Ho_Chi_Minh")
-        current_vn = datetime.now(vntz).strftime("%d/%m/%Y")
-        cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=current_vn)
-    numbers = cal.get_all_tbi_indicators()
+
 
     # Use LLM to select indicators
     selected_keys = _infer_keys_from_llm(question)
+    
+    if is_user_info_complete:
+        if normalized_current is not None:
+            cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=normalized_current)
+        else:
+            # Let TBICalculator handle default current time by passing empty string or using a dummy date
+            from datetime import datetime
+            import pytz
+            vntz = pytz.timezone("Asia/Ho_Chi_Minh")
+            current_vn = datetime.now(vntz).strftime("%d/%m/%Y")
+            cal = TBICalculator(dob=profile["dob"], name=profile["name"], current_date=current_vn)
+        numbers = cal.get_all_tbi_indicators()
 
     # Get age_milestones from CalNum calculation - ensure it's a list
-    age_tci_raw = numbers.get("age_tci", [])
-    age_tci = age_tci_raw if isinstance(age_tci_raw, list) else []
-    
-    # Calculate current milestone and challenge based on user's personal age_milestones
-    milestone_info = _calculate_tci_insights(profile["dob"], age_tci, normalized_current)
-    
-    # If milestone or challenge indicators are selected, prioritize current ones
-    tci_indicators = [k for k in selected_keys if k.startswith("tci_")]
-    bci_indicators = [k for k in selected_keys if k.startswith("bci_")]
-    
-    if tci_indicators or bci_indicators:
-        # Replace generic milestone/challenge with current ones
-        for i, key in enumerate(selected_keys):
-            if key.startswith("tci_"):
-                selected_keys[i] = milestone_info["tci_name"]
-            elif key.startswith("bci_"):
-                selected_keys[i] = milestone_info["bci_name"]
+        age_tci_raw = numbers.get("age_tci", [])
+        age_tci = age_tci_raw if isinstance(age_tci_raw, list) else []
         
-        # Remove duplicates after replacement
-        selected_keys = list(dict.fromkeys(selected_keys))
-
-    # Fetch S3 docs for all selected indicators
-    s3 = S3Client()
-    docs: Dict[str, str] = {}
-
-    # Map indicator keys to their corresponding number values and S3 types
-    # Safe get with type checking
-    def safe_nested_get(data: Any, *keys: str) -> Any:
-        """Safely get nested dictionary values"""
-        result = data
-        for key in keys:
-            if isinstance(result, dict):
-                result = result.get(key)
-            else:
-                return None
-        return result
-    
-    indicator_mapping = {
-        "ppa": ("ppa", numbers.get("ppa")),
-        "spi": ("spi", numbers.get("spi")),
-        "edi": ("edi", numbers.get("edi")),
-        "mpi": ("mpi", numbers.get("mpi")),
-        "cmi": ("cmi", numbers.get("cmi")),
-        "ri": ("ri", numbers.get("ri")),
-        "sai": ("sai", numbers.get("sai")),
-        "ppai": ("ppai", numbers.get("ppai")),
-        "ioci": ("ioci", numbers.get("ioci")),
-        "bci_1": ("bci_1", safe_nested_get(numbers, "bci", "bci_1")),
-        "bci_2": ("bci_2", safe_nested_get(numbers, "bci", "bci_2")),
-        "bci_3": ("bci_3", safe_nested_get(numbers, "bci", "bci_3")),
-        "bci_4": ("bci_4", safe_nested_get(numbers, "bci", "bci_4")),
-        "tci_1": ("tci_1", safe_nested_get(numbers, "tci_phase", "tci_1")),
-        "tci_2": ("tci_2", safe_nested_get(numbers, "tci_phase", "tci_2")),
-        "tci_3": ("tci_3", safe_nested_get(numbers, "tci_phase", "tci_3")),
-        "tci_4": ("tci_4", safe_nested_get(numbers, "tci_phase", "tci_4")),
-        "ari": ("ari", numbers.get("ari")),
-        "dai": ("dai", safe_nested_get(numbers, "alignment_signals", "dai")),
-        "ami": ("ami", safe_nested_get(numbers, "alignment_signals", "ami")),
-        "mri": ("mri", safe_nested_get(numbers, "alignment_signals", "mri")),
-        "nei": ("nei", numbers.get("nei")),
-        "ssi": ("ssi", numbers.get("ssi")),
-        "wmi": ("wmi", numbers.get("wmi")),
-        "tai": ("tai", numbers.get("tai")),
-        "cii": ("cii", numbers.get("cii")),
-        "bli": ("bli", numbers.get("bli")),
-    }
-
-    # Prefetch S3 docs for current milestone/challenge so they are always available
-    try:
-        current_tci_val = milestone_info.get("current_tci")
-        if current_tci_val is not None:
-            current_tci_ord = int(current_tci_val)
-            tci_key = milestone_info.get("tci_name")
-            if tci_key:
-                tci_phase_data = numbers.get("tci_phase", {})
-                if isinstance(tci_phase_data, dict):
-                    tci_val = tci_phase_data.get(tci_key)
-                    if isinstance(tci_val, int):
-                        try:
-                            doc_content = s3.get_document_text_for_numerology(
-                                "tci", tci_val, tci_number=current_tci_ord
-                            )
-                            if doc_content and not doc_content.startswith("Lỗi"):
-                                docs[tci_key] = doc_content
-                        except Exception:
-                            pass
-            bci_key = milestone_info.get("bci_name")
-            if bci_key:
-                bci_data = numbers.get("bci", {})
-                if isinstance(bci_data, dict):
-                    bci_val = bci_data.get(bci_key)
-                    if isinstance(bci_val, int):
-                        try:
-                            doc_content = s3.get_document_text_for_numerology(
-                                "bci", bci_val, bci_number=current_tci_ord
-                            )
-                            if doc_content and not doc_content.startswith("Lỗi"):
-                                docs[bci_key] = doc_content
-                        except Exception:
-                            pass
-    except Exception:
-        pass
-
-    # Fetch documents for all selected keys
-    print(f"Fetching documents for {len(selected_keys)} selected keys...")
-    print(f"Current tci info: {milestone_info}")
-    
-    for key in selected_keys:
-        print(f"  Processing key: {key}")
+        # Calculate current milestone and challenge based on user's personal age_milestones
+        milestone_info = _calculate_tci_insights(profile["dob"], age_tci, normalized_current)
         
-        # Special handling: milestone_X and challenge_X should fetch S3 docs by ordinal (1..4)
-        if key.startswith("tci_"):
-            try:
-                tci_ord = int(key.split("_")[1])
-                # File name expects milestone value (calculated), folder expects ordinal 1..4
-                tci_phase_data = numbers.get("tci_phase", {})
-                if isinstance(tci_phase_data, dict):
-                    tci_value = tci_phase_data.get(f"tci_{tci_ord}")
-                    if not isinstance(tci_value, int):
-                        docs[f"{key}_error"] = f"Invalid tci value: {tci_value}"
-                        print(f"Invalid tci value: {tci_value}")
-                        continue
-                    try:
-                        doc_content = s3.get_document_text_for_numerology(
-                            "tci",
-                            tci_value,
-                            tci_number=tci_ord,
-                        )
-                        if doc_content:
-                            docs[key] = doc_content
-                            print(f"Tci doc fetched: {len(str(doc_content))} chars")
-                        else:
-                            docs[f"{key}_error"] = "Empty content"
-                            print(f"Tci doc fetch returned empty content")
-                    except Exception as e:
-                        docs[f"{key}_error"] = str(e)
-                        print(f"Tci doc exception: {e}")
-                    continue
-                else:
-                    docs[f"{key}_error"] = f"Invalid tci_phase data type: {type(tci_phase_data)}"
-                    print(f"Invalid tci_phase data type: {type(tci_phase_data)}")
-                    continue
-            except Exception as e:
-                print(f"Invalid tci key '{key}': {e}")
-
-        if key.startswith("bci_"):
-            try:
-                bci_ord = int(key.split("_")[1])
-                # File name expects challenge value (calculated), folder expects ordinal 1..4
-                bci_data = numbers.get("bci", {})
-                if isinstance(bci_data, dict):
-                    bci_value = bci_data.get(f"bci_{bci_ord}")
-                    if not isinstance(bci_value, int):
-                        docs[f"{key}_error"] = f"Invalid bci value: {bci_value}"
-                        print(f"Invalid bci value: {bci_value}")
-                        continue
-                    try:
-                        doc_content = s3.get_document_text_for_numerology(
-                            "bci",
-                            bci_value,
-                            bci_number=bci_ord,
-                        )
-                        if doc_content:
-                            docs[key] = doc_content
-                            print(f"Bci doc fetched: {len(str(doc_content))} chars")
-                        else:
-                            docs[f"{key}_error"] = "Empty content"
-                            print(f"Bci doc fetch returned empty content")
-                    except Exception as e:
-                        docs[f"{key}_error"] = str(e)
-                        print(f"Bci doc exception: {e}")
-                    continue
-                else:
-                    docs[f"{key}_error"] = f"Invalid bci data type: {type(bci_data)}"
-                    print(f"Invalid bci data type: {type(bci_data)}")
-                    continue
-            except Exception as e:
-                print(f"Invalid bci key '{key}': {e}")
-
-        if key in indicator_mapping:
-            s3_type, number_value = indicator_mapping[key]
-
-            if isinstance(number_value, int):
-                try:
-                    doc_content = s3.get_document_text_for_numerology(s3_type, number_value)
-                    if doc_content and not doc_content.startswith("Error"):
-                        docs[key] = doc_content
-                        print(f"Document fetched: {len(doc_content)} chars")
-                    else:
-                        docs[f"{key}_error"] = doc_content
-                        print(f"Document fetch failed: {doc_content}")
-                except Exception as e:
-                    docs[f"{key}_error"] = str(e)
-                    print(f"Exception: {e}")
-            # Handle list values (for passion and missing_aspects)
-            elif isinstance(number_value, list) and len(number_value) > 0:
-                print(f"Processing list of {len(number_value)} values: {number_value}")
-                combined_content = []
-                for i, num in enumerate(number_value):
-                    if isinstance(num, int):
-                        try:
-                            doc_content = s3.get_document_text_for_numerology(s3_type, num)
-                            if doc_content and not doc_content.startswith("Error"):
-                                combined_content.append(f"--- Số {num} ---\n{doc_content}")
-                                # print(f"Document {i+1} fetched for number {num}: {len(doc_content)} chars")
-                            else:
-                                # print(f"Document {i+1} fetch failed for number {num}: {doc_content}")
-                                pass
-                        except Exception as e:
-                            print(f"Exception for number {num}: {e}")
-                    else:
-                        print(f"Invalid number in list: {num}")
-                
-                if combined_content:
-                    docs[key] = "\n\n".join(combined_content)
-                    print(f"Combined documents fetched: {len(docs[key])} chars total")
-                else:
-                    docs[f"{key}_error"] = "No valid documents could be fetched from the list"
-                    print(f"No valid documents fetched from list")
-            else:
-                docs[f"{key}_error"] = f"Invalid number value: {number_value}"
-                print(f"Invalid number value: {number_value}")
-        else:
-            # For indicators not in S3 mapping, use the calculated values and meanings
-            print(f"    Using calculated value for: {key}")
+        # If milestone or challenge indicators are selected, prioritize current ones
+        tci_indicators = [k for k in selected_keys if k.startswith("tci_")]
+        bci_indicators = [k for k in selected_keys if k.startswith("bci_")]
+        
+        if tci_indicators or bci_indicators:
+            # Replace generic milestone/challenge with current ones
+            for i, key in enumerate(selected_keys):
+                if key.startswith("tci_"):
+                    selected_keys[i] = milestone_info["tci_name"]
+                elif key.startswith("bci_"):
+                    selected_keys[i] = milestone_info["bci_name"]
             
-            if key in numbers:
-                if key not in docs:
-                    docs[key] = f"Value: {numbers[key]}"
-            elif key == milestone_info["tci_name"]:
-                # Current milestone with age context
-                if key not in docs:
+            # Remove duplicates after replacement
+            selected_keys = list(dict.fromkeys(selected_keys))
+
+        # Fetch S3 docs for all selected indicators
+        s3 = S3Client()
+        docs: Dict[str, str] = {}
+
+        # Map indicator keys to their corresponding number values and S3 types
+        # Safe get with type checking
+        def safe_nested_get(data: Any, *keys: str) -> Any:
+            """Safely get nested dictionary values"""
+            result = data
+            for key in keys:
+                if isinstance(result, dict):
+                    result = result.get(key)
+                else:
+                    return None
+            return result
+        
+        indicator_mapping = {
+            "ppa": ("ppa", numbers.get("ppa")),
+            "spi": ("spi", numbers.get("spi")),
+            "edi": ("edi", numbers.get("edi")),
+            "mpi": ("mpi", numbers.get("mpi")),
+            "cmi": ("cmi", numbers.get("cmi")),
+            "ri": ("ri", numbers.get("ri")),
+            "sai": ("sai", numbers.get("sai")),
+            "ppai": ("ppai", numbers.get("ppai")),
+            "ioci": ("ioci", numbers.get("ioci")),
+            "bci_1": ("bci_1", safe_nested_get(numbers, "bci", "bci_1")),
+            "bci_2": ("bci_2", safe_nested_get(numbers, "bci", "bci_2")),
+            "bci_3": ("bci_3", safe_nested_get(numbers, "bci", "bci_3")),
+            "bci_4": ("bci_4", safe_nested_get(numbers, "bci", "bci_4")),
+            "tci_1": ("tci_1", safe_nested_get(numbers, "tci_phase", "tci_1")),
+            "tci_2": ("tci_2", safe_nested_get(numbers, "tci_phase", "tci_2")),
+            "tci_3": ("tci_3", safe_nested_get(numbers, "tci_phase", "tci_3")),
+            "tci_4": ("tci_4", safe_nested_get(numbers, "tci_phase", "tci_4")),
+            "ari": ("ari", numbers.get("ari")),
+            "dai": ("dai", safe_nested_get(numbers, "alignment_signals", "dai")),
+            "ami": ("ami", safe_nested_get(numbers, "alignment_signals", "ami")),
+            "mri": ("mri", safe_nested_get(numbers, "alignment_signals", "mri")),
+            "nei": ("nei", numbers.get("nei")),
+            "ssi": ("ssi", numbers.get("ssi")),
+            "wmi": ("wmi", numbers.get("wmi")),
+            "tai": ("tai", numbers.get("tai")),
+            "cii": ("cii", numbers.get("cii")),
+            "bli": ("bli", numbers.get("bli")),
+        }
+
+        # Prefetch S3 docs for current milestone/challenge so they are always available
+        try:
+            current_tci_val = milestone_info.get("current_tci")
+            if current_tci_val is not None:
+                current_tci_ord = int(current_tci_val)
+                tci_key = milestone_info.get("tci_name")
+                if tci_key:
                     tci_phase_data = numbers.get("tci_phase", {})
                     if isinstance(tci_phase_data, dict):
-                        tci_value = tci_phase_data.get(f"tci_{milestone_info['current_tci']}")
-                        docs[key] = f"{milestone_info.get('tci_description', 'N/A')} - Value: {tci_value}"
-            elif key == milestone_info["bci_name"]:
-                # Current challenge with age context
-                if key not in docs:
+                        tci_val = tci_phase_data.get(tci_key)
+                        if isinstance(tci_val, int):
+                            try:
+                                doc_content = s3.get_document_text_for_numerology(
+                                    "tci", tci_val, tci_number=current_tci_ord
+                                )
+                                if doc_content and not doc_content.startswith("Lỗi"):
+                                    docs[tci_key] = doc_content
+                            except Exception:
+                                pass
+                bci_key = milestone_info.get("bci_name")
+                if bci_key:
                     bci_data = numbers.get("bci", {})
                     if isinstance(bci_data, dict):
-                        bci_value = bci_data.get(f"bci_{milestone_info.get('current_bci', 1)}")
-                        docs[key] = f"{milestone_info.get('bci_description', 'N/A')} - Value: {bci_value}"
-            elif key.startswith("bci_"):
-                bci_num = key.split("_")[1]
-                bci_data = numbers.get("bci", {})
-                if isinstance(bci_data, dict):
-                    bci_value = bci_data.get(f"bci_{bci_num}")
-                    if bci_value is not None and key not in docs:
-                        docs[key] = f"Thách thức {bci_num}: {bci_value}"
-            elif key.startswith("tci_"):
-                tci_num = key.split("_")[1]
-                tci_phase_data = numbers.get("tci_phase", {})
-                if isinstance(tci_phase_data, dict):
-                    tci_value = tci_phase_data.get(f"tci_{tci_num}")
-                    if tci_value is not None and key not in docs:
-                        docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
+                        bci_val = bci_data.get(bci_key)
+                        if isinstance(bci_val, int):
+                            try:
+                                doc_content = s3.get_document_text_for_numerology(
+                                    "bci", bci_val, bci_number=current_tci_ord
+                                )
+                                if doc_content and not doc_content.startswith("Lỗi"):
+                                    docs[bci_key] = doc_content
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+        # Fetch documents for all selected keys
+        print(f"Fetching documents for {len(selected_keys)} selected keys...")
+        print(f"Current tci info: {milestone_info}")
+        
+        for key in selected_keys:
+            print(f"  Processing key: {key}")
+            
+            # Special handling: milestone_X and challenge_X should fetch S3 docs by ordinal (1..4)
+            if key.startswith("tci_"):
+                try:
+                    tci_ord = int(key.split("_")[1])
+                    # File name expects milestone value (calculated), folder expects ordinal 1..4
+                    tci_phase_data = numbers.get("tci_phase", {})
+                    if isinstance(tci_phase_data, dict):
+                        tci_value = tci_phase_data.get(f"tci_{tci_ord}")
+                        if not isinstance(tci_value, int):
+                            docs[f"{key}_error"] = f"Invalid tci value: {tci_value}"
+                            print(f"Invalid tci value: {tci_value}")
+                            continue
+                        try:
+                            doc_content = s3.get_document_text_for_numerology(
+                                "tci",
+                                tci_value,
+                                tci_number=tci_ord,
+                            )
+                            if doc_content:
+                                docs[key] = doc_content
+                                print(f"Tci doc fetched: {len(str(doc_content))} chars")
+                            else:
+                                docs[f"{key}_error"] = "Empty content"
+                                print(f"Tci doc fetch returned empty content")
+                        except Exception as e:
+                            docs[f"{key}_error"] = str(e)
+                            print(f"Tci doc exception: {e}")
+                        continue
+                    else:
+                        docs[f"{key}_error"] = f"Invalid tci_phase data type: {type(tci_phase_data)}"
+                        print(f"Invalid tci_phase data type: {type(tci_phase_data)}")
+                        continue
+                except Exception as e:
+                    print(f"Invalid tci key '{key}': {e}")
+
+            if key.startswith("bci_"):
+                try:
+                    bci_ord = int(key.split("_")[1])
+                    # File name expects challenge value (calculated), folder expects ordinal 1..4
+                    bci_data = numbers.get("bci", {})
+                    if isinstance(bci_data, dict):
+                        bci_value = bci_data.get(f"bci_{bci_ord}")
+                        if not isinstance(bci_value, int):
+                            docs[f"{key}_error"] = f"Invalid bci value: {bci_value}"
+                            print(f"Invalid bci value: {bci_value}")
+                            continue
+                        try:
+                            doc_content = s3.get_document_text_for_numerology(
+                                "bci",
+                                bci_value,
+                                bci_number=bci_ord,
+                            )
+                            if doc_content:
+                                docs[key] = doc_content
+                                print(f"Bci doc fetched: {len(str(doc_content))} chars")
+                            else:
+                                docs[f"{key}_error"] = "Empty content"
+                                print(f"Bci doc fetch returned empty content")
+                        except Exception as e:
+                            docs[f"{key}_error"] = str(e)
+                            print(f"Bci doc exception: {e}")
+                        continue
+                    else:
+                        docs[f"{key}_error"] = f"Invalid bci data type: {type(bci_data)}"
+                        print(f"Invalid bci data type: {type(bci_data)}")
+                        continue
+                except Exception as e:
+                    print(f"Invalid bci key '{key}': {e}")
+
+            if key in indicator_mapping:
+                s3_type, number_value = indicator_mapping[key]
+
+                if isinstance(number_value, int):
+                    try:
+                        doc_content = s3.get_document_text_for_numerology(s3_type, number_value)
+                        if doc_content and not doc_content.startswith("Error"):
+                            docs[key] = doc_content
+                            print(f"Document fetched: {len(doc_content)} chars")
+                        else:
+                            docs[f"{key}_error"] = doc_content
+                            print(f"Document fetch failed: {doc_content}")
+                    except Exception as e:
+                        docs[f"{key}_error"] = str(e)
+                        print(f"Exception: {e}")
+                # Handle list values (for passion and missing_aspects)
+                elif isinstance(number_value, list) and len(number_value) > 0:
+                    print(f"Processing list of {len(number_value)} values: {number_value}")
+                    combined_content = []
+                    for i, num in enumerate(number_value):
+                        if isinstance(num, int):
+                            try:
+                                doc_content = s3.get_document_text_for_numerology(s3_type, num)
+                                if doc_content and not doc_content.startswith("Error"):
+                                    combined_content.append(f"--- Số {num} ---\n{doc_content}")
+                                    # print(f"Document {i+1} fetched for number {num}: {len(doc_content)} chars")
+                                else:
+                                    # print(f"Document {i+1} fetch failed for number {num}: {doc_content}")
+                                    pass
+                            except Exception as e:
+                                print(f"Exception for number {num}: {e}")
+                        else:
+                            print(f"Invalid number in list: {num}")
+                    
+                    if combined_content:
+                        docs[key] = "\n\n".join(combined_content)
+                        print(f"Combined documents fetched: {len(docs[key])} chars total")
+                    else:
+                        docs[f"{key}_error"] = "No valid documents could be fetched from the list"
+                        print(f"No valid documents fetched from list")
+                else:
+                    docs[f"{key}_error"] = f"Invalid number value: {number_value}"
+                    print(f"Invalid number value: {number_value}")
             else:
-                if key not in docs:
-                    docs[key] = f"Value: {numbers.get(key, 'N/A')}"
+                # For indicators not in S3 mapping, use the calculated values and meanings
+                print(f"    Using calculated value for: {key}")
+                
+                if key in numbers:
+                    if key not in docs:
+                        docs[key] = f"Value: {numbers[key]}"
+                elif key == milestone_info["tci_name"]:
+                    # Current milestone with age context
+                    if key not in docs:
+                        tci_phase_data = numbers.get("tci_phase", {})
+                        if isinstance(tci_phase_data, dict):
+                            tci_value = tci_phase_data.get(f"tci_{milestone_info['current_tci']}")
+                            docs[key] = f"{milestone_info.get('tci_description', 'N/A')} - Value: {tci_value}"
+                elif key == milestone_info["bci_name"]:
+                    # Current challenge with age context
+                    if key not in docs:
+                        bci_data = numbers.get("bci", {})
+                        if isinstance(bci_data, dict):
+                            bci_value = bci_data.get(f"bci_{milestone_info.get('current_bci', 1)}")
+                            docs[key] = f"{milestone_info.get('bci_description', 'N/A')} - Value: {bci_value}"
+                elif key.startswith("bci_"):
+                    bci_num = key.split("_")[1]
+                    bci_data = numbers.get("bci", {})
+                    if isinstance(bci_data, dict):
+                        bci_value = bci_data.get(f"bci_{bci_num}")
+                        if bci_value is not None and key not in docs:
+                            docs[key] = f"Thách thức {bci_num}: {bci_value}"
+                elif key.startswith("tci_"):
+                    tci_num = key.split("_")[1]
+                    tci_phase_data = numbers.get("tci_phase", {})
+                    if isinstance(tci_phase_data, dict):
+                        tci_value = tci_phase_data.get(f"tci_{tci_num}")
+                        if tci_value is not None and key not in docs:
+                            docs[key] = f"Giai đoạn {tci_num}: {tci_value}"
+                else:
+                    if key not in docs:
+                        docs[key] = f"Value: {numbers.get(key, 'N/A')}"
 
-    # Provide mapping meanings for selected keys
-    meanings: Dict[str, str] = {}
-    for k in selected_keys:
-        if k in tbi_definitions:
-            meanings[k] = tbi_definitions[k]
+        # Provide mapping meanings for selected keys
+        meanings: Dict[str, str] = {}
+        for k in selected_keys:
+            if k in tbi_definitions:
+                meanings[k] = tbi_definitions[k]
 
-    # Calculate TBI insights
-    insights = _calculate_tbi_insights(profile["dob"], age_tci, normalized_current)
+        # Calculate TBI insights
+        insights = _calculate_tbi_insights(profile["dob"], age_tci, normalized_current)
+        
+        # Prepare user info
+        user_info = f"Tên: {profile['name']}, Ngày sinh: {profile['dob']}"
+        
+        # Prepare TBI indicators summary
+        tbi_indicators = {}
+        for key in selected_keys:
+            if key in numbers:
+                tbi_indicators[key] = numbers[key]
+            elif key in docs:
+                tbi_indicators[key] = f"Document available ({len(docs[key])} chars)"
+        
+        # Prepare analysis context
+        analysis_context = f"Giai đoạn hiện tại: {milestone_info.get('tci_description', 'N/A')}"
+        
+        # Return both structured payload and text resources
+        return {
+            "question": question,
+            "user_info": user_info,
+            "selected_keys": selected_keys,
+            "tbi_indicators": tbi_indicators,
+            "meanings": meanings,
+            "documents": docs,
+            "insights": insights,
+            "analysis_context": analysis_context,
+            "language": language,  # Include language in return value
+        }
     
-    # Prepare user info
-    user_info = f"Tên: {profile['name']}, Ngày sinh: {profile['dob']}"
-    
-    # Prepare TBI indicators summary
-    tbi_indicators = {}
-    for key in selected_keys:
-        if key in numbers:
-            tbi_indicators[key] = numbers[key]
-        elif key in docs:
-            tbi_indicators[key] = f"Document available ({len(docs[key])} chars)"
-    
-    # Prepare analysis context
-    analysis_context = f"Giai đoạn hiện tại: {milestone_info.get('tci_description', 'N/A')}"
-    
-    # Return both structured payload and text resources
-    return {
-        "question": question,
-        "user_info": user_info,
-        "selected_keys": selected_keys,
-        "tbi_indicators": tbi_indicators,
-        "meanings": meanings,
-        "documents": docs,
-        "insights": insights,
-        "analysis_context": analysis_context,
-        "language": language,  # Include language in return value
-    }
+    else:
+        meanings = {k: tbi_definitions[k] for k in selected_keys if k in tbi_definitions}
+
+        return {
+            "question": question,
+            "user_info": "Thông tin người dùng không đầy đủ",
+            "selected_keys": selected_keys,
+            "tbi_indicators": {},          # Không có chỉ số
+            "meanings": meanings,          # Chỉ có định nghĩa các chỉ số đã chọn
+            "documents": {},               # Không có tài liệu trích xuất
+            "insights": {},                # Không có insight
+            "analysis_context": "Thiếu thông tin cá nhân cần thiết để phân tích chi tiết.",
+            "language": language,
+            "user_info_complete": is_user_info_complete
+        }
 
 
 def build_tbi_agent():
@@ -748,7 +771,8 @@ def build_tbi_agent():
         rendered_content = template.render(
             tbi_context=tbi_context,
             tbi_question=data.get("question", ""),
-            language=data.get("language", "vi")
+            language=data.get("language", "vi"),
+            user_info_complete=data.get("user_info_complete", False),
         )
         
         return rendered_content
