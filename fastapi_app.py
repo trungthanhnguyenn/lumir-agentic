@@ -92,6 +92,7 @@ class CompletePipelineRequest(BaseModel):
     birthday: Optional[str] = Field(None, description="Birthday (optional)")
     username: Optional[str] = Field(None, description="Username (optional)")
     language: str = Field(default="vi", description="Language (default: vi)")
+    conversation_history: List[Dict[str, Any]] = Field(default=[], description="Conversation history")
 
 class ChatbotRequest(BaseModel):
     question: str = Field(..., description="Question of user")
@@ -210,7 +211,7 @@ async def general_agent_endpoint(
         print(f"General Agent Endpoint - Question: {question}")
 
         # Call general agent
-        response = lumir_api.general_agent_endpoint(question, language, user_name)
+        response = lumir_api.general_agent_endpoint(question, language, user_name or "")
 
         return {
             "endpoint": "general_agent",
@@ -238,8 +239,18 @@ async def question_decomposition_endpoint(
     birthday: Optional[str] = Form(None),
     username: Optional[str] = Form(None),
     language: str = Form(default="vi"),
-    excel_file: Optional[UploadFile] = File(None)
+    excel_file: Optional[UploadFile] = File(None),
+    history: Optional[str] = Form(None)
 ):
+    # Parse history if provided
+    conversation_history = []
+    if history:
+        try:
+            import json
+            conversation_history = json.loads(history)
+        except Exception:
+            conversation_history = []
+    
     # Save temporary file and pass excel_path
     excel_path = None
     if excel_file:
@@ -255,7 +266,8 @@ async def question_decomposition_endpoint(
             birthday=birthday,
             excel_path=excel_path,  # Pass file path
             language=language,
-            username=username
+            username=username,
+            conversation_history=conversation_history
         )
         return result
     finally:
@@ -305,7 +317,7 @@ async def numerology_endpoint(request: NumerologyRequest):
     """
     try:
         result = lumir_api.numerology_endpoint(
-            question=request.question,
+            question=request.question or "",
             user_name=request.user_name,
             birthday=request.birthday,
             language=request.language
@@ -463,7 +475,8 @@ async def complete_pipeline_endpoint(request: CompletePipelineRequest):
             birthday=request.birthday,
             excel_path=None,  # No file upload in this endpoint
             language=request.language,
-            username=request.username
+            username=request.username,
+            conversation_history=request.conversation_history
         )
         
         if result["success"]:

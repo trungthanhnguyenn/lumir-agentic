@@ -328,9 +328,10 @@ class LUMIRAPIEndpoints:
         question: str,
         user_name: Optional[str] = None,
         birthday: Optional[str] = None,
-        excel_path: Optional[UploadFile] = File(None),
+        excel_path: Optional[str] = None,
         language: str = "vi",
-        username: Optional[str] = None
+        username: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Endpoint 2: Analyze question and decide routing
@@ -371,7 +372,7 @@ class LUMIRAPIEndpoints:
                 excel_path=excel_path,
                 language=language,
                 username=username,
-                conversation_history=[]
+                conversation_history=conversation_history
             )
             
             # Update has_valid_trading_data
@@ -785,7 +786,8 @@ class LUMIRAPIEndpoints:
         birthday: Optional[str] = None,
         excel_path: Optional[str] = None,
         language: str = "vi",
-        username: Optional[str] = None
+        username: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Endpoint 6: Complete pipeline (mô phỏng logic test_infer)
@@ -835,7 +837,8 @@ class LUMIRAPIEndpoints:
             # Step 2: Question Decomposition
             print("Step 2: Question Decomposition...")
             decomposition_result = self.question_decomposition_endpoint(
-                question, user_name, birthday, excel_path, language, username
+                question, user_name, birthday, excel_path, language, username,
+                conversation_history
             )
             
             if not decomposition_result["success"]:
@@ -882,6 +885,8 @@ class LUMIRAPIEndpoints:
             
             lumir_result = self.lumir_synthesis_endpoint(
                 question=question,
+                task=decomposition_data.get("task", "question_answering"),
+                reasoning=decomposition_data.get("reasoning", ""),
                 question_type=question_type,
                 tbi_context=tbi_context,
                 trading_context=trading_context,

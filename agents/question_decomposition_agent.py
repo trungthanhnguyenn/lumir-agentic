@@ -12,15 +12,51 @@ from tools.data_validator_tool import DataValidator
 
 class QuestionDecomposition(BaseModel):
     """Result of analysis and create sub-question"""
-    question_type: str = Field(description="Question type: 'trading_related', 'tbi_related', 'general_chat', 'needs_more_info'")
-    should_call_agents: bool = Field(description="Should call specialized agents")
-    # numerology_question: Optional[str] = Field(description="Question for numerology agent (null if not needed)")
-    tbi_question: Optional[str] = Field(description="Question for TBI agent (null if not needed)")
-    trading_question: Optional[str] = Field(description="Question for trading agent (null if not needed)")
-    reasoning: str = Field(description="Reasoning for analysis and routing")
-    focus_areas: List[str] = Field(description="Focus areas if any")
-    needs_user_info: bool = Field(description="Whether to ask for more user info")
-    suggested_questions: List[str] = Field(description="Suggested questions to ask user if needed")
+    question_type: str = Field(
+        description="Question type: 'trading_related', "
+                   "'tbi_related', 'general_chat', 'needs_more_info'"
+    )
+    should_call_agents: bool = Field(
+        description="Should call specialized agents"
+    )
+    general_question: Optional[str] = Field(
+        description="Question for general agent (null if not needed)"
+    )
+    lumir_question: Optional[str] = Field(
+        description="Question for Lumir agent (null if not needed)"
+    )
+    tbi_question: Optional[str] = Field(
+        description="Question for TBI agent (null if not needed)"
+    )
+    trading_question: Optional[str] = Field(
+        description="Question for trading agent (null if not needed)"
+    )
+    needs_more_info_question: Optional[str] = Field(
+        description="Clarifying question to understand user intent"
+    )
+    history_recall: Optional[str] = Field(
+        description="Summary or recall of relevant history content",
+        default=None
+    )
+    reasoning: str = Field(
+        description="Reasoning for analysis and routing"
+    )
+    focus_areas: List[str] = Field(
+        description="Focus areas if any"
+    )
+    needs_user_info: bool = Field(
+        description="Whether to ask for more user info"
+    )
+    task: str = Field(
+        description="Task type: summary, reasoning, question_answering, "
+                   "multiturn"
+    )
+    has_valid_trading_data: bool = Field(
+        description="Whether trading data is valid"
+    )
+    history: Optional[List[Dict[str, Any]]] = Field(
+        description="Conversation history for context"
+    )
 
 
 def _read_prompt() -> str:
@@ -30,13 +66,13 @@ def _read_prompt() -> str:
 
 
 def analyze_and_decompose_question(
-    question: str, 
+    question: str,
     user_name: Optional[str] = None,
     birthday: Optional[str] = None,
     excel_path: Optional[str] = None,
     language: str = "vi",
     username: Optional[str] = None,
-    conversation_history: List[Dict[str, Any]] = None
+    conversation_history: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Analyze and decompose question in a smart and natural way
@@ -98,12 +134,17 @@ def analyze_and_decompose_question(
         # Create context from conversation history
         context_from_history = ""
         if conversation_history:
-            recent_turns = conversation_history[-3:]  # Last 3 turns
+            recent_turns = conversation_history[-5:]  # Last 5 turns
             context_parts = []
             for turn in recent_turns:
-                user_q = turn.get("user_question", "")
-                if user_q:
-                    context_parts.append(f"User: {user_q}")
+                role = turn.get("role", "")
+                content = turn.get("content", "")
+
+                if role and content:
+                    if role == "user":
+                        context_parts.append(f"User: {content}")
+                    elif role == "assistant":
+                        context_parts.append(f"Lumir: {content}")
             if context_parts:
                 context_from_history = "\n".join(context_parts)
         
@@ -186,19 +227,25 @@ Example: - "How can you help me to improve my trading performance?" -> Does user
         
     except Exception as e:
         print(f"Question decomposition failed: {e}")
-        # Fallback analysis - return general chat if user is not logged in
-        fallback_type = "general_chat" if not all([user_name, birthday, username]) else "needs_more_info"
+        # Fallback analysis
+        fallback_type = ("general_chat" if not all([user_name, birthday,
+                                                   username])
+                        else "needs_more_info")
         return {
             "question_type": fallback_type,
             "should_call_agents": False,
-            # "numerology_question": None,
+            "general_question": None,
+            "lumir_question": None,
             "tbi_question": None,
             "trading_question": None,
+            "needs_more_info_question": None,
+            "history_recall": None,
             "reasoning": f"Fallback analysis due to error: {str(e)}",
             "focus_areas": [],
             "needs_user_info": not all([user_name, birthday, username]),
-            "suggested_questions": [],
-            "has_valid_trading_data": False
+            "task": "question_answering",
+            "has_valid_trading_data": False,
+            "history": conversation_history
         }
 
 

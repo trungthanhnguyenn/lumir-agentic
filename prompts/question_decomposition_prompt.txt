@@ -24,7 +24,7 @@ Classify queries into **exactly 5 categories**:
 
 | Category | Criteria | Examples |
 |----------|----------|----------|
-| `general_chat` | **CONFIRMED** out-of-domain topics: weather, general greetings, completely unrelated subjects | "Hello", "Weather today?", "Thank you", "What's your favorite color?" |
+| `general_chat` | **CONFIRMED** out-of-domain topics: weather, general greetings, personal life issues with clear context, completely unrelated subjects | "Hello", "Weather today?", "Thank you", "Tôi buồn vì người yêu chia tay", "Hôm nay tôi mất việc" |
 | `lumir_related` | System features, platform guidance, tutorials | "What is LUMIR?", "How to start using platform?", "System features?" |
 | `trading_related` | Market analysis, trading strategies, performance questions | "Best trading strategies?", "Market trends analysis?", "How to improve trading performance?" |
 | `tbi_related` | Psychology/emotions/behavior **SPECIFICALLY IN TRADING CONTEXT** | "Control emotions when trading?", "Trading stress management?", "My trading discipline?" |
@@ -208,7 +208,7 @@ Example: - "How can you help me to improve my trading performance?" -> Does user
 
 User Question
 ↓
-Is it clearly out-of-domain? → general_chat
+Is it explicitly out-of-domain with clear reason/context? → general_chat
 ↓ No
 Is it clearly about platform? → lumir_related
 ↓ No
@@ -216,20 +216,38 @@ Is it clearly about trading? → trading_related
 ↓ No
 Is it clearly about trading psychology? → tbi_related
 ↓ No
-Is it ambiguous/unclear? → needs_more_info
+Is it truly ambiguous/unclear in intent? → needs_more_info
+
+### Classification Guidelines:
+
+**EXPLICIT OUT-OF-DOMAIN (→ general_chat):**
+- Clear personal problems unrelated to trading: "Tôi buồn vì người yêu chia tay"
+- Specific life events with context: "Hôm nay tôi mất việc"
+- Well-defined non-trading topics: "Làm thế nào để nấu phở?"
+
+**AMBIGUOUS EMOTIONAL EXPRESSIONS (→ needs_more_info):**
+- Vague emotions without context: "Tôi rất buồn", "I'm feeling stressed"
+- Unclear intent: "Tôi lo lắng", "I'm worried"
+- Could be trading-related but unclear: "Tôi sợ", "I'm anxious"
+
+**Examples:**
+- "Tôi buồn" → `needs_more_info` (ambiguous - could be trading stress)
+- "Tôi buồn vì người yêu chia tay" → `general_chat` (explicit personal issue)
+- "Tôi lo lắng" → `needs_more_info` (could be trading-related)
+- "Tôi lo lắng về việc mất tiền" → `trading_related` or `tbi_related` (clear trading context)
 
 
 ### Fallback Mechanisms:
-- **Ambiguous emotional expressions** → `needs_more_info` with specific clarifying question
-- **Multi-domain overlap** → Route to both relevant agents with clear sub-questions
-- **Technical errors** → Default to `needs_more_info` for clarification
+- **Multi-domain overlap** → Route to most relevant domain with clear sub-questions
+- **Technical errors** → Default to `general_chat` for non-technical questions
+- **Truly unclear intent** → `needs_more_info` with specific clarifying question
 
 ## PERFORMANCE OPTIMIZATION
 
 **Focus on precision and user value** through intelligent routing that:
-1. **Prevents false routing** to TBI agent for non-trading psychology
-2. **Clarifies ambiguous queries** before making routing decisions
-3. **Maximizes relevance** of responses through proper agent selection
-4. **Ensures consistency** between user intent and agent capabilities
+1. **Distinguishes between ambiguous and explicit statements**
+2. **Routes explicit out-of-domain queries to general_chat immediately**
+3. **Uses needs_more_info only for truly unclear intent**
+4. **Prevents over-clarification of already clear statements**
 
-Remember: **When in doubt about whether a question relates to trading, ALWAYS use needs_more_info to clarify first.**
+Remember: **Only use needs_more_info for questions where the intent is genuinely unclear, not for explicit statements that happen to be out-of-domain.**
