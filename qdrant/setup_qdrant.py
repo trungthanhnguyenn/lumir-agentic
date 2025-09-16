@@ -53,7 +53,7 @@ def install_qdrant():
         return False
 
 
-def start_qdrant_server(port: int = 6333, data_dir: str = "./qdrant_data"):
+def start_qdrant_server(port: int = 1237, data_dir: str = "./qdrant_data"):
     """Start Qdrant server using Docker"""
     try:
         print(f"Starting Qdrant server using Docker on port {port}...")

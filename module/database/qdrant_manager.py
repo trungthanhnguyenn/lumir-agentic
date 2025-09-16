@@ -49,7 +49,7 @@ class QdrantManager:
     Manage Qdrant vector database
     """
     
-    def __init__(self, host: str = "localhost", port: int = 6333, 
+    def __init__(self, host: str = "localhost", port: int = 1237, 
                  collection_prefix: str = "lumir_rag"):
         if not QDRANT_AVAILABLE:
             raise ImportError("Qdrant client not available. Install with: pip install qdrant-client")
@@ -533,7 +533,7 @@ class QdrantManagerFactory:
     """Factory to create Qdrant manager"""
     
     @staticmethod
-    def create_manager(host: str = "localhost", port: int = 6333, 
+    def create_manager(host: str = "localhost", port: int = 1237, 
                       collection_prefix: str = "lumir_rag") -> QdrantManager:
         """Create Qdrant manager with specific configuration"""
         return QdrantManager(host, port, collection_prefix)
@@ -541,7 +541,7 @@ class QdrantManagerFactory:
     @staticmethod
     def create_local_manager(collection_prefix: str = "lumir_rag") -> QdrantManager:
         """Create Qdrant manager for local development"""
-        return QdrantManager("localhost", 6333, collection_prefix)
+        return QdrantManager("localhost", 1237, collection_prefix)
     
     @staticmethod
     def create_cloud_manager(url: str, api_key: str, 
@@ -556,7 +556,7 @@ class QdrantManagerFactory:
             port = int(port_str)
         else:
             host = url
-            port = 6333
+            port = 1237
         
         manager = QdrantManager(host, port, collection_prefix)
         # Set API key if needed

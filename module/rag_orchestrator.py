@@ -45,7 +45,7 @@ class RAGOrchestrator:
     def __init__(self, 
                  documents_dir: str = "trading_data/general_infor",
                  qdrant_host: str = "localhost",
-                 qdrant_port: int = 6333,
+                 qdrant_port: int = 1237,
                  embedding_model: str = "Qwen3-Embedding-0.6B",
                  embedding_provider: str = "hf"):
         
@@ -531,7 +531,7 @@ class RAGOrchestratorFactory:
     @staticmethod
     def create_orchestrator(documents_dir: str = "trading_data/general_infor",
                            qdrant_host: str = "localhost",
-                           qdrant_port: int = 6333,
+                           qdrant_port: int = 1237,
                            embedding_model: str = "embedding-002",
                            embedding_provider: str = "gemini") -> RAGOrchestrator:
         """Create RAG orchestrator with specific configuration"""
@@ -574,7 +574,7 @@ class RAGOrchestratorFactory:
             return RAGOrchestrator(
                 documents_dir=documents_dir,
                 qdrant_host="localhost",
-                qdrant_port=6333,
+                qdrant_port=1237,
                 embedding_model="Qwen3-Embedding-0.6B",
                 embedding_provider="hf"
             )
@@ -582,14 +582,14 @@ class RAGOrchestratorFactory:
             return RAGOrchestrator(
                 documents_dir=documents_dir,
                 qdrant_host="localhost",
-                qdrant_port=6333,
+                qdrant_port=1237,
                 embedding_model="embedding-002",
                 embedding_provider="gemini"
             )
         return RAGOrchestrator(
             documents_dir=documents_dir,
             qdrant_host="localhost",
-            qdrant_port=6333,
+            qdrant_port=1237,
             embedding_model="all-MiniLM-L6-v2",
             embedding_provider="sentence_transformers"
         )
