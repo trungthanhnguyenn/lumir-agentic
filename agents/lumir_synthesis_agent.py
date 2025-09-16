@@ -93,6 +93,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     question = input_dict.get("question", "")
     question_type = input_dict.get("question_type", "general_chat")
     tbi_context = input_dict.get("tbi_context", "")
+    birthday = input_dict.get("birthday", "")
     trading_context = input_dict.get("trading_context", "")
     user_name = input_dict.get("user_name", "")
     username = input_dict.get("username", "")
@@ -112,15 +113,15 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     context_summary = []
     if tbi_context and tbi_context.strip():
         if language == "en":
-            context_summary.append("✓ TBI Personality & Psychology Analysis Available")
+            context_summary.append("TBI Personality & Psychology Analysis Available")
         else:  # Vietnamese default
-            context_summary.append("✓ Có phân tích tính cách và tâm lý TBI")
+            context_summary.append("Có phân tích tính cách và tâm lý TBI")
             
     if trading_context and trading_context.strip():
         if language == "en":
-            context_summary.append("✓ Trading Performance Data Available")
+            context_summary.append("Trading Performance Data Available")
         else:  # Vietnamese default
-            context_summary.append("✓ Có phân tích dữ liệu giao dịch")
+            context_summary.append("Có phân tích dữ liệu giao dịch")
 
     if question_type == "trading_related" and not has_trading_data:
         if language == "en":
@@ -128,7 +129,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         else:
             context_summary.append("Chưa có dữ liệu giao dịch - Không thể tư vấn chuyên sâu")
 
-    if question_type == "tbi_related" and not user_name or not birthday:
+    if question_type == "tbi_related" and (not user_name or not birthday):
         if language == "en":
             context_summary.append("Missing user info - Cannot provide TBI-specific advice")
         else:

@@ -399,13 +399,14 @@ class TimeCalculator:
         Returns:
             dict: Date information for target weekday
         """
-        # Convert Vietnamese weekday number to Python weekday (0-6, where 0 is Monday)
+        # Convert Vietnamese weekday number to Python weekday (0=Monday,..6=Sunday)
         python_weekday = self._convert_thu_to_python_weekday(target_weekday)
 
-        # Find the previous occurrence of the target weekday strictly before today
+        # Calculate days back to the previous occurrence
         days_back = self.current_date.weekday() - python_weekday
-        if days_back <= 0:
+        if days_back < 0:
             days_back += 7
+
         target_date = self.current_date - timedelta(days=days_back)
 
         return {

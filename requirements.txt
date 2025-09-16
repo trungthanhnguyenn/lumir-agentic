@@ -42,7 +42,7 @@ langdetect==1.0.9
 tiktoken==0.7.0
 
 # === Gradio (giữ nguyên nếu cần demo) ===
-gradio==5.34.1
+gradio==4.44.1
 gradio_client==1.10.3
 
 # === Optional extras ===
