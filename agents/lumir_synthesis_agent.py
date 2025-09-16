@@ -254,7 +254,7 @@ def create_memory_context(conversation_history: List[Dict[str, Any]]) -> str:
         if user_question and lumir_response:
             context_parts.append(f"Turn {i}:")
             context_parts.append(f"User: {user_question}")
-            context_parts.append(f"LUMIR: {lumir_response[:200]}...")  # Limit length
+            context_parts.append(f"LUMIR: {lumir_response}")
             context_parts.append("")
     
     return "\n".join(context_parts)
@@ -273,7 +273,6 @@ def build_lumir_with_memory():
         task: str,
         reasoning: str,
         question_type: str = "general_chat",
-        # numerology_context: str = "",
         tbi_context: str = "",
         trading_context: str = "",
         user_name: str = "",
