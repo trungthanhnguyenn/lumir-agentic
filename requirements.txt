@@ -43,7 +43,7 @@ tiktoken==0.7.0
 
 # === Gradio (giữ nguyên nếu cần demo) ===
 gradio==4.44.1
-gradio_client==1.10.3
+gradio_client==1.3.0
 
 # === Optional extras ===
 boto3==1.35.0
