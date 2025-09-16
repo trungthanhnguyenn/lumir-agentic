@@ -16,6 +16,7 @@ from agents.tbi_agent import build_tbi_agent
 from agents.trading_agent import build_trading_agent
 from agents.lumir_synthesis_agent import build_lumir_synthesis_agent
 from agents.memory_agent import build_memory_agent
+from agents.general_agent import build_general_agent
 from tools.data_validator_tool import DataValidator
 
 
@@ -204,6 +205,47 @@ class LUMIRAPIEndpoints:
                 "endpoint": "memory_history",
                 "success": False,
                 "error": f"Failed to get conversation history: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            }
+
+    def general_agent_endpoint(
+        self,
+        question: str,
+        language: str = "vi",
+        user_name: str = None
+    ) -> Dict[str, Any]:
+        """
+        Endpoint: General Agent to answer common questions
+        
+        Args:
+            question: User's question
+            user_name: User name (optional)
+            
+        Returns:
+            Dict containing general agent response
+        """
+        try:
+            print(f"General Agent Endpoint - Question: {question}")
+            
+            # Call general agent
+            response = build_general_agent(question=question, language=language, user_name=user_name)
+
+            return {
+                "endpoint": "general_agent",
+                "success": True,
+                "question": question,
+                "user_name": user_name or "User",
+                "general_response": response,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            error_msg = f"General agent failed: {str(e)}"
+            print(f"{error_msg}")
+            return {
+                "endpoint": "general_agent",
+                "success": False,
+                "error": error_msg,
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -646,6 +688,8 @@ class LUMIRAPIEndpoints:
     def lumir_synthesis_endpoint(
         self,
         question: str,
+        task: str,
+        reasoning: str,
         question_type: str = "general_chat",
         tbi_context: str = "",
         trading_context: str = "",
@@ -663,6 +707,8 @@ class LUMIRAPIEndpoints:
         
         Args:
             question: Original question
+            task: Task type (e.g., "question answering", "summary", etc.)
+            reasoning: Reasoning from decomposition
             question_type: Question type
             tbi_context: Context from TBI agent
             trading_context: Context from trading agent
@@ -695,7 +741,9 @@ class LUMIRAPIEndpoints:
                 "focus_areas": focus_areas or [],
                 "needs_user_info": needs_user_info,
                 "suggested_questions": suggested_questions or [],
-                "conversation_history": conversation_history or []
+                "conversation_history": conversation_history or [],
+                "response_type": task,
+                "analysis_reasoning": reasoning
             }
             
             # Call LUMIR-AI agent using invoke method

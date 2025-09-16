@@ -72,6 +72,8 @@ class TradingRequest(BaseModel):
 
 class LumirSynthesisRequest(BaseModel):
     question: str = Field(..., description="Original question")
+    task: str = Field(..., description="Task type (e.g., 'question answering', 'summary', etc.)")
+    reasoning: str = Field(..., description="Reasoning from decomposition")
     question_type: str = Field(default="general_chat", description="Question type")
     tbi_context: Optional[str] = Field(default="", description="Context from TBI agent (can be None)")
     trading_context: Optional[str] = Field(default="", description="Context from trading agent (can be None)")
@@ -187,6 +189,47 @@ async def memory_history_endpoint(request: MemoryHistoryRequest):
 # ============================================================================
 # ENDPOINT 3: QUESTION DECOMPOSITION
 # ============================================================================
+
+@app.post("/api/general/agent", response_model=Dict[str, Any])
+async def general_agent_endpoint(
+    question: str = Form(...),
+    language: str = Form(default="vi"),
+    user_name: Optional[str] = Form(None)
+):
+    """
+    Endpoint: General Agent to answer common questions
+
+    Args:
+        question: User's question
+        user_name: User name (optional)
+
+    Returns:
+        Dict containing general agent response
+    """
+    try:
+        print(f"General Agent Endpoint - Question: {question}")
+
+        # Call general agent
+        response = lumir_api.general_agent_endpoint(question, language, user_name)
+
+        return {
+            "endpoint": "general_agent",
+            "success": True,
+            "question": question,
+            "user_name": user_name or "User",
+            "general_response": response,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        error_msg = f"General agent failed: {str(e)}"
+        print(f"{error_msg}")
+        return {
+            "endpoint": "general_agent",
+            "success": False,
+            "error": error_msg,
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.post("/api/question/decompose", response_model=Dict[str, Any])
 async def question_decomposition_endpoint(
@@ -369,6 +412,8 @@ async def lumir_synthesis_endpoint(request: LumirSynthesisRequest):
         
         result = lumir_api.lumir_synthesis_endpoint(
             question=request.question,
+            task=request.task,
+            reasoning=request.reasoning,
             question_type=request.question_type,
             tbi_context=tbi_context,
             trading_context=trading_context,

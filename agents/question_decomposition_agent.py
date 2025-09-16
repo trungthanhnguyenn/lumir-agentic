@@ -98,10 +98,10 @@ def analyze_and_decompose_question(
         # Create context from conversation history
         context_from_history = ""
         if conversation_history:
-            recent_turns = conversation_history[-3:]  # Get last 3 turns
+            recent_turns = conversation_history[-3:]  # Last 3 turns
             context_parts = []
             for turn in recent_turns:
-                user_q = turn.get("user_question", "")[:100]  # Limit length
+                user_q = turn.get("user_question", "")
                 if user_q:
                     context_parts.append(f"User: {user_q}")
             if context_parts:
@@ -110,39 +110,57 @@ def analyze_and_decompose_question(
         prompt = ChatPromptTemplate.from_messages([
             ("system", _read_prompt()),
             ("human", """
-THÔNG TIN PHÂN TÍCH:
+## ANALYSIS REQUEST
 
-Câu hỏi gốc: "{question}"
+**Original Question**: "{question}"
 
-Thông tin user hiện có:
-- Tên: {user_name}
-- Ngày sinh: {birthday}  
-- File Excel trading: {excel_path}
-- Dữ liệu trading hợp lệ: {has_valid_trading_data}
-- Đã login: {user_logged_in}
-- Ngôn ngữ: {language}
+**User Context**:
+- Name: {user_name}
+- Birthday: {birthday}
+- Excel File: {excel_path}
+- Valid Trading Data: {has_valid_trading_data}
+- Logged In: {user_logged_in} 
+- Language: {language}
 
-Lịch sử hội thoại gần đây:
+**Conversation History**:
 {context_from_history}
 
 ---
 
-HÃY PHÂN TÍCH THÔNG MINH:
+## ANALYSIS FRAMEWORK
 
-1. **Kiểm tra điều kiện kỹ thuật:**
-   - Trading Agent: Có file Excel hợp lệ? ({has_valid_trading_data})
-   - TBI Agent: Có tên VÀ ngày sinh? ({user_name} + {birthday})
+### 1. Smart question decompose
+- Create specific sub-questions for relevant agents that match which the original question intent
+- Ensure sub-questions are clear, concise, and contextually relevant
+-  ALWAYS make the most helpul sub-questions in order to help user get the best answer
 
-2. **Hiểu ý định câu hỏi:**
-   - Câu hỏi có liên quan trading/cảm xúc/hành vi/tâm lý không?
-   - Hay là câu hỏi chung/chào hỏi/thông tin hệ thống?
+### 2. Intent Analysis
+**Question Classification Examples**:
+- "Hello" → `general_chat` (greeting/social)
+- "What can you help with?" → `lumir_related` (system inquiry)
+- "I feel anxious when trading" → `tbi_related` (psychology/emotions)
+- "Should I buy stocks now?" → `trading_related` (market/strategy)
+- "I'm confused" → `needs_more_info` (unclear intent)
 
-3. **Quyết định thông minh:**
-   - Nếu không liên quan → general_chat
-   - Nếu liên quan + có điều kiện → tạo câu hỏi cho agent tương ứng
-   - Nếu liên quan + thiếu điều kiện → needs_more_info
+### 3. Smart Routing Decision
+Based on your analysis:
+- Determine the most appropriate question category
+- Generate specific, actionable sub-questions for relevant agents
+- Consider whether multiple agents should be engaged
+- Identify any missing information needed
+- Choose task type wisely based on question and user context
 
-Hãy tạo câu hỏi hữu ích và phù hợp từ câu hỏi gốc!
+### 4. For Ambiguous Emotional Expressions:
+**ALWAYS classify as `needs_more_info`** until you can confirm:
+- Is this related to trading psychology? → `tbi_related`
+- Is this about trading performance? → `trading_related`
+- Is this about Lumir's capabilities? → `lumir_related` 
+- Is this completely unrelated? → `general_chat`
+**If a question can be misunderstood between `trading_related` `tbi_related` or `lumir_related` it should also be put in the `needs_user_info` type**
+Example: - "How can you help me to improve my trading performance?" -> Does user asked about Lumir ability or want trading agent and tbi agent analyze thier trading data?
+
+**Your task**: Analyze the user's question intelligently and provide precise routing with well-crafted sub-questions that will help deliver the most valuable response to the user.
+## IMPORTANT: QUESTION TYPE MUST BE ONE OF: `trading_related`, `tbi_related`, `general_chat`, `needs_more_info`, `lumir_related` dont use any other type.
 """)
         ])
         

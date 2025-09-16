@@ -102,22 +102,11 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     needs_user_info = input_dict.get("needs_user_info", False)
     suggested_questions = input_dict.get("suggested_questions", [])
     conversation_history = input_dict.get("conversation_history", [])
-    
+    response_type = input_dict.get("task")
+    reasoning = input_dict.get("reasoning")
+
     # Detect abnormal behavior
     abnormal_behaviors = _detect_abnormal_behavior(tbi_context, trading_context, question)
-    
-    # Determine response type
-    response_type = "comprehensive"
-    if question_type == "general_chat":
-        response_type = "general_chat"
-    elif question_type == "needs_more_info":
-        response_type = "needs_more_info"
-    elif not tbi_context and not trading_context:
-        response_type = "general"
-    elif not trading_context and has_trading_data:
-        response_type = "missing_trading_data"
-    elif not tbi_context:
-        response_type = "missing_tbi_data"
     
     # Prepare intelligent context summary based on language
     context_summary = []
@@ -132,26 +121,24 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
             context_summary.append("✓ Trading Performance Data Available")
         else:  # Vietnamese default
             context_summary.append("✓ Có phân tích dữ liệu giao dịch")
+
+    if question_type == "trading_related" and not has_trading_data:
+        if language == "en":
+            context_summary.append("No trading data - Cannot provide trading-specific advice")
+        else:
+            context_summary.append("Chưa có dữ liệu giao dịch - Không thể tư vấn chuyên sâu")
+
+    if question_type == "tbi_related" and not user_name or not birthday:
+        if language == "en":
+            context_summary.append("Missing user info - Cannot provide TBI-specific advice")
+        else:
+            context_summary.append("Chưa có thông tin người dùng - Không thể tư vấn chuyên sâu về cảm xúc hành vi trong giao dịch")
             
     if not context_summary:
         if language == "en":
-            context_summary.append("⚠ Limited data - General guidance available")
+            context_summary.append("Limited data - General guidance available")
         else:  # Vietnamese default
-            context_summary.append("⚠ Chưa có dữ liệu phân tích chuyên sâu")
-    
-    # Smart response type detection
-    if tbi_context and trading_context:
-        response_type = "comprehensive"
-    elif question_type == "general_chat":
-        response_type = "general_chat"
-    elif question_type == "needs_more_info":
-        response_type = "needs_more_info"
-    elif tbi_context and not trading_context:
-        response_type = "psychology_focused"
-    elif trading_context and not tbi_context:
-        response_type = "trading_focused"
-    else:
-        response_type = "general"
+            context_summary.append("Chưa có dữ liệu phân tích chuyên sâu")
     
     # Format conversation history for display
     conversation_context = ""
@@ -174,6 +161,7 @@ def _prepare_synthesis_data(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         "needs_user_info": needs_user_info,
         "suggested_questions": suggested_questions,
         "conversation_history": conversation_context,
+        "analysis_reasoning": reasoning,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -196,11 +184,11 @@ LANGUAGE REQUIRED: {language}
 === CONTEXT ANALYSIS ===
 QUESTION TYPE: {question_type}
 CONTEXT SUMMARY: {context_summary}
-RESPONSE TYPE: {response_type}
+TASK: {response_type}
 
 === AVAILABLE DATA SOURCES ===
 
-TBI ANALYSIS (Trading Behavioral Index - Personality & Psychology):
+TBI ANALYSIS (Trading Behavioral Index - Personality & Psychology in Trading):
 {tbi_context}
 
 TRADING DATA ANALYSIS:
@@ -211,6 +199,10 @@ ABNORMAL BEHAVIORS DETECTED:
 
 CONVERSATION HISTORY:
 {conversation_history}
+
+### DECOMPOSITION INSIGHTS
+Reasoning: {analysis_reasoning}
+Focus Areas: {focus_areas}
 
 === SYNTHESIS INSTRUCTION ===
 Based on the question and available context above:
@@ -277,6 +269,8 @@ def build_lumir_with_memory():
     
     def lumir_with_memory(
         question: str,
+        task: str,
+        reasoning: str,
         question_type: str = "general_chat",
         # numerology_context: str = "",
         tbi_context: str = "",
@@ -327,7 +321,10 @@ def build_lumir_with_memory():
             "focus_areas": focus_areas or [],
             "needs_user_info": needs_user_info,
             "suggested_questions": suggested_questions or [],
-            "memory_context": memory_context
+            "context_summary": memory_context,
+            "response_type": task,
+            "analysis_reasoning": reasoning,
+            "conversation_history": conversation_history or []
         }
         
         # Call synthesis agent
