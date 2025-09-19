@@ -14,6 +14,10 @@ def _read_prompt() -> str:
 
 def answer(question: str, language: str = "vi", user_name: str = None) -> str:
     """Answer general questions"""
+    if language == "en":
+        language = "English"
+    elif language == "vi":
+        language = "Vietnamese"
     try:
         llm = get_openai_llm()
         prompt_template = _read_prompt()
@@ -22,7 +26,7 @@ def answer(question: str, language: str = "vi", user_name: str = None) -> str:
             ("user", """
     ## FOLLOW THESE INSTRUCTIONS CAREFULLY
     - You are a helpful assistant that always provides accurate and useful information.
-    - Answer the question bellow and response in {language}.:
+    - You must obey the instructions in the question below and respond in {language}:
 
     User name: {user_name}\nQuestion: {question}
     """)
