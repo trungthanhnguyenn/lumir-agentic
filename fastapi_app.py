@@ -345,7 +345,8 @@ async def numerology_endpoint(request: NumerologyRequest):
 async def trading_endpoint(
     question: str = Form(None),
     language: str = Form(default="vi"),
-    excel_file: Optional[UploadFile] = File(None)
+    account_number: Optional[str] = Form(default=""),
+    excel_file: Optional[UploadFile] = File(None),
 ):
     """
     Analyze trading data
@@ -373,15 +374,16 @@ async def trading_endpoint(
             except Exception:
                 temp_path = None
                 has_trading_data = False
-        else:
+        elif account_number is not None and account_number.strip() != "":
             # Không có file upload
-            has_trading_data = False
+            has_trading_data = True
         
         result = lumir_api.trading_endpoint(
             question=question,
             excel_path=temp_path or "",
             language=language,
-            has_trading_data=has_trading_data
+            has_trading_data=has_trading_data,
+            account_number=account_number
         )
         
         status = 200 if result.get("success") else 400
@@ -741,14 +743,14 @@ async def general_exception_handler(request, exc):
 
 if __name__ == "__main__":
     print("🚀 Starting LUMIR-AI FastAPI Server...")
-    print("📖 API Documentation available at: http://localhost:8866/docs")
-    print("🔍 API Info available at: http://localhost:8866/api/info")
-    print("💡 Health check available at: http://localhost:8866/health")
+    print("📖 API Documentation available at: http://localhost:8123/docs")
+    print("🔍 API Info available at: http://localhost:8123/api/info")
+    print("💡 Health check available at: http://localhost:8123/health")
     
     uvicorn.run(
         "fastapi_app:app",
         host="0.0.0.0",
-        port=8866,
+        port=8123,
         reload=True,
         log_level="info"
     )

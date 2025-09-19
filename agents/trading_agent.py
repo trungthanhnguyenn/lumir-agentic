@@ -388,6 +388,9 @@ def _prepare_trading_data(inputs: dict) -> dict:
     question   = inputs.get("question", "")
     excel_path = inputs.get("excel_path") or inputs.get("file_path")
     language   = inputs.get("language", "vi")
+    # New field for account number
+    account_number = inputs.get("account_number") 
+    print(f"Account number: {account_number}")
 
     # Default
     empty = {
@@ -415,6 +418,7 @@ def _prepare_trading_data(inputs: dict) -> dict:
             file_path=excel_path,
             question=question,
             trading_data=inputs.get("trading_data") if inputs.get("trading_data") else None,
+            account_number=account_number,  # Pass account number to the tool
         )
         if not analysis.get("success"):
             return {

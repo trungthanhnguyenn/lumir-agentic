@@ -607,7 +607,8 @@ class LUMIRAPIEndpoints:
         question: str,
         excel_path: str,
         language: str = "vi",
-        has_trading_data: bool = False
+        has_trading_data: bool = False,
+        account_number: Optional[str] = None  # New field for account number
     ) -> Dict[str, Any]:
         """
         Endpoint 4: Analyze trading data
@@ -652,7 +653,8 @@ class LUMIRAPIEndpoints:
                 "question": question,
                 "excel_path": excel_path,
                 "language": language,
-                "has_trading_data": has_trading_data
+                "has_trading_data": has_trading_data,
+                "account_number": account_number
             }
             
             result = self.trading_agent.invoke(inputs)  # Use .invoke() method for Langchain

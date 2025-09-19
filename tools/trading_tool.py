@@ -619,7 +619,50 @@ def generate_comprehensive_report(df: pd.DataFrame, analysis_result: Optional[Di
     
     return "\n".join(report_parts)
 
-def analyze_trading_data(file_path: Optional[str] = None, question: Optional[str] = None, trading_data: Optional[dict] = None, excel_path: Optional[str] = None) -> Dict[str, Any]:
+def get_trading_data_from_api(api_url: str, params: Dict) -> pd.DataFrame:
+    """
+    Fetch trading data from API endpoint and return as DataFrame.
+    
+    Args:
+        api_url: URL of the API endpoint
+        kwargs: Additional parameters for the API request
+    Returns:
+        DataFrame with trading data or empty DataFrame if fetch fails
+    """
+    import requests
+    
+    try:
+        print(f"Fetching trading data from API: {api_url} with params: {params}")
+        response = requests.get(api_url, params=params, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if not data or 'data' not in data:
+            print("No trading data found in API response")
+            return pd.DataFrame()
+        
+        df = pd.DataFrame(data['data']['data'])
+        
+        if df.empty:
+            print("Trading data from API is empty")
+            return df
+        
+        print(f"Successfully fetched trading data from API. Records: {len(df)}")
+        return df
+        
+    except Exception as e:
+        print(f"Error fetching trading data from API: {e}")
+        return pd.DataFrame()
+
+
+def analyze_trading_data(
+    file_path: Optional[str] = None, 
+    question: Optional[str] = None, 
+    trading_data: Optional[dict] = None, 
+    excel_path: Optional[str] = None, 
+    account_number: Optional[int] = None
+) -> Dict[str, Any]:
     """
     Analyze trading data with a specific question
     
@@ -639,7 +682,18 @@ def analyze_trading_data(file_path: Optional[str] = None, question: Optional[str
         print(f"Question: {question or 'No question'}")
         
         # Read data from multiple sources
-        df = get_trading_data(file_path=file_path, trading_data=trading_data, excel_path=excel_path)
+        if account_number:
+            print(f"Account number provided: {account_number}, fetching data from API")
+            # Example API URL and params - replace with actual
+            api_url = os.getenv("TRADING_API_URL", "https://api.example.com/trades")
+            params = {
+                "account_number": account_number,
+                "page": 1,
+                "per_page": 20
+            }
+            df = get_trading_data_from_api(api_url, params)
+        else:
+            df = get_trading_data(file_path=file_path, trading_data=trading_data, excel_path=excel_path)
         print(f"Successfully read {len(df)} rows of data")
         
         # Analyze question if available
