@@ -203,7 +203,7 @@ class TBICalculator:
     # Karmic debt numbers
     KARMIC_NUMBERS = {13, 14, 16, 19}
 
-    def __init__(self, dob: str, name: str, current_date: str = None):
+    def __init__(self, dob: Optional[str], name: Optional[str], current_date: Optional[str]):
         """
         Initialize TBI Calculator with name, birthday and current date similar to numerology calculation
         
