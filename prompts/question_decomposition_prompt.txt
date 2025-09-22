@@ -188,6 +188,7 @@ Example: - "How can you help me to improve my trading performance?" -> Does user
 "trading_question": "Specific question for trading agent or null",
 "tbi_question": "Specific question for TBI agent or null",
 "needs_more_info_question": "Clarifying question to understand user intent or null",
+"history_recall": "Summary or recall of relevant history content when task=multiturn or null",
 "reasoning": "Clear explanation of classification logic and routing decisions",
 "focus_areas": ["trading", "psychology", "behavior", "system"] | [],
 "needs_user_info": true | false,
@@ -235,7 +236,6 @@ Is it truly ambiguous/unclear in intent? → needs_more_info
 - "Tôi buồn vì người yêu chia tay" → `general_chat` (explicit personal issue)
 - "Tôi lo lắng" → `needs_more_info` (could be trading-related)
 - "Tôi lo lắng về việc mất tiền" → `trading_related` or `tbi_related` (clear trading context)
-
 
 ### Fallback Mechanisms:
 - **Multi-domain overlap** → Route to most relevant domain with clear sub-questions

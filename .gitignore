@@ -226,4 +226,5 @@ test_with_debug.py
 test_system.py
 *.ipynb
 view_debug_logs.py
-
+test.py
+model_cache/
