@@ -6,15 +6,7 @@ import json
 from dotenv import load_dotenv
 import time
 
-# Load .env from project root explicitly, then fallback to CWD
-try:
-    project_root_env = Path(__file__).resolve().parents[2] / ".env"
-    if project_root_env.exists():
-        load_dotenv(dotenv_path=project_root_env)
-    else:
-        load_dotenv()
-except Exception:
-    load_dotenv()
+load_dotenv()
 
 # Embedding libraries
 try:
@@ -57,11 +49,11 @@ class EmbeddingManager:
     Hỗ trợ Gemini embedding-002 và sentence-transformers
     """
     
-    def __init__(self, model_name: str = "embedding-002", provider: str = "gemini"):
+    def __init__(self, model_name: str = "Qwen3-Embedding-0.6B", provider: str = "hf"):
         self.model_name = model_name
         self.provider = provider
         self.model = None
-        self.embedding_dimension = None
+        self.embedding_dimension = 1024  # Default for Qwen3-0.6B
         self.batch_size = 32
         # Simple rate limit control (requests per minute)
         self.rpm_limit = int(os.getenv("EMBEDDING_RPM_LIMIT", "80"))
@@ -70,8 +62,44 @@ class EmbeddingManager:
         # HF client
         self._hf_client = None
         
+        # Detect optimal device
+        self.device = self._detect_device()
+        
         # Initialize model
         self._initialize_model()
+    
+    def _detect_device(self) -> str:
+        """Detect optimal device for embedding computation"""
+        if not TORCH_AVAILABLE:
+            return "cpu"
+        
+        try:
+            import torch
+            import platform
+            
+            # Check if Apple Silicon (M1/M2/M3)
+            if platform.system() == "Darwin" and platform.machine() in ["arm64", "arm64e"]:
+                if torch.backends.mps.is_available():
+                    print("🍎 Apple Silicon GPU (MPS) detected and available")
+                    return "mps"
+                else:
+                    print("🍎 Apple Silicon detected, using CPU")
+                    return "cpu"
+            
+            # Check CUDA availability
+            elif torch.cuda.is_available():
+                gpu_count = torch.cuda.device_count()
+                print(f"🚀 CUDA detected with {gpu_count} GPU(s)")
+                return "cuda"
+            
+            # Default to CPU
+            else:
+                print("💻 Using CPU for embeddings")
+                return "cpu"
+                
+        except Exception as e:
+            print(f"⚠️ Device detection failed, using CPU: {e}")
+            return "cpu"
     
     def _initialize_model(self):
         """Initialize embedding model"""
@@ -91,19 +119,18 @@ class EmbeddingManager:
                     model_name=model_name,
                     model_kwargs={
                         "trust_remote_code": True,
-                        "device": os.getenv("HF_DEVICE", "cuda")
+                        "device": self.device  # Use auto-detected device
                     },
                     encode_kwargs={
                         "batch_size": int(os.getenv("HF_EMBED_BATCH", "8"))
                     }
                 )
-                # Probe to get dimension
-                try:
-                    probe_vec = self.model.embed_query("probe")
-                    default_dim = int(os.getenv("EMBEDDING_DIM", "1024"))
-                    self.embedding_dimension = len(probe_vec) if isinstance(probe_vec, list) else default_dim
-                except Exception:
-                    self.embedding_dimension = int(os.getenv("EMBEDDING_DIM", "1024"))
+                # Probe to get dimension - no fallback allowed
+                probe_vec = self.model.embed_query("probe")
+                if not isinstance(probe_vec, list) or len(probe_vec) == 0:
+                    raise RuntimeError("Embedding model returned invalid probe vector")
+                self.embedding_dimension = len(probe_vec)
+                print(f"Verified embedding dimension: {self.embedding_dimension}")
                 print(f"HF embeddings model loaded: {model_name}")
                 print(f"Embedding dimension: {self.embedding_dimension}")
 
@@ -185,7 +212,7 @@ class EmbeddingManager:
                     return vec
                 except Exception as e:
                     print(f"Error getting embedding (HF): {e}")
-                    return [0.0] * (self.embedding_dimension or 0)
+                    raise RuntimeError(f"Failed to generate embedding with HuggingFace: {e}")
 
             if self.provider == "gemini":
                 # New client first
@@ -216,8 +243,8 @@ class EmbeddingManager:
                             return list(emb["values"]) 
                         if isinstance(emb, list):
                             return emb
-                    # Fallback: return empty
-                    return []
+                    # No fallback - raise error if embedding generation fails
+                    raise RuntimeError(f"Failed to generate embedding with Gemini. Invalid response format: {result}")
                 else:
                     # Legacy SDK path
                     backoff = 1.0
@@ -238,8 +265,14 @@ class EmbeddingManager:
                                 continue
                             raise
                     if isinstance(response, dict):
-                        return response.get("embedding", [])
-                    return getattr(response, "embedding", [])
+                        embedding = response.get("embedding")
+                        if not embedding:
+                            raise RuntimeError("Gemini legacy API returned empty embedding")
+                        return embedding
+                    embedding = getattr(response, "embedding", None)
+                    if not embedding:
+                        raise RuntimeError("Gemini legacy API returned no embedding")
+                    return embedding
                 
             elif self.provider == "sentence_transformers":
                 embedding = self.model.encode(text, convert_to_tensor=False)
@@ -247,8 +280,8 @@ class EmbeddingManager:
                 
         except Exception as e:
             print(f"Error getting embedding: {e}")
-            # Return zero vector as fallback
-            return [0.0] * self.embedding_dimension
+            # No fallback - propagate error to caller
+            raise RuntimeError(f"Failed to generate embedding for text: {e}")
     
     def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """
@@ -287,8 +320,8 @@ class EmbeddingManager:
                 
         except Exception as e:
             print(f"Error getting batch embeddings: {e}")
-            # Return zero vectors as fallback
-            return [[0.0] * self.embedding_dimension] * len(texts)
+            # No fallback - propagate error to caller
+            raise RuntimeError(f"Failed to generate batch embeddings: {e}")
     
     def get_embedding_dimension(self) -> int:
         """Get embedding vector dimension"""
