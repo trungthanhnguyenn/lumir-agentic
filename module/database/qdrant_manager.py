@@ -49,14 +49,13 @@ class QdrantManager:
     Manage Qdrant vector database
     """
     
-    def __init__(self, host: str = "localhost", port: int = 1237, 
-                 collection_prefix: str = "lumir_rag"):
+    def __init__(self, host: str = "localhost", port: int = 1237):
         if not QDRANT_AVAILABLE:
             raise ImportError("Qdrant client not available. Install with: pip install qdrant-client")
         
         self.host = host
         self.port = port
-        self.collection_prefix = collection_prefix
+        self.collection_prefix = ""  # No prefix by default, collections use their direct names
         self.client = None
         self.collections = {}
         
@@ -88,7 +87,7 @@ class QdrantManager:
             True if successful
         """
         try:
-            collection_name = f"{self.collection_prefix}_{config.name}"
+            collection_name = config.name
             
             # Check if collection exists
             if self._collection_exists(collection_name):
@@ -138,13 +137,12 @@ class QdrantManager:
     def delete_collection(self, collection_name: str) -> bool:
         """Delete collection"""
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            self.client.delete_collection(full_name)
-            print(f"Collection {full_name} deleted")
-            
-            if full_name in self.collections:
-                del self.collections[full_name]
-            
+            self.client.delete_collection(collection_name)
+            print(f"Collection {collection_name} deleted")
+
+            if collection_name in self.collections:
+                del self.collections[collection_name]
+
             return True
             
         except Exception as e:
@@ -168,16 +166,13 @@ class QdrantManager:
             True if successful
         """
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            
             # Check if collection exists
-            if not self._collection_exists(full_name):
-                print(f"Collection {full_name} does not exist")
+            if not self._collection_exists(collection_name):
+                print(f"Collection {collection_name} does not exist")
                 return False
             
             # Before upsert, skip existing points (id duplicate)
             try:
-                full_name = f"{self.collection_prefix}_{collection_name}"
                 existing_ids = set()
                 # Get batch ids currently (if collection is large, can optimize by filter by ids chunk)
                 ids_to_check = [p['id'] for p in points if 'id' in p]
@@ -212,11 +207,11 @@ class QdrantManager:
             
             # Upsert points
             self.client.upsert(
-                collection_name=full_name,
+                collection_name=collection_name,
                 points=qdrant_points
             )
-            
-            print(f"Upserted {len(points)} points to {full_name}")
+
+            print(f"Upserted {len(points)} points to {collection_name}")
             return True
             
         except Exception as e:
@@ -241,16 +236,14 @@ class QdrantManager:
             List of SearchResult
         """
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            
             # Check if collection exists
-            if not self._collection_exists(full_name):
-                print(f"Collection {full_name} does not exist")
+            if not self._collection_exists(collection_name):
+                print(f"Collection {collection_name} does not exist")
                 return []
             
             # Perform search
             search_result = self.client.search(
-                collection_name=full_name,
+                collection_name=collection_name,
                 query_vector=query_vector,
                 limit=limit,
                 score_threshold=score_threshold,
@@ -268,8 +261,8 @@ class QdrantManager:
                     vector=point.vector if with_vectors else None
                 )
                 results.append(result)
-            
-            print(f"Found {len(results)} results in {full_name}")
+
+            print(f"Found {len(results)} results in {collection_name}")
             return results
             
         except Exception as e:
@@ -293,11 +286,9 @@ class QdrantManager:
             List of SearchResult
         """
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            
             # Check if collection exists
-            if not self._collection_exists(full_name):
-                print(f"Collection {full_name} does not exist")
+            if not self._collection_exists(collection_name):
+                print(f"Collection {collection_name} does not exist")
                 return []
             
             # Create filter
@@ -305,7 +296,7 @@ class QdrantManager:
             
             # Perform search with filter
             search_result = self.client.search(
-                collection_name=full_name,
+                collection_name=collection_name,
                 query_vector=query_vector,
                 query_filter=qdrant_filter,
                 limit=limit,
@@ -323,8 +314,8 @@ class QdrantManager:
                     payload=point.payload or {}
                 )
                 results.append(result)
-            
-            print(f"Found {len(results)} filtered results in {full_name}")
+
+            print(f"Found {len(results)} filtered results in {collection_name}")
             return results
             
         except Exception as e:
@@ -380,12 +371,10 @@ class QdrantManager:
     def get_collection_info(self, collection_name: str) -> Optional[Dict[str, Any]]:
         """Get collection info"""
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            
-            if not self._collection_exists(full_name):
+            if not self._collection_exists(collection_name):
                 return None
-            
-            info = self.client.get_collection(full_name)
+
+            info = self.client.get_collection(collection_name)
             return {
                 "name": info.name,
                 "vector_size": info.config.params.vectors.size,
@@ -403,6 +392,10 @@ class QdrantManager:
         """List all collections"""
         try:
             collections = self.client.get_collections()
+            # If no prefix, return all collections
+            if not self.collection_prefix:
+                return [col.name for col in collections.collections]
+            # Otherwise filter by prefix
             return [col.name for col in collections.collections 
                    if col.name.startswith(self.collection_prefix)]
         except Exception as e:
@@ -423,7 +416,7 @@ class QdrantManager:
             True if successful
         """
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
+            full_name = f"{self.colle}_{collection_name}"
             
             if not self._collection_exists(full_name):
                 print(f"Collection {full_name} does not exist")
@@ -496,13 +489,11 @@ class QdrantManager:
     def get_collection_stats(self, collection_name: str) -> Optional[Dict[str, Any]]:
         """Get collection stats"""
         try:
-            full_name = f"{self.collection_prefix}_{collection_name}"
-            
-            if not self._collection_exists(full_name):
+            if not self._collection_exists(collection_name):
                 return None
-            
-            info = self.client.get_collection(full_name)
-            name = getattr(info, "name", full_name)
+
+            info = self.client.get_collection(collection_name)
+            name = getattr(info, "name", collection_name)
             config = getattr(info, "config", None)
             params = getattr(config, "params", None) if config else None
             vectors = getattr(params, "vectors", None) if params else None
@@ -533,19 +524,17 @@ class QdrantManagerFactory:
     """Factory to create Qdrant manager"""
     
     @staticmethod
-    def create_manager(host: str = "localhost", port: int = 1237, 
-                      collection_prefix: str = "lumir_rag") -> QdrantManager:
+    def create_manager(host: str = "localhost", port: int = 1237) -> QdrantManager:
         """Create Qdrant manager with specific configuration"""
-        return QdrantManager(host, port, collection_prefix)
+        return QdrantManager(host, port)
     
     @staticmethod
-    def create_local_manager(collection_prefix: str = "lumir_rag") -> QdrantManager:
+    def create_local_manager() -> QdrantManager:
         """Create Qdrant manager for local development"""
-        return QdrantManager("localhost", 1237, collection_prefix)
+        return QdrantManager("localhost", 1237)
     
     @staticmethod
-    def create_cloud_manager(url: str, api_key: str, 
-                           collection_prefix: str = "lumir_rag") -> QdrantManager:
+    def create_cloud_manager(url: str, api_key: str) -> QdrantManager:
         """Create Qdrant manager for cloud deployment"""
         # Parse URL to get host and port
         if url.startswith("http"):
@@ -558,7 +547,7 @@ class QdrantManagerFactory:
             host = url
             port = 1237
         
-        manager = QdrantManager(host, port, collection_prefix)
+        manager = QdrantManager(host, port)
         # Set API key if needed
         if hasattr(manager.client, 'set_api_key'):
             manager.client.set_api_key(api_key)

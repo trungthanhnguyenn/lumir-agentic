@@ -61,7 +61,7 @@ class QuestionDecomposition(BaseModel):
 
 def _read_prompt() -> str:
     base_dir = Path(__file__).resolve().parents[1]
-    prompt_path = base_dir / "prompts" / "question_decomposition_prompt.txt"
+    prompt_path = base_dir / "prompts" / "question_decomposition_prompt_v2.txt"
     return prompt_path.read_text(encoding="utf-8")
 
 

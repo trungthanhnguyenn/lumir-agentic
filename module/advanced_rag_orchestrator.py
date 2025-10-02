@@ -148,7 +148,7 @@ class AdvancedRAGOrchestrator:
         """Initialize all system components"""
         try:
             # 1. Initialize base components
-            self.qdrant_manager = QdrantManager(qdrant_host, qdrant_port, "lumir_advanced")
+            self.qdrant_manager = QdrantManager(qdrant_host, qdrant_port)
             self.embedding_manager = EmbeddingManager(embedding_model, embedding_provider)
             
             # 2. Initialize advanced chunker
@@ -674,7 +674,7 @@ class AdvancedRAGOrchestratorFactory:
     def create_trading_orchestrator(
         documents_dir: str = "trading_data/general_info",
         qdrant_host: str = "localhost",
-        qdrant_port: int = 6333,
+        qdrant_port: int = 1237,
         embedding_model: str = "Qwen3-Embedding-0.6B",
         embedding_provider: str = "hf"
     ) -> AdvancedRAGOrchestrator:

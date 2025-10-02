@@ -165,7 +165,7 @@ def check_docker_container_status():
         return False
 
 
-def check_qdrant_health(port: int = 6333) -> bool:
+def check_qdrant_health(port: int = 1237) -> bool:
     """Check if Qdrant server is running"""
     try:
         # Use /collections endpoint instead of /health
@@ -374,8 +374,8 @@ def main():
     print("1. Add your trading documents to 'trading_data/general_infor/'")
     print("2. Run this script again to process documents")
     print("3. Use the RAG system in your application")
-    print("\nQdrant UI: http://localhost:6333/dashboard")
-    print("Qdrant API: http://localhost:6333")
+    print("\nQdrant UI: http://localhost:1237/dashboard")
+    print("Qdrant API: http://localhost:1237")
     print("\nDocker management commands:")
     print("   - Check container status: python qdrant/setup_qdrant.py --status")
     print("   - Stop Qdrant: python qdrant/setup_qdrant.py --stop")

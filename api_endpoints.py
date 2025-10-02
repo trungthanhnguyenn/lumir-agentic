@@ -18,6 +18,9 @@ from agents.lumir_synthesis_agent import build_lumir_synthesis_agent
 from agents.memory_agent import build_memory_agent
 from agents.general_agent import build_general_agent
 from tools.data_validator_tool import DataValidator
+from rag_query import RAGQuerySystem
+
+
 
 
 class LUMIRAPIEndpoints:
@@ -35,6 +38,9 @@ class LUMIRAPIEndpoints:
         self.memory_agent = build_memory_agent()
         # Chatbot lazy init
         self._chatbot = None
+
+        # RAG system
+        self.rag_system = RAGQuerySystem()
         
         # Conversation history for multi-turn (in-memory cache)
         self.conversation_history = {}
@@ -212,7 +218,8 @@ class LUMIRAPIEndpoints:
         self,
         question: str,
         language: str = "vi",
-        user_name: str = None
+        user_name: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Endpoint: General Agent to answer common questions
@@ -228,7 +235,7 @@ class LUMIRAPIEndpoints:
             print(f"General Agent Endpoint - Question: {question}")
             
             # Call general agent
-            response = build_general_agent(question=question, language=language, user_name=user_name)
+            response = build_general_agent(question=question, language=language, user_name=user_name, conversation_history=conversation_history)
 
             return {
                 "endpoint": "general_agent",
@@ -1307,6 +1314,120 @@ class LUMIRAPIEndpoints:
                 "timestamp": datetime.now().isoformat()
             }
 
+# ============================================================================
+# ENDPOINT RAG: Query RAG system for context retrieval
+# ============================================================================
+    
+    async def rag_query_endpoint(
+        self, 
+        question: str, 
+        top_n: int = 10,
+        score_threshold: float = 0.3,
+        collection_name: Optional[str] = None,
+        include_metadata: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Endpoint: RAG Query - Retrieve and rerank top N contexts
+        
+        Args:
+            question: User's question
+            top_n: Number of top results to return (default: 10)
+            score_threshold: Minimum similarity score (default: 0.3)
+            collection_name: Collection to query (default: use system default)
+            include_metadata: Include metadata like scores, sources, etc. (default: False)
+            
+        Returns:
+            Dict containing:
+                - success: bool
+                - question: str
+                - contexts: List[str] - List of context strings (if include_metadata=False)
+                - results: List[Dict] - Full results with metadata (if include_metadata=True)
+                - total_results: int
+        """
+        try:
+            print(f"RAG Query Endpoint - Question: '{question}', Collection: '{collection_name or 'default'}', Top N: {top_n}")
+            
+            # Check if RAG system is initialized
+            if not self.rag_system or not self.rag_system.orchestrator:
+                return {
+                    "endpoint": "rag_query",
+                    "success": False,
+                    "error": "RAG system not initialized. Please run ingest_documents.py first.",
+                    "question": question,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Use default collection if not specified
+            if collection_name is None:
+                collection_name = self.rag_system.default_collection
+            
+            # Check if collection exists
+            collection_info = self.rag_system.get_collection_info(collection_name)
+            if not collection_info.get("exists"):
+                return {
+                    "endpoint": "rag_query",
+                    "success": False,
+                    "error": f"Collection '{collection_name}' not found. Please run ingest_documents.py first.",
+                    "question": question,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            if collection_info.get("points_count", 0) == 0:
+                return {
+                    "endpoint": "rag_query",
+                    "success": False,
+                    "error": f"Collection '{collection_name}' is empty. Please run ingest_documents.py first.",
+                    "question": question,
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Query RAG system using async version
+            results = await self.rag_system.ask_question_async(
+                question=question,
+                top_n=top_n,
+                score_threshold=score_threshold,
+                collection_name=collection_name
+            )
+            
+            # Format results based on metadata flag
+            if include_metadata:
+                # Return full metadata
+                return {
+                    "endpoint": "rag_query",
+                    "success": True,
+                    "question": question,
+                    "results": results,
+                    "total_results": len(results),
+                    "database_info": {
+                        "total_chunks": self.rag_system.total_chunks,
+                        "score_threshold": score_threshold,
+                        "top_n_requested": top_n
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                # Return only content strings
+                contexts = [result["content"] for result in results]
+                return {
+                    "endpoint": "rag_query",
+                    "success": True,
+                    "question": question,
+                    "contexts": contexts,
+                    "total_results": len(contexts),
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+        except Exception as e:
+            error_msg = f"RAG query failed: {str(e)}"
+            print(f"❌ {error_msg}")
+            
+            return {
+                "endpoint": "rag_query",
+                "success": False,
+                "error": error_msg,
+                "question": question,
+                "timestamp": datetime.now().isoformat()
+            }
 
 # ============================================================================
 # FACTORY FUNCTION

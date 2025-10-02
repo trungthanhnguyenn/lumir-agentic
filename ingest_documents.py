@@ -8,6 +8,14 @@ import sys
 from pathlib import Path
 import time
 import hashlib
+import os
+
+from module.document.document_processor_patch import create_patched_processor
+from module.advanced_rag_orchestrator import AdvancedRAGOrchestrator
+from qdrant_client.http import models as qdrant_models
+from module.database.qdrant_manager import CollectionConfig
+
+
 
 # Add module to path
 sys.path.append(str(Path(__file__).parent))
@@ -22,10 +30,7 @@ def get_file_hash(file_path: Path) -> str:
 
 def check_document_exists_in_qdrant(file_path: Path, qdrant, collection_name: str) -> bool:
     """Check if document already exists in Qdrant"""
-    try:
-        # Check if any points exist from this file
-        from qdrant_client.http import models as qdrant_models
-        
+    try:        
         # Search for points with this source file
         filter_condition = qdrant_models.Filter(
             must=[
@@ -50,26 +55,31 @@ def check_document_exists_in_qdrant(file_path: Path, qdrant, collection_name: st
         print(f"    ⚠️  Error checking document existence: {e}")
         return False
 
-def ingest_documents():
-    """Ingest all documents with deduplication"""
+def ingest_documents(file_path: str = "trading_data"):
+    """
+    Ingest all documents with deduplication
+    
+    Args:
+        file_path: Directory containing documents to ingest (default: 'trading_data')
+    """
     print("🚀 Starting Document Ingestion into RAG System")
     print("=" * 80)
     
     try:
-        from module.document.document_processor import DocumentProcessor
-        from module.advanced_rag_orchestrator import AdvancedRAGOrchestrator
-        
+        # Use PATCHED version - keeps original smart chunking but fixes missing content
         # Initialize processors
-        print("🔧 Initializing processors...")
-        doc_processor = DocumentProcessor()
-        orchestrator = AdvancedRAGOrchestrator(qdrant_host="localhost", qdrant_port=6333)
+        print("🔧 Initializing processors (PATCHED version - smart chunking + no missing content)...")
+        doc_processor = create_patched_processor(chunk_size=1000, chunk_overlap=200)
+        orchestrator = AdvancedRAGOrchestrator(qdrant_host="localhost", qdrant_port=1237)
         
-        # Create collection if not exists
-        collection_name = "trading_docs"
-        from module.database.qdrant_manager import CollectionConfig
+        # Create collection name from directory name (sanitize it)
+        # Replace spaces, dots, and special characters with underscores
+        base_name = os.path.basename(file_path)
+        collection_name = f"lumir_{base_name}".replace(" ", "_").replace(".", "_").replace("-", "_").lower()
         
-        full_collection_name = f"{orchestrator.qdrant_manager.collection_prefix}_{collection_name}"
-        if not orchestrator.qdrant_manager._collection_exists(full_collection_name):
+        print(f"📦 Using collection: {collection_name}")
+        
+        if not orchestrator.qdrant_manager._collection_exists(collection_name):
             config = CollectionConfig(
                 name=collection_name,
                 vector_size=1024,
@@ -95,9 +105,9 @@ def ingest_documents():
         print(f"📊 Found {len(documents)} documents")
         
         # Check current database status
-        full_collection_name = f"{orchestrator.qdrant_manager.collection_prefix}_{collection_name}"
+        # full_collection_name = f"{orchestrator.qdrant_manager.collection_prefix}_{collection_name}"
         try:
-            collection_info = orchestrator.qdrant_manager.client.get_collection(full_collection_name)
+            collection_info = orchestrator.qdrant_manager.client.get_collection(collection_name)
             current_points = collection_info.points_count
             print(f"📋 Current database: {current_points} chunks already stored")
         except:

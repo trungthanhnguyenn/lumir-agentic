@@ -67,8 +67,7 @@ class RAGOrchestrator:
             # Initialize Qdrant manager
             self.qdrant_manager = QdrantManager(
                 host=self.qdrant_host,
-                port=self.qdrant_port,
-                collection_prefix="lumir_rag"
+                port=self.qdrant_port
             )
             
             # Initialize collection manager

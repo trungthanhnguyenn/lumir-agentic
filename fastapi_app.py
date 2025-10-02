@@ -124,6 +124,12 @@ class MemoryHistoryRequest(BaseModel):
     username: str = Field(..., description="Username")
     limit: Optional[int] = Field(None, description="Number of recent turns")
 
+class RAGQueryRequest(BaseModel):
+    question: str = Field(..., description="Question to search for relevant context")
+    top_n: int = Field(default=10, description="Number of top results to return (default: 10)")
+    score_threshold: float = Field(default=0.3, description="Minimum similarity score (0.0-1.0, default: 0.3)")
+    include_metadata: bool = Field(default=False, description="Include metadata (scores, sources) with results (default: False)")
+    collection_name: Optional[str] = Field(default=None, description="Name of the Qdrant collection to query (default: use system default)")
 # ============================================================================
 # ENDPOINT 1: MEMORY CHECK
 # ============================================================================
@@ -601,113 +607,50 @@ async def memory_update_endpoint(request: MemoryUpdateRequest):
         return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
-# HEALTH CHECK & INFO ENDPOINTS
+# ENDPOINT 10: RAG QUERY - Retrieve Top N Context
 # ============================================================================
 
-@app.get("/")
-async def root():
-    """Root endpoint with system information"""
-    return {
-        "message": "LUMIR-AI API System",
-        "version": "1.0.0",
-        "description": "Smart Multi-Agent Chatbot System for Trading Advice and Emotional Control",
-        "endpoints": {
-            "memory_check": "/api/memory/check",
-            "question_decomposition": "/api/question/decompose",
-            "numerology": "/api/numerology/analyze",
-            "trading": "/api/trading/analyze",
-            "lumir_synthesis": "/api/lumir/synthesize",
-            "complete_pipeline": "/api/pipeline/complete",
-            "memory_management": "/api/memory/manage",
-            "memory_update": "/api/memory/update",
-            "memory_history": "/api/memory/history"
-        },
-        "features": [
-            "User-specific cache memory (UUID-based)",
-            "Intelligent question routing",
-            "Multi-turn conversation support",
-            "Language consistency",
-            "Parallel agent execution"
-        ]
-    }
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "system": "LUMIR-AI API"
-    }
-
-@app.get("/api/info")
-async def api_info():
-    """Detailed information about API"""
-    return {
-        "api_name": "LUMIR-AI API",
-        "version": "1.0.0",
-        "description": "Smart Multi-Agent Chatbot System",
-        "architecture": {
-            "question_decomposition_agent": "Intelligent routing and question analysis",
-            "numerology_agent": "Numerology calculations and insights",
-            "trading_agent": "Trading data analysis and reporting",
-            "lumir_synthesis_agent": "Final response synthesis",
-            "memory_agent": "User-specific knowledge caching"
-        },
-        "user_memory_system": {
-            "description": "Each user has separate cache memory",
-            "identification": "Based on user_name + birthday + username",
-            "storage": "UUID-based hashing for unique identification",
-            "isolation": "Complete memory isolation between users"
-        },
-        "endpoints": {
-            "memory_check": {
-                "url": "/api/memory/check",
-                "method": "POST",
-                "description": "Check user-specific memory cache"
-            },
-            "question_decomposition": {
-                "url": "/api/question/decompose", 
-                "method": "POST",
-                "description": "Intelligent question analysis and routing"
-            },
-            "numerology": {
-                "url": "/api/numerology/analyze",
-                "method": "POST", 
-                "description": "Numerology analysis for specific user"
-            },
-            "trading": {
-                "url": "/api/trading/analyze",
-                "method": "POST",
-                "description": "Trading data analysis with Excel upload"
-            },
-            "lumir_synthesis": {
-                "url": "/api/lumir/synthesize",
-                "method": "POST",
-                "description": "Final response synthesis from all agents"
-            },
-            "complete_pipeline": {
-                "url": "/api/pipeline/complete",
-                "method": "POST",
-                "description": "Complete LUMIR-AI pipeline (main endpoint)"
-            },
-            "memory_management": {
-                "url": "/api/memory/manage",
-                "method": "POST",
-                "description": "Manage user-specific memory cache"
-            },
-            "memory_update": {
-                "url": "/api/memory/update",
-                "method": "POST",
-                "description": "Update user-specific memory cache (add, update, remove entries)"
-            },
-            "memory_history": {
-                "url": "/api/memory/history",
-                "method": "POST",
-                "description": "Get conversation history for a specific user"
-            }
+@app.post("/api/rag/query", response_model=Dict[str, Any])
+async def rag_query_endpoint(request: RAGQueryRequest):
+    """
+    RAG Query Endpoint - Retrieve and rerank top N relevant contexts
+    
+    This endpoint performs:
+    1. Embedding generation for the question
+    2. Vector similarity search in Qdrant
+    3. Reranking using cross-encoder
+    4. Return top N most relevant context chunks
+    
+    By default, returns only a list of context strings (contexts field).
+    Set include_metadata=true to get full details with scores and sources.
+    
+    Perfect for:
+    - Finding relevant information without full chat
+    - Building custom RAG pipelines
+    - Context retrieval for external systems
+    """
+    try:
+        result = await lumir_api.rag_query_endpoint(
+            question=request.question,
+            top_n=request.top_n,
+            score_threshold=request.score_threshold,
+            collection_name=request.collection_name,
+            include_metadata=request.include_metadata
+        )
+        
+        if result.get("success"):
+            return JSONResponse(content=result, status_code=200)
+        else:
+            return JSONResponse(content=result, status_code=400)
+            
+    except Exception as e:
+        error_response = {
+            "endpoint": "rag_query",
+            "success": False,
+            "error": f"Internal server error: {str(e)}",
+            "timestamp": datetime.now().isoformat()
         }
-    }
+        return JSONResponse(content=error_response, status_code=500)
 
 # ============================================================================
 # ERROR HANDLERS
