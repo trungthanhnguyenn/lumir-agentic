@@ -9,6 +9,7 @@ from pathlib import Path
 import time
 import hashlib
 import os
+from typing import Optional
 
 from module.document.document_processor_patch import create_patched_processor
 from module.advanced_rag_orchestrator import AdvancedRAGOrchestrator
@@ -55,7 +56,7 @@ def check_document_exists_in_qdrant(file_path: Path, qdrant, collection_name: st
         print(f"    ⚠️  Error checking document existence: {e}")
         return False
 
-def ingest_documents(file_path: str = "trading_data"):
+def ingest_documents(file_path: str = "trading_data", collection_name: Optional[str] = None) -> bool:
     """
     Ingest all documents with deduplication
     
@@ -74,8 +75,9 @@ def ingest_documents(file_path: str = "trading_data"):
         
         # Create collection name from directory name (sanitize it)
         # Replace spaces, dots, and special characters with underscores
-        base_name = os.path.basename(file_path)
-        collection_name = f"lumir_{base_name}".replace(" ", "_").replace(".", "_").replace("-", "_").lower()
+        if collection_name is None:
+            base_name = os.path.basename(file_path)
+            collection_name = f"lumir_{base_name}".replace(" ", "_").replace(".", "_").replace("-", "_").lower()
         
         print(f"📦 Using collection: {collection_name}")
         
